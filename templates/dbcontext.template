@@ -1,0 +1,29 @@
+using Database.Common;
+using Database.Generated;
+
+
+namespace Database.Generated;
+
+class DbContext
+{
+    private DatabaseProvider database;
+
+    public DbContext(DatabaseProvider database)
+    {
+    this.database = database;
+    }
+
+{{range $func :=  .Functions}}
+    public async {{if $func.HasReturn}}Task<List<{{$func.ModelName}}>>{{else}}Task{{end}} {{$func.FunctionName}}(CancellationToken ct{{range $parameter := $func.Parameters}}, {{$parameter.PropertyType}} {{$parameter.PropertyName}}{{end}})
+    {
+        var procedureParams = new object[] { {{range $parameter := $func.Parameters}}
+            {{$parameter.PropertyName}},{{end}}
+        };
+        {{if $func.HasReturn}}
+        return  await database.CallStoredProcedureAsync<{{$func.ModelName}}>(ct,"{{$func.DbFullFunctionName}}",procedureParams,{{.ProcessorName}}.Process);
+        {{else}}
+        await database.CallStoredProcedureWithoutReturn(ct,"{{$func.DbFullFunctionName}}",procedureParams,{{$func.IsProcedure}});
+        {{end}}
+    }
+{{end}}
+}

@@ -1,0 +1,19 @@
+using Database.Common;
+using Npgsql;
+
+namespace Database.Generated;
+
+public class {{.ProcessorName}}
+{
+	public static {{.ModelName}} Process(NpgsqlDataReader reader, List<ColumnDescriptor> descriptors)
+	{
+		var item = new {{.ModelName}}();
+
+        {{range $property := .ReturnProperties}}
+    // {{.DbColumnName}} {{.DbColumnType}}
+    item.{{.PropertyName}} = reader.{{.MapperFunction}}({{.Position}});
+        {{end}}
+
+		return item;
+	}
+}

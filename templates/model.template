@@ -1,0 +1,10 @@
+using Database.Common;
+
+namespace Database.Generated;
+
+public class {{.ModelName}}
+{
+    {{range $property := .ReturnProperties}}
+	[DbColumnMapping("{{$property.DbColumnName}}")] public {{$property.PropertyType}} {{$property.PropertyName}} { get; set; }
+    {{end}}
+}
