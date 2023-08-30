@@ -51,9 +51,6 @@ func Generate(routines []Function) error {
 		}
 	}
 
-	_ = moduleTemplate
-	_ = processorTemplate
-
 	return nil
 }
 
