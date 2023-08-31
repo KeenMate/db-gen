@@ -3,51 +3,60 @@ package main
 import (
 	_ "database/sql"
 	"db-gen/src"
+	"fmt"
+	"github.com/common-nighthawk/go-figure"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 )
 
-const dbConnectString = "postgresql://postgres:Password3000!!@localhost:5432/db_gen"
-
 func main() {
-	log.Println("db_gen starting...")
+	printHello()
+	log.Println("Starting...")
 
-	conn, err := dbGen.Connect(dbConnectString)
+	log.Printf("Getting configurations...")
+	config, err := dbGen.GetConfig()
+	if err != nil {
+		log.Panic("error getting config")
+	}
+
+	log.Printf("Connecting to database...")
+	conn, err := dbGen.Connect(config.ConnectionString)
 	if err != nil {
 		log.Panic("error connecting to database")
 	}
 
-	routines, err := conn.GetRoutines("public")
+	log.Printf("Getting routines...")
+	routines, err := dbGen.GetRoutines(conn, config)
 	if err != nil {
-		log.Panicf("error getting routines: %s", err)
+		log.Printf("error getting routines: %s", err)
 	}
+	log.Printf("Got %d routines", len(routines))
 
-	log.Printf("Finished getting routines, got %d", len(routines))
-
-	for i, routine := range routines {
-		err := conn.AddParamsToRoutine(&routines[i])
-
-		if err != nil {
-			log.Panicf("error getting routine params for routine %s: %s", routine.RoutineName, err)
-		}
-	}
-
-	log.Printf("Finished getting params for routines")
+	log.Printf("Saving to debug file...")
 	err = dbGen.SaveToTempFile(routines, "dbRoutines")
 	if err != nil {
 		log.Printf("error savinf debug file: %s", err)
 	}
 
-	processedFunctions, err := dbGen.Preprocess(routines)
+	log.Printf("Preprocessing...")
+	processedFunctions, err := dbGen.Preprocess(routines, config)
 
-	log.Printf("Finished processing function")
+	log.Printf("Saving to debug file...")
 	err = dbGen.SaveToTempFile(processedFunctions, "mapped")
 	if err != nil {
 		log.Printf("error savinf debug file: %s", err)
 	}
 
-	err = dbGen.Generate(processedFunctions)
+	log.Printf("Generating...")
+	err = dbGen.Generate(processedFunctions, config)
 	if err != nil {
 		log.Panic(err)
 	}
+
+	log.Printf("Done")
+}
+
+func printHello() {
+	figure.NewColorFigure("db-gen", "", "green", true).Print()
+	fmt.Println()
 }

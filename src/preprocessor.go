@@ -8,11 +8,11 @@ import (
 
 // Transforms data returned by database to structures that are used in generator
 
-func Preprocess(routines []DbRoutine) ([]Function, error) {
+func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 	// In future this should be more modular
 
 	// Map routines
-	functions, err := mapFunctions(routines)
+	functions, err := mapFunctions(routines, config)
 
 	if err != nil {
 		log.Println("Error while mapping functions")
@@ -23,7 +23,7 @@ func Preprocess(routines []DbRoutine) ([]Function, error) {
 
 }
 
-func mapFunctions(routines []DbRoutine) ([]Function, error) {
+func mapFunctions(routines []DbRoutine, config *Config) ([]Function, error) {
 	mappedFunctions := make([]Function, len(routines))
 
 	for i, routine := range routines {

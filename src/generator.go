@@ -8,11 +8,10 @@ import (
 	"text/template"
 )
 
-const basePath = "C:\\Testbench\\CSharp\\AspNetCoreDbGen\\AspNetCoreDbGen\\output"
 const processorsFolder = "processors"
 const modelsFolder = "models"
 
-func Generate(routines []Function) error {
+func Generate(routines []Function, config *Config) error {
 
 	dbcontextTemplate, err := parseTemplates("./templates/dbcontext.gotmpl")
 	processorTemplate, err := parseTemplates("./templates/processor.gotmpl")
@@ -22,15 +21,15 @@ func Generate(routines []Function) error {
 		return errors.New(fmt.Sprintf("Error loading one or more templates: %s", err))
 	}
 
-	err = os.MkdirAll(basePath, 777)
-	err = os.MkdirAll(path.Join(basePath, processorsFolder), 777)
-	err = os.MkdirAll(path.Join(basePath, modelsFolder), 777)
+	err = os.MkdirAll(config.OutputFolder, 777)
+	err = os.MkdirAll(path.Join(config.OutputFolder, processorsFolder), 777)
+	err = os.MkdirAll(path.Join(config.OutputFolder, modelsFolder), 777)
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error creating output folder: %s", err))
 	}
 
-	err = generateDbContext(routines, dbcontextTemplate)
+	err = generateDbContext(routines, dbcontextTemplate, config.OutputFolder)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error generating dbcontext: %s", err))
 	}
@@ -40,12 +39,12 @@ func Generate(routines []Function) error {
 			continue
 		}
 
-		err = generateModel(routine, moduleTemplate)
+		err = generateModel(routine, moduleTemplate, config.OutputFolder)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Error generating models: %s", err))
 		}
 
-		err = generateProcessor(routine, processorTemplate)
+		err = generateProcessor(routine, processorTemplate, config.OutputFolder)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Error generating processors: %s", err))
 		}
@@ -58,13 +57,13 @@ func parseTemplates(path string) (*template.Template, error) {
 	return template.ParseFiles(path)
 }
 
-func generateDbContext(routines []Function, template *template.Template) error {
+func generateDbContext(routines []Function, template *template.Template, outputFolder string) error {
 
-	data := &dbContextData{
+	data := &DbContextData{
 		Functions: routines,
 	}
 
-	filepath := path.Join(basePath, "DbConxtext.cs")
+	filepath := path.Join(outputFolder, "DbConxtext.cs")
 	f, err := os.Create(filepath)
 	defer f.Close()
 	if err != nil {
@@ -79,9 +78,9 @@ func generateDbContext(routines []Function, template *template.Template) error {
 	return nil
 }
 
-func generateModel(routine Function, template *template.Template) error {
+func generateModel(routine Function, template *template.Template, outputFolder string) error {
 
-	filePath := path.Join(basePath, modelsFolder, routine.ModelName+".cs")
+	filePath := path.Join(outputFolder, modelsFolder, routine.ModelName+".cs")
 
 	f, err := os.Create(filePath)
 	defer f.Close()
@@ -97,8 +96,8 @@ func generateModel(routine Function, template *template.Template) error {
 	return nil
 }
 
-func generateProcessor(routine Function, template *template.Template) error {
-	filePath := path.Join(basePath, processorsFolder, routine.ProcessorName+".cs")
+func generateProcessor(routine Function, template *template.Template, outputFolder string) error {
+	filePath := path.Join(outputFolder, processorsFolder, routine.ProcessorName+".cs")
 
 	f, err := os.Create(filePath)
 	defer f.Close()

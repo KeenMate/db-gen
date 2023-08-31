@@ -1,6 +1,7 @@
 package dbGen
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -54,7 +55,25 @@ type DbParameter struct {
 
 const inMode, outMode = "IN", "OUT"
 
-func (conn DbConn) GetRoutines(schema string) ([]DbRoutine, error) {
+func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
+	routines, err := getFunctionsInSchema(conn, "public")
+	if err != nil {
+		return nil, fmt.Errorf("getting routines: %s", err)
+	}
+
+	for i, routine := range routines {
+		err := addParamsToRoutine(conn, &routines[i])
+
+		if err != nil {
+			return nil, fmt.Errorf("getting params for routine %s: %s", routine.RoutineName, err)
+		}
+	}
+
+	return routines, err
+
+}
+
+func getFunctionsInSchema(conn *DbConn, schema string) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
 
 	// I am coalescing
@@ -76,7 +95,7 @@ func (conn DbConn) GetRoutines(schema string) ([]DbRoutine, error) {
 	      order by routine_schema, routine_name;
 	`
 
-	err := conn.Select(routines, q, "public")
+	err := conn.Select(routines, q, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +103,7 @@ func (conn DbConn) GetRoutines(schema string) ([]DbRoutine, error) {
 	return *routines, nil
 }
 
-func (conn DbConn) AddParamsToRoutine(routine *DbRoutine) error {
+func addParamsToRoutine(conn *DbConn, routine *DbRoutine) error {
 	q := `
 		select ordinal_position::int,
 			   parameter_name::text,
