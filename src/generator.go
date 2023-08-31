@@ -14,9 +14,9 @@ const modelsFolder = "models"
 
 func Generate(routines []Function) error {
 
-	dbcontextTemplate, err := parseTemplates("./templates/dbcontext.template")
-	processorTemplate, err := parseTemplates("./templates/processor.template")
-	moduleTemplate, err := parseTemplates("./templates/model.template")
+	dbcontextTemplate, err := parseTemplates("./templates/dbcontext.gotmpl")
+	processorTemplate, err := parseTemplates("./templates/processor.gotmpl")
+	moduleTemplate, err := parseTemplates("./templates/model.gotmpl")
 
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error loading one or more templates: %s", err))
