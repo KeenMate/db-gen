@@ -75,7 +75,7 @@ func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
 		dbFullFunctionName := routine.RoutineSchema + "." + routine.RoutineName
 		modelName := getModelName(routine.RoutineName)
 		processorName := getProcessorName(routine.RoutineName)
-		returnProperties := getParameters(routine.OutParameters)
+		returnProperties := getReturnProperties(routine)
 
 		function := &Function{
 			FunctionName:       functionName,
@@ -93,6 +93,34 @@ func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
 	}
 
 	return mappedFunctions, nil
+}
+
+func getReturnProperties(routine DbRoutine) []Property {
+	returnParameters := make([]Property, 0)
+	structuredTypes := []string{"record", "USER-DEFINED"}
+	voidTypes := []string{"void"}
+
+	if slices.Contains(voidTypes, routine.DataType) {
+		return returnParameters
+	}
+
+	// If value is simple data type
+	if !slices.Contains(structuredTypes, routine.DataType) {
+
+		propertyName := getPropertyName(routine.RoutineName)
+		propertyType, propertyMapper := getCsharpType(routine.DataType)
+
+		return append(returnParameters, Property{
+			DbColumnName:   routine.RoutineName,
+			DbColumnType:   routine.DataType,
+			PropertyName:   propertyName,
+			PropertyType:   propertyType,
+			Position:       0,
+			MapperFunction: propertyMapper,
+		})
+	}
+
+	return getParameters(routine.OutParameters)
 }
 
 func getParameters(attributes []DbParameter) []Property {
@@ -140,7 +168,7 @@ func getCsharpType(databaseType string) (string, string) {
 	// TODO this is hardcodded for now
 	// But in future it should be loaded from file
 	switch databaseType {
-	case "boolean":
+	case "boolean", "bool":
 		return "bool", "GetBoolean"
 	case "smallint", "int2":
 		return "short", "GetInt16"
@@ -159,7 +187,11 @@ func getCsharpType(databaseType string) (string, string) {
 	case "uuid":
 		return "Guid", "GetGuid"
 	case "bytea":
-		return "byte[]", "GetValue"
+		return "byte[]", "GetByteArray"
+	case "timestamptz", "date", "timestamp":
+		return "DateTime", "GetDateTime"
+	case "interval":
+		return "TimeSpan", "GetTimeSpan"
 	default:
 		return "string", "GetString"
 	}

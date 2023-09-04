@@ -14,7 +14,7 @@ func main() {
 	log.Printf("Getting configurations...")
 	config, err := dbGen.GetConfig()
 	if err != nil {
-		log.Panic("error getting config")
+		dbGen.Panic("error getting config %s", err)
 	}
 
 	dbGen.VerboseLog("Verbose logging is enabled")
