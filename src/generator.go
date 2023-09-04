@@ -59,7 +59,7 @@ func generateDbContext(routines []Function, config *Config) error {
 		Functions: routines,
 	}
 
-	filepath := path.Join(config.OutputFolder, "DbConxtext.cs")
+	filepath := path.Join(config.OutputFolder, "DbContext"+config.GeneratedFileExtension)
 	return generateFile(data, dbcontextTemplate, filepath)
 }
 
@@ -77,7 +77,7 @@ func generateModels(routines []Function, config *Config) error {
 			continue
 		}
 
-		filePath := path.Join(config.OutputFolder, modelsFolder, routine.ModelName+".cs")
+		filePath := path.Join(config.OutputFolder, modelsFolder, routine.ModelName+config.GeneratedFileExtension)
 
 		err = generateFile(routine, moduleTemplate, filePath)
 		if err != nil {
@@ -103,7 +103,7 @@ func generateProcessors(routines []Function, config *Config) error {
 		if !routine.HasReturn {
 			continue
 		}
-		filePath := path.Join(config.OutputFolder, processorsFolder, routine.ProcessorName+".cs")
+		filePath := path.Join(config.OutputFolder, processorsFolder, routine.ProcessorName+config.GeneratedFileExtension)
 
 		err = generateFile(routine, processorTemplate, filePath)
 		if err != nil {

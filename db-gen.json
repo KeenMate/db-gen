@@ -9,6 +9,7 @@
   "DbContextTemplate": "./templates/dbcontext.gotmpl",
   "ModelTemplate": "./templates/model.gotmpl",
   "ProcessorTemplate": "./templates/processor.gotmpl",
+  "GeneratedFileExtension": ".cs",
   "Generate": [
     {
       "Schema": "public",

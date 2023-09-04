@@ -3,14 +3,12 @@ package main
 import (
 	_ "database/sql"
 	"db-gen/src"
-	"fmt"
-	"github.com/common-nighthawk/go-figure"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log"
 )
 
 func main() {
-	printHello()
+	dbGen.Hello()
 	log.Println("Starting...")
 
 	log.Printf("Getting configurations...")
@@ -29,12 +27,16 @@ func main() {
 		doGenerate(config)
 	case dbGen.Init:
 		doInit(config)
+	default:
+		dbGen.Panic("Unknown command %s", config.Command)
 	}
 
 	log.Printf("Done")
 }
 
 func doGenerate(config *dbGen.Config) {
+	log.Printf("Connecting to database...")
+
 	log.Printf("Connecting to database...")
 	conn, err := dbGen.Connect(config.ConnectionString)
 	if err != nil {
@@ -48,7 +50,7 @@ func doGenerate(config *dbGen.Config) {
 	}
 	log.Printf("Got %d routines", len(routines))
 
-	log.Printf("Saving to debug file...")
+	dbGen.VerboseLog("Saving to debug file...")
 	err = dbGen.SaveToTempFile(routines, "dbRoutines")
 	if err != nil {
 		dbGen.Panic("error savinf debug file: %s", err)
@@ -61,10 +63,10 @@ func doGenerate(config *dbGen.Config) {
 	}
 	log.Printf("After preprocessing %d functions left", len(processedFunctions))
 
-	log.Printf("Saving to debug file...")
+	dbGen.VerboseLog("Saving to debug file...")
 	err = dbGen.SaveToTempFile(processedFunctions, "mapped")
 	if err != nil {
-		dbGen.Panic("error savinf debug file: %s", err)
+		dbGen.Panic("error saving debug file: %s", err)
 	}
 
 	log.Printf("Generating...")
@@ -76,9 +78,4 @@ func doGenerate(config *dbGen.Config) {
 
 func doInit(config *dbGen.Config) {
 	log.Printf("Not implemented yet")
-}
-
-func printHello() {
-	figure.NewColorFigure("db-gen", "", "green", true).Print()
-	fmt.Println()
 }

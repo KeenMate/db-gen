@@ -2,9 +2,12 @@ package dbGen
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/common-nighthawk/go-figure"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func PrettyPrintSlice[T interface{}](values []T) {
@@ -60,4 +63,16 @@ func RemoveContents(dir string) error {
 		}
 	}
 	return nil
+}
+
+const bold = "\033[5;1m"
+
+// Hello prints welcome message and waits fo a bit
+func Hello() {
+	figure.NewColorFigure("db-gen", "", "green", true).Print()
+	fmt.Println("Ultimate db call code generator by " + bold + "KEEN|MATE" + colorReset)
+	fmt.Println()
+
+	time.Sleep(2 * time.Second)
+
 }
