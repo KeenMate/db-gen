@@ -15,6 +15,7 @@ type Function struct {
 	DbFullFunctionName string
 	ModelName          string
 	ProcessorName      string
+	Schema             string
 	HasReturn          bool
 	IsProcedure        bool
 	Parameters         []Property
@@ -49,8 +50,8 @@ type Config struct {
 }
 
 type SchemaConfig struct {
-	Schema          string
-	AllFunctions    bool
-	Functions       []string
-	IgnoreFunctions []string
+	Schema           string   `json:"Schema,omitempty"`
+	AllFunctions     bool     `json:"AllFunctions,omitempty"`
+	Functions        []string `json:"Functions,omitempty"`
+	IgnoredFunctions []string `json:"IgnoredFunctions,omitempty"`
 }

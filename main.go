@@ -59,6 +59,7 @@ func doGenerate(config *dbGen.Config) {
 	if err != nil {
 		dbGen.Panic("error preprocessing: %s", err)
 	}
+	log.Printf("After preprocessing %d functions left", len(processedFunctions))
 
 	log.Printf("Saving to debug file...")
 	err = dbGen.SaveToTempFile(processedFunctions, "mapped")

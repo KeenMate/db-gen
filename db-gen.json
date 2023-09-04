@@ -12,7 +12,17 @@
   "Generate": [
     {
       "Schema": "public",
-      "AllFunctions": true
+      "AllFunctions": true,
+      "IgnoredFunctions": [
+        "ignored"
+      ]
+    },
+    {
+      "Schema": "test",
+      "AllFunctions": false,
+      "Functions": [
+        "explicitly_included"
+      ]
     }
   ]
 }

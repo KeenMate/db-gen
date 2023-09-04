@@ -87,4 +87,30 @@ begin
 end
 $$;
 
-select new_function('Honza')
+select new_function('Honza');
+
+
+create or replace function ignored() returns void
+    language plpgsql as
+$$
+begin
+
+end;
+$$;
+
+create schema if not exists test;
+create function test.explicitly_included()
+    returns table
+            (
+                __number int,
+                __string text,
+                __json   json
+            )
+    language plpgsql
+as
+$$
+begin
+
+    return query select 1, 'Hello from custom type', json_build_object('key', 'value');
+end;
+$$;

@@ -3,6 +3,7 @@ package dbGen
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"slices"
 )
 
 type DbConn struct {
@@ -56,9 +57,17 @@ type DbParameter struct {
 const inMode, outMode = "IN", "OUT"
 
 func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
-	routines, err := getFunctionsInSchema(conn, "public")
-	if err != nil {
-		return nil, fmt.Errorf("getting routines: %s", err)
+	schemas := getSchemas(config)
+
+	routines := make([]DbRoutine, 0)
+	for _, schema := range schemas {
+		newRoutines, err := getFunctionsInSchema(conn, schema)
+
+		if err != nil {
+			return nil, fmt.Errorf("getting routines for schema %s : %s", schema, err)
+		}
+
+		routines = append(routines, newRoutines...)
 	}
 
 	for i, routine := range routines {
@@ -69,8 +78,18 @@ func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
 		}
 	}
 
-	return routines, err
+	return routines, nil
 
+}
+func getSchemas(config *Config) []string {
+	schemas := make([]string, 0)
+	for _, schemaConfig := range config.Generate {
+		if !slices.Contains(schemas, schemaConfig.Schema) {
+			schemas = append(schemas, schemaConfig.Schema)
+		}
+	}
+
+	return schemas
 }
 
 func getFunctionsInSchema(conn *DbConn, schema string) ([]DbRoutine, error) {

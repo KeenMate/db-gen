@@ -1,8 +1,10 @@
 package dbGen
 
 import (
+	"fmt"
 	"github.com/stoewer/go-strcase"
 	"log"
+	"slices"
 	"sort"
 )
 
@@ -12,21 +14,62 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 	// In future this should be more modular
 
 	// Map routines
-	functions, err := mapFunctions(routines, config)
+	functions, err := mapFunctions(&routines, config)
 
 	if err != nil {
 		log.Println("Error while mapping functions")
 		return nil, err
 	}
 
+	functions = filterFunctions(&functions, config)
+
 	return functions, nil
 
 }
 
-func mapFunctions(routines []DbRoutine, config *Config) ([]Function, error) {
-	mappedFunctions := make([]Function, len(routines))
+func filterFunctions(functions *[]Function, config *Config) []Function {
+	schemaMap := getSchemaConfigMap(config)
 
-	for i, routine := range routines {
+	filteredFunctions := make([]Function, 0)
+
+	for _, function := range *functions {
+		schemaConfig, exists := schemaMap[function.Schema]
+
+		// if config for given schema doest exits, dont generate for any function in given scheme
+		if !exists {
+			continue
+		}
+
+		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.FunctionName) {
+			// Case sensitive
+			if slices.Contains(schemaConfig.IgnoredFunctions, function.FunctionName) {
+				VerboseLog(fmt.Sprintf("Ignoring funtion '%s' in scheme '%s'", function.FunctionName, function.Schema))
+				continue
+			}
+
+			filteredFunctions = append(filteredFunctions, function)
+
+		}
+
+	}
+
+	return filteredFunctions
+}
+
+func getSchemaConfigMap(config *Config) map[string]SchemaConfig {
+	schemaMap := make(map[string]SchemaConfig)
+
+	for _, schemaConfig := range config.Generate {
+		schemaMap[schemaConfig.Schema] = schemaConfig
+	}
+
+	return schemaMap
+}
+
+func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
+	mappedFunctions := make([]Function, len(*routines))
+
+	for i, routine := range *routines {
 		parameters := getParameters(routine.InParameters)
 		functionName := getFunctionName(routine.RoutineName)
 		dbFullFunctionName := routine.RoutineSchema + "." + routine.RoutineName
@@ -43,6 +86,7 @@ func mapFunctions(routines []DbRoutine, config *Config) ([]Function, error) {
 			ProcessorName:      processorName,
 			HasReturn:          len(returnProperties) > 0,
 			IsProcedure:        routine.FuncType == "procedure",
+			Schema:             routine.RoutineSchema,
 		}
 
 		mappedFunctions[i] = *function
