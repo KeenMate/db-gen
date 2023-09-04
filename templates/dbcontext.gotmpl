@@ -16,7 +16,7 @@ class DbContext
     }
 
 {{range $func :=  .Functions}}
-    public async {{if $func.HasReturn}}Task<List<{{$func.ModelName}}>>{{else}}Task{{end}} {{$func.FunctionName}}(CancellationToken ct{{range $parameter := $func.Parameters}}, {{$parameter.PropertyType}} {{$parameter.PropertyName}}{{end}})
+    public async {{if $func.HasReturn}}Task<List<{{$func.ModelName}}>>{{else}}Task{{end}} {{$func.FunctionName}}({{range $parameter := $func.Parameters}} {{$parameter.PropertyType}} {{$parameter.PropertyName}}, {{end}}CancellationToken ct)
     {
         var procedureParams = new object[] { {{range $parameter := $func.Parameters}}
             {{$parameter.PropertyName}},{{end}}

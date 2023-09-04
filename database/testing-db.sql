@@ -53,7 +53,7 @@ create or replace function return_setof()
 as
 $$
 begin
-   return query select * from example_table;
+    return query select * from example_table;
 end;
 $$;
 
@@ -76,4 +76,15 @@ begin
 end;
 $$;
 
-select return_void(1,2)
+select return_void(1, 2);
+
+create or replace function new_function(name text) returns text
+    language plpgsql
+as
+$$
+begin
+    return 'Hello ' || name;
+end
+$$;
+
+select new_function('Honza')

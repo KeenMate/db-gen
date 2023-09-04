@@ -1,7 +1,6 @@
 package dbGen
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -12,58 +11,120 @@ const processorsFolder = "processors"
 const modelsFolder = "models"
 
 func Generate(routines []Function, config *Config) error {
-
-	dbcontextTemplate, err := parseTemplates("./templates/dbcontext.gotmpl")
-	processorTemplate, err := parseTemplates("./templates/processor.gotmpl")
-	moduleTemplate, err := parseTemplates("./templates/model.gotmpl")
-
+	err := ensureOutputFolder(config)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error loading one or more templates: %s", err))
+		return fmt.Errorf("ensuring output folder: %s", err)
+	}
+	VerboseLog("Ensured output folder")
+
+	err = generateDbContext(routines, config)
+	if err != nil {
+		return fmt.Errorf("generating dbcontext: %s", err)
+
+	}
+	VerboseLog("Generated dbcontext")
+
+	if config.GenerateModels {
+		err = generateModels(routines, config)
+		if err != nil {
+			return fmt.Errorf("generating models: %s", err)
+
+		}
+		VerboseLog("Generated models")
+
+	} else {
+		VerboseLog("Skipping generating models")
 	}
 
-	err = os.MkdirAll(config.OutputFolder, 777)
-	err = os.MkdirAll(path.Join(config.OutputFolder, processorsFolder), 777)
+	if config.GenerateProcessors {
+		err = generateProcessors(routines, config)
+		if err != nil {
+			return fmt.Errorf("generating processors: %s", err)
+
+		}
+		VerboseLog("Generated processors")
+	} else {
+		VerboseLog("Skipping generating processors")
+	}
+	return nil
+}
+
+func generateDbContext(routines []Function, config *Config) error {
+	dbcontextTemplate, err := parseTemplates(config.DbContextTemplate)
+	if err != nil {
+		return fmt.Errorf("loading dbContext template: %s", err)
+	}
+
+	data := &DbContextData{
+		Functions: routines,
+	}
+
+	filepath := path.Join(config.OutputFolder, "DbConxtext.cs")
+	return generateFile(data, dbcontextTemplate, filepath)
+}
+
+func generateModels(routines []Function, config *Config) error {
+
+	moduleTemplate, err := parseTemplates(config.ModelTemplate)
+	if err != nil {
+		return fmt.Errorf("loading module template: %s", err)
+	}
+
 	err = os.MkdirAll(path.Join(config.OutputFolder, modelsFolder), 777)
-
-	if err != nil {
-		return errors.New(fmt.Sprintf("Error creating output folder: %s", err))
-	}
-
-	err = generateDbContext(routines, dbcontextTemplate, config.OutputFolder)
-	if err != nil {
-		return errors.New(fmt.Sprintf("Error generating dbcontext: %s", err))
-	}
 
 	for _, routine := range routines {
 		if !routine.HasReturn {
 			continue
 		}
 
-		err = generateModel(routine, moduleTemplate, config.OutputFolder)
+		filePath := path.Join(config.OutputFolder, modelsFolder, routine.ModelName+".cs")
+
+		err = generateFile(routine, moduleTemplate, filePath)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Error generating models: %s", err))
+			return fmt.Errorf("generating models: %s", err)
 		}
 
-		err = generateProcessor(routine, processorTemplate, config.OutputFolder)
+	}
+
+	return nil
+}
+
+func generateProcessors(routines []Function, config *Config) error {
+	processorTemplate, err := parseTemplates(config.ProcessorTemplate)
+	if err != nil {
+		return fmt.Errorf("loading processor template: %s", err)
+	}
+
+	err = os.MkdirAll(path.Join(config.OutputFolder, processorsFolder), 777)
+	if err != nil {
+		return fmt.Errorf("creating processor output folder: %s", err)
+	}
+	for _, routine := range routines {
+		if !routine.HasReturn {
+			continue
+		}
+		filePath := path.Join(config.OutputFolder, processorsFolder, routine.ProcessorName+".cs")
+
+		err = generateFile(routine, processorTemplate, filePath)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Error generating processors: %s", err))
+			return fmt.Errorf("generating processor %s: %s", routine.ProcessorName, err)
 		}
 	}
 
 	return nil
 }
 
-func parseTemplates(path string) (*template.Template, error) {
-	return template.ParseFiles(path)
-}
+func parseTemplates(filepath string) (*template.Template, error) {
+	if !fileExists(filepath) {
+		return nil, fmt.Errorf("config file %s does not exist", filepath)
 
-func generateDbContext(routines []Function, template *template.Template, outputFolder string) error {
-
-	data := &DbContextData{
-		Functions: routines,
 	}
 
-	filepath := path.Join(outputFolder, "DbConxtext.cs")
+	return template.ParseFiles(filepath)
+}
+
+func generateFile(data interface{}, template *template.Template, filepath string) error {
+
 	f, err := os.Create(filepath)
 	defer f.Close()
 	if err != nil {
@@ -78,36 +139,18 @@ func generateDbContext(routines []Function, template *template.Template, outputF
 	return nil
 }
 
-func generateModel(routine Function, template *template.Template, outputFolder string) error {
-
-	filePath := path.Join(outputFolder, modelsFolder, routine.ModelName+".cs")
-
-	f, err := os.Create(filePath)
-	defer f.Close()
-	if err != nil {
-		return err
+func ensureOutputFolder(config *Config) error {
+	if fileExists(config.OutputFolder) {
+		VerboseLog("Deleting contents of output folder")
+		err := RemoveContents(config.OutputFolder)
+		if err != nil {
+			return fmt.Errorf("clearing output folder: %s", err)
+		}
 	}
 
-	err = template.Execute(f, routine)
+	err := os.MkdirAll(config.OutputFolder, 777)
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func generateProcessor(routine Function, template *template.Template, outputFolder string) error {
-	filePath := path.Join(outputFolder, processorsFolder, routine.ProcessorName+".cs")
-
-	f, err := os.Create(filePath)
-	defer f.Close()
-	if err != nil {
-		return err
-	}
-
-	err = template.Execute(f, routine)
-	if err != nil {
-		return err
+		return fmt.Errorf("creating output folder: %s", err)
 	}
 
 	return nil

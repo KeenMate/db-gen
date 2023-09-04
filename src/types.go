@@ -25,7 +25,15 @@ type DbContextData struct {
 	Functions []Function
 }
 
+type Command string
+
+const (
+	Init Command = "init"
+	Gen          = "gen"
+)
+
 type Config struct {
+	Command                    Command
 	ConnectionString           string         `json:"ConnectionString"`
 	OutputFolder               string         `json:"OutputFolder,omitempty"`
 	OutputNamespace            string         `json:"OutputNamespace,omitempty"`
@@ -35,6 +43,8 @@ type Config struct {
 	DbContextTemplate          string         `json:"DbContextTemplate,omitempty"`
 	ModelTemplate              string         `json:"ModelTemplate,omitempty"`
 	ProcessorTemplate          string         `json:"ProcessorTemplate,omitempty"`
+	Verbose                    bool           `json:"Verbose,omitempty"`
+	ClearOutputFolder          bool           `json:"ClearOutputFolder,omitempty"`
 	Generate                   []SchemaConfig `json:"Generate,omitempty"`
 }
 
