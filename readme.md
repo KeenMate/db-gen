@@ -1,5 +1,16 @@
 # db-gen
 
+Successor to ecto-gen
+
+## Known Limitations
+
+- generating code for functions that return one value acts like the function return void
+
+## Configuration
+
+All configuration is stored in file specified with `--config` flag or in `./db-gen.json`
+Enable verbose logging with `--verbose` flag (can)
+
 ### Configuration overview
 
 - **ConnectionString (string)**:

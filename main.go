@@ -17,10 +17,8 @@ func main() {
 		log.Panic("error getting config")
 	}
 
-	if config.Verbose {
-		log.Print("Verbose logging is enabled")
-		dbGen.PrettyPrint(config)
-	}
+	dbGen.VerboseLog("Verbose logging is enabled")
+	dbGen.VerboseLogStruct(config)
 
 	switch config.Command {
 	case dbGen.Gen:

@@ -37,6 +37,13 @@ func VerboseLog(message string) {
 	}
 }
 
+func VerboseLogStruct(val interface{}) {
+	if CurrentConfig.Verbose {
+		formattedStr, _ := json.MarshalIndent(val, "", "  ")
+		log.Printf(colorBlue+"%s"+colorReset, formattedStr)
+	}
+}
+
 func fileExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 
