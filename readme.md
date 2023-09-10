@@ -53,3 +53,40 @@ Enable verbose logging with `--verbose` flag (can)
         - Can be used in template
     - **MappingFunction (string)**:
         - Can be used in template
+
+## Templates
+
+processor and model templates have `Function` struct availible as `.` argument
+dbcontext has `DbContextData` struct as `.` argument
+
+```go
+package main
+
+// Types used in template
+type Property struct {
+	DbColumnName   string
+	DbColumnType   string
+	PropertyName   string
+	PropertyType   string
+	Position       int
+	MapperFunction string
+}
+
+type Function struct {
+	FunctionName       string
+	DbFullFunctionName string
+	ModelName          string
+	ProcessorName      string
+	Schema             string
+	DbFunctionName     string
+	HasReturn          bool
+	IsProcedure        bool
+	Parameters         []Property
+	ReturnProperties   []Property
+}
+
+type DbContextData struct {
+	Functions []Function
+}
+
+```
