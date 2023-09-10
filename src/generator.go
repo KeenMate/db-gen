@@ -125,6 +125,8 @@ func parseTemplates(filepath string) (*template.Template, error) {
 }
 
 func generateFile(data interface{}, template *template.Template, fp string) error {
+	// TODO maybe check and write to console if file was changed
+
 	f, err := os.Create(fp)
 	defer f.Close()
 	if err != nil {
