@@ -46,3 +46,10 @@ Enable verbose logging with `--verbose` flag (can)
         - Functions to be ignored when generating code in the schema.
     - **Functions (array of strings)**:
         - Functions to be explicitly included when generating code in the schema.
+- **Mappings**
+    - **DatabaseTypes (array of strings)**:
+        - If one database type has multiple mappings, last will be used
+    - **MappedType (string)**:
+        - Can be used in template
+    - **MappingFunction (string)**:
+        - Can be used in template
