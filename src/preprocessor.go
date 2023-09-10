@@ -13,8 +13,12 @@ import (
 func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 	// In future this should be more modular
 
+	// don't need to compute for every property
+	typeMappings := getTypeMappings(config)
+	VerboseLog(fmt.Sprintf("Got %d type mappigns", len(typeMappings)))
+
 	// Map routines
-	functions, err := mapFunctions(&routines, config)
+	functions, err := mapFunctions(&routines, &typeMappings, config)
 
 	if err != nil {
 		log.Println("Error while mapping functions")
@@ -29,26 +33,30 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 
 func filterFunctions(functions *[]Function, config *Config) []Function {
 	schemaMap := getSchemaConfigMap(config)
-
+	VerboseLog(fmt.Sprintf("Got %d schema configs  ", len(schemaMap)))
 	filteredFunctions := make([]Function, 0)
 
 	for _, function := range *functions {
 		schemaConfig, exists := schemaMap[function.Schema]
 
-		// if config for given schema doest exits, dont generate for any function in given scheme
+		// if config for given schema doest exits, don't generate for any function in given scheme
 		if !exists {
+			VerboseLog(fmt.Sprintf("No schema config for '%s'", function.Schema))
 			continue
 		}
 
-		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.FunctionName) {
+		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.DbFunctionName) {
 			// Case sensitive
-			if slices.Contains(schemaConfig.IgnoredFunctions, function.FunctionName) {
-				VerboseLog(fmt.Sprintf("Ignoring funtion '%s' in scheme '%s'", function.FunctionName, function.Schema))
+			if slices.Contains(schemaConfig.IgnoredFunctions, function.DbFunctionName) {
+				VerboseLog(fmt.Sprintf("Function '%s.%s' in ignored functions", function.Schema, function.DbFunctionName))
 				continue
 			}
 
 			filteredFunctions = append(filteredFunctions, function)
-
+		} else {
+			VerboseLog(fmt.Sprintf("Function '%s.%s' not generated because all function is false or isnt included in functions",
+				function.Schema,
+				function.DbFunctionName))
 		}
 
 	}
@@ -66,16 +74,25 @@ func getSchemaConfigMap(config *Config) map[string]SchemaConfig {
 	return schemaMap
 }
 
-func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
+func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, config *Config) ([]Function, error) {
 	mappedFunctions := make([]Function, len(*routines))
 
 	for i, routine := range *routines {
-		parameters := getParameters(routine.InParameters)
+
+		returnProperties, err := getReturnProperties(routine, typeMappings)
+		if err != nil {
+			return nil, fmt.Errorf("mapping function %s: %s", routine.RoutineName, err)
+		}
+
+		parameters, err := getParameters(routine.InParameters, typeMappings)
+		if err != nil {
+			return nil, fmt.Errorf("mapping function %s: %s", routine.RoutineName, err)
+		}
+
 		functionName := getFunctionName(routine.RoutineName)
 		dbFullFunctionName := routine.RoutineSchema + "." + routine.RoutineName
 		modelName := getModelName(routine.RoutineName)
 		processorName := getProcessorName(routine.RoutineName)
-		returnProperties := getReturnProperties(routine)
 
 		function := &Function{
 			FunctionName:       functionName,
@@ -85,8 +102,9 @@ func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
 			ReturnProperties:   returnProperties,
 			ProcessorName:      processorName,
 			HasReturn:          len(returnProperties) > 0,
-			IsProcedure:        routine.FuncType == "procedure",
+			IsProcedure:        routine.FuncType == Procedure,
 			Schema:             routine.RoutineSchema,
+			DbFunctionName:     routine.RoutineName,
 		}
 
 		mappedFunctions[i] = *function
@@ -95,59 +113,70 @@ func mapFunctions(routines *[]DbRoutine, config *Config) ([]Function, error) {
 	return mappedFunctions, nil
 }
 
-func getReturnProperties(routine DbRoutine) []Property {
+func getReturnProperties(routine DbRoutine, typeMappings *map[string]mapping) ([]Property, error) {
+
 	returnParameters := make([]Property, 0)
 	structuredTypes := []string{"record", "USER-DEFINED"}
 	voidTypes := []string{"void"}
 
-	if slices.Contains(voidTypes, routine.DataType) {
-		return returnParameters
+	//procedures in pg don't have return type
+	if routine.FuncType == Procedure || slices.Contains(voidTypes, routine.DataType) {
+		return returnParameters, nil
 	}
+
+	outParameters := routine.OutParameters
 
 	// If value is simple data type
 	if !slices.Contains(structuredTypes, routine.DataType) {
-
-		propertyName := getPropertyName(routine.RoutineName)
-		propertyType, propertyMapper := getCsharpType(routine.DataType)
-
-		return append(returnParameters, Property{
-			DbColumnName:   routine.RoutineName,
-			DbColumnType:   routine.DataType,
-			PropertyName:   propertyName,
-			PropertyType:   propertyType,
-			Position:       0,
-			MapperFunction: propertyMapper,
+		outParameters = append(outParameters, DbParameter{
+			OrdinalPosition: 0,
+			Name:            routine.RoutineName,
+			Mode:            OutMode,
+			UDTName:         routine.DataType,
+			IsNullable:      false,
 		})
+
 	}
 
-	return getParameters(routine.OutParameters)
+	return getParameters(outParameters, typeMappings)
 }
 
-func getParameters(attributes []DbParameter) []Property {
+func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) ([]Property, error) {
+
 	properties := make([]Property, len(attributes))
+
+	if attributes == nil || len(attributes) == 0 {
+		return properties, nil
+	}
 
 	// Make sure attributes are in right order
 	sort.Slice(attributes, func(i, j int) bool {
 		return attributes[i].OrdinalPosition < attributes[j].OrdinalPosition
 	})
 
+	// First possition should be 0
+	positionOffset := attributes[0].OrdinalPosition
+
 	for i, attribute := range attributes {
 		propertyName := getPropertyName(attribute.Name)
-		propertyType, propertyMapper := getCsharpType(attribute.UDTName)
+		typeMapping, err := getMapping(typeMappings, attribute.UDTName)
+		if err != nil {
+			return nil, fmt.Errorf("mapping parameter %s: %s", attribute.Name, err)
+		}
 
 		property := &Property{
 			DbColumnName:   attribute.Name,
 			DbColumnType:   attribute.UDTName,
 			PropertyName:   propertyName,
-			PropertyType:   propertyType,
-			Position:       attribute.OrdinalPosition - 1,
-			MapperFunction: propertyMapper,
+			PropertyType:   typeMapping.mappingType,
+			Position:       attribute.OrdinalPosition - positionOffset,
+			MapperFunction: typeMapping.mappingFunction,
 		}
 
 		properties[i] = *property
 	}
 
-	return properties
+	return properties, nil
 }
 
 func getFunctionName(dbFunctionName string) string {
@@ -164,35 +193,35 @@ func getProcessorName(dbColumnName string) string {
 	return strcase.UpperCamelCase(dbColumnName) + "Processor"
 }
 
-func getCsharpType(databaseType string) (string, string) {
-	// TODO this is hardcodded for now
-	// But in future it should be loaded from file
-	switch databaseType {
-	case "boolean", "bool":
-		return "bool", "GetBoolean"
-	case "smallint", "int2":
-		return "short", "GetInt16"
-	case "integer", "int4":
-		return "int", "GetInt32"
-	case "bigint", "int8":
-		return "long", "GetInt64"
-	case "real":
-		return "float", "GetFloat"
-	case "double precision":
-		return "double", "GetDouble"
-	case "numeric", "money":
-		return "decimal", "GetDecimal"
-	case "text", "character varying", "character", "citext", "json", "jsonb", "xml":
-		return "string", "GetString"
-	case "uuid":
-		return "Guid", "GetGuid"
-	case "bytea":
-		return "byte[]", "GetByteArray"
-	case "timestamptz", "date", "timestamp":
-		return "DateTime", "GetDateTime"
-	case "interval":
-		return "TimeSpan", "GetTimeSpan"
-	default:
-		return "string", "GetString"
+type mapping struct {
+	mappingFunction string
+	mappingType     string
+}
+
+func getTypeMappings(config *Config) map[string]mapping {
+	mappings := make(map[string]mapping)
+
+	// If there are multiple mappings to one database type, last one will be used
+
+	for _, val := range config.Mappings {
+		for _, databaseType := range val.DatabaseTypes {
+			mappings[databaseType] = mapping{
+				mappingFunction: val.MappingFunction,
+				mappingType:     val.MappedType,
+			}
+		}
+
 	}
+
+	return mappings
+}
+
+func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, error) {
+	val, isFound := (*mappings)[dbDataType]
+
+	if !isFound {
+		return nil, fmt.Errorf("mapping for dbType '%s' not found", dbDataType)
+	}
+
+	return &val, nil
 }

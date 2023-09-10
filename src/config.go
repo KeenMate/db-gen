@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -28,6 +29,7 @@ func GetConfig() (*Config, error) {
 	// Cli args should override config loaded from file
 	config.Command = args.command
 	config.Verbose = args.verbose
+	config.PathBase = path.Dir(args.configPath)
 
 	if err != nil {
 		return nil, fmt.Errorf("getting configuration from file: %w", err)
@@ -67,7 +69,6 @@ func parseCLIArgs() (*cliArgs, error) {
 
 	if _, err := os.Stat(args.configPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("config file %s does not exist", args.configPath)
-
 	}
 
 	args.command = parseCommand(flag.Arg(0))

@@ -54,7 +54,11 @@ type DbParameter struct {
 	IsNullable      bool   `db:"is_nullable"`
 }
 
-const inMode, outMode = "IN", "OUT"
+const (
+	OutMode   = "OUT"
+	InMode    = "IN"
+	Procedure = "procedure"
+)
 
 func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
 	schemas := getSchemas(config)
@@ -155,10 +159,10 @@ func addParamsToRoutine(conn *DbConn, routine *DbRoutine) error {
 	for _, param := range *params {
 
 		switch param.Mode {
-		case inMode:
+		case InMode:
 			routine.InParameters = append(routine.InParameters, param)
 			break
-		case outMode:
+		case OutMode:
 			routine.OutParameters = append(routine.OutParameters, param)
 			break
 		}

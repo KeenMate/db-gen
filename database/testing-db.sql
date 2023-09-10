@@ -114,3 +114,20 @@ begin
     return query select 1, 'Hello from custom type', json_build_object('key', 'value');
 end;
 $$;
+
+create schema if not exists test;
+create function test.implicitly_ignored()
+    returns table
+            (
+                __number int,
+                __string text,
+                __json   json
+            )
+    language plpgsql
+as
+$$
+begin
+
+    return query select 1, 'Hello from custom type', json_build_object('key', 'value');
+end;
+$$;

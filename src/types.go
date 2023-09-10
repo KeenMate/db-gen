@@ -16,6 +16,7 @@ type Function struct {
 	ModelName          string
 	ProcessorName      string
 	Schema             string
+	DbFunctionName     string
 	HasReturn          bool
 	IsProcedure        bool
 	Parameters         []Property
@@ -35,6 +36,7 @@ const (
 
 type Config struct {
 	Command                    Command
+	PathBase                   string         //everything should be relative to config file
 	ConnectionString           string         `json:"ConnectionString"`
 	OutputFolder               string         `json:"OutputFolder,omitempty"`
 	OutputNamespace            string         `json:"OutputNamespace,omitempty"`
@@ -48,6 +50,7 @@ type Config struct {
 	Verbose                    bool           `json:"Verbose,omitempty"`
 	ClearOutputFolder          bool           `json:"ClearOutputFolder,omitempty"`
 	Generate                   []SchemaConfig `json:"Generate,omitempty"`
+	Mappings                   []Mapping      `json:"Mappings"`
 }
 
 type SchemaConfig struct {
@@ -55,4 +58,11 @@ type SchemaConfig struct {
 	AllFunctions     bool     `json:"AllFunctions,omitempty"`
 	Functions        []string `json:"Functions,omitempty"`
 	IgnoredFunctions []string `json:"IgnoredFunctions,omitempty"`
+}
+
+// TODO in config.go validate that we dont have multiple mappings to one DatabaseType
+type Mapping struct {
+	DatabaseTypes   []string `json:"DatabaseTypes"`
+	MappedType      string   `json:"MappedType"`
+	MappingFunction string   `json:"MappingFunction"`
 }

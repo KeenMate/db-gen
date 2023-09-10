@@ -99,6 +99,7 @@ func generateProcessors(routines []Function, config *Config) error {
 	if err != nil {
 		return fmt.Errorf("creating processor output folder: %s", err)
 	}
+
 	for _, routine := range routines {
 		if !routine.HasReturn {
 			continue
@@ -123,9 +124,8 @@ func parseTemplates(filepath string) (*template.Template, error) {
 	return template.ParseFiles(filepath)
 }
 
-func generateFile(data interface{}, template *template.Template, filepath string) error {
-
-	f, err := os.Create(filepath)
+func generateFile(data interface{}, template *template.Template, fp string) error {
+	f, err := os.Create(fp)
 	defer f.Close()
 	if err != nil {
 		return err

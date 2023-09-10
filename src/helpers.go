@@ -26,9 +26,10 @@ const colorReset = "\033[0m"
 const colorBlue = "\033[34m"
 const colorRed = "\033[31m"
 
-// Panic Wrapper of log.panicf that adds red color
-func Panic(template string, args ...any) {
-	log.Panicf(colorRed+template+colorReset, args...)
+// Exit Wrapper of log.panicf that adds red color
+func Exit(template string, args ...any) {
+	log.Printf(colorRed+template+colorReset, args...)
+	os.Exit(1)
 }
 
 func VerboseLog(message string) {
