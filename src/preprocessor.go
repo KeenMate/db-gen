@@ -15,7 +15,7 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 
 	// don't need to compute for every property
 	typeMappings := getTypeMappings(config)
-	VerboseLog(fmt.Sprintf("Got %d type mappigns", len(typeMappings)))
+	VerboseLog("Got %d type mappigns", len(typeMappings))
 
 	// Map routines
 	functions, err := mapFunctions(&routines, &typeMappings, config)
@@ -33,7 +33,7 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 
 func filterFunctions(functions *[]Function, config *Config) []Function {
 	schemaMap := getSchemaConfigMap(config)
-	VerboseLog(fmt.Sprintf("Got %d schema configs  ", len(schemaMap)))
+	VerboseLog("Got %d schema configs  ", len(schemaMap))
 	filteredFunctions := make([]Function, 0)
 
 	for _, function := range *functions {
@@ -41,22 +41,22 @@ func filterFunctions(functions *[]Function, config *Config) []Function {
 
 		// if config for given schema doest exits, don't generate for any function in given scheme
 		if !exists {
-			VerboseLog(fmt.Sprintf("No schema config for '%s'", function.Schema))
+			VerboseLog("No schema config for '%s'", function.Schema)
 			continue
 		}
 
 		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.DbFunctionName) {
 			// Case sensitive
 			if slices.Contains(schemaConfig.IgnoredFunctions, function.DbFunctionName) {
-				VerboseLog(fmt.Sprintf("Function '%s.%s' in ignored functions", function.Schema, function.DbFunctionName))
+				VerboseLog("Function '%s.%s' in ignored functions", function.Schema, function.DbFunctionName)
 				continue
 			}
 
 			filteredFunctions = append(filteredFunctions, function)
 		} else {
-			VerboseLog(fmt.Sprintf("Function '%s.%s' not generated because all function is false or isnt included in functions",
+			VerboseLog("Function '%s.%s' not generated because all function is false or isnt included in functions",
 				function.Schema,
-				function.DbFunctionName))
+				function.DbFunctionName)
 		}
 
 	}

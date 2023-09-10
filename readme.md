@@ -29,6 +29,7 @@ Enable verbose logging with `--verbose` flag (can)
     - If **True** doesn't generate models for functions without return type
 - **ClearOutputFolder (boolean)**:
     - If **True** deletes content of output folder before generating new files
+    - If this is false, program will show you which files have changed
 - **DbContextTemplate (string)**:
     - Path to the template file for generating the dbContext file.
 - **ModelTemplate (string)**:

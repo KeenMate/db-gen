@@ -5,7 +5,7 @@
   "GenerateModels": true,
   "GenerateProcessors": true,
   "SkipModelGenForVoidReturns": false,
-  "ClearOutputFolder": true,
+  "ClearOutputFolder": false,
   "DbContextTemplate": "./templates/dbcontext.gotmpl",
   "ModelTemplate": "./templates/model.gotmpl",
   "ProcessorTemplate": "./templates/processor.gotmpl",

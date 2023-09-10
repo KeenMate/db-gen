@@ -32,9 +32,14 @@ func Exit(template string, args ...any) {
 	os.Exit(1)
 }
 
-func VerboseLog(message string) {
+func VerboseLog(message string, args ...any) {
 	if CurrentConfig.Verbose {
-		log.Print(colorBlue + message + colorReset)
+		if len(args) == 0 {
+			log.Print(colorBlue + message + colorReset)
+
+		} else {
+			log.Printf(colorBlue+message+colorReset, args...)
+		}
 	}
 }
 
