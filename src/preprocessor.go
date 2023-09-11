@@ -78,6 +78,7 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 	mappedFunctions := make([]Function, len(*routines))
 
 	for i, routine := range *routines {
+		VerboseLog("Mapping %s", routine.RoutineName)
 
 		returnProperties, err := getReturnProperties(routine, typeMappings)
 		if err != nil {
@@ -128,13 +129,16 @@ func getReturnProperties(routine DbRoutine, typeMappings *map[string]mapping) ([
 
 	// If value is simple data type
 	if !slices.Contains(structuredTypes, routine.DataType) {
-		outParameters = append(outParameters, DbParameter{
+
+		// TODO investigate this more
+		// if function has return type, it means it return just one value
+		outParameters = []DbParameter{{
 			OrdinalPosition: 0,
 			Name:            routine.RoutineName,
 			Mode:            OutMode,
 			UDTName:         routine.DataType,
 			IsNullable:      false,
-		})
+		}}
 
 	}
 
@@ -156,6 +160,7 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 
 	// First possition should be 0
 	positionOffset := attributes[0].OrdinalPosition
+	VerboseLog("Possition offset is %d", positionOffset)
 
 	for i, attribute := range attributes {
 		propertyName := getPropertyName(attribute.Name)

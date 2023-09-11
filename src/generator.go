@@ -77,7 +77,7 @@ func generateDbContext(routines []Function, hashMap *map[string]string, config *
 	}
 
 	if changed {
-		VerboseLog("Updated: Dbcontext")
+		log.Printf("Updated: Dbcontext")
 	} else {
 		VerboseLog("Same: Dbcontext")
 	}
@@ -109,7 +109,7 @@ func generateModels(routines []Function, hashMap *map[string]string, config *Con
 		}
 
 		if changed {
-			VerboseLog("Updated: %s", relPath)
+			log.Printf("Updated: %s", relPath)
 		} else {
 			VerboseLog("Same: %s", relPath)
 		}
@@ -142,7 +142,7 @@ func generateProcessors(routines []Function, hashMap *map[string]string, config 
 		}
 
 		if changed {
-			VerboseLog("Updated: %s", relPath)
+			log.Printf("Updated: %s", relPath)
 		} else {
 			VerboseLog("Same: %s", relPath)
 		}
@@ -226,6 +226,11 @@ func fileMd5Sum(filePath string) (string, error) {
 
 func generateFileHashes(outputFolder string) (*map[string]string, error) {
 	hashMap := make(map[string]string)
+
+	// If folder doesnt exist
+	if _, err := os.Stat(outputFolder); os.IsNotExist(err) {
+		return &hashMap, nil
+	}
 
 	err := filepath.Walk(outputFolder,
 		func(path string, info os.FileInfo, err error) error {
