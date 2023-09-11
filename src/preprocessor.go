@@ -160,7 +160,7 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 
 	// First possition should be 0
 	positionOffset := attributes[0].OrdinalPosition
-	VerboseLog("Possition offset is %d", positionOffset)
+	//VerboseLog("Possition offset is %d", positionOffset)
 
 	for i, attribute := range attributes {
 		propertyName := getPropertyName(attribute.Name)
