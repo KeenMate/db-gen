@@ -13,50 +13,50 @@ import (
 func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
 	// In future this should be more modular
 
+	filteredFunctions := filterFunctions(&routines, config)
+
 	// don't need to compute for every property
 	typeMappings := getTypeMappings(config)
 	VerboseLog("Got %d type mappigns", len(typeMappings))
 
 	// Map routines
-	functions, err := mapFunctions(&routines, &typeMappings, config)
+	functions, err := mapFunctions(&filteredFunctions, &typeMappings, config)
 
 	if err != nil {
 		log.Println("Error while mapping functions")
 		return nil, err
 	}
 
-	functions = filterFunctions(&functions, config)
-
 	return functions, nil
 
 }
 
-func filterFunctions(functions *[]Function, config *Config) []Function {
+func filterFunctions(functions *[]DbRoutine, config *Config) []DbRoutine {
 	schemaMap := getSchemaConfigMap(config)
 	VerboseLog("Got %d schema configs  ", len(schemaMap))
-	filteredFunctions := make([]Function, 0)
+	filteredFunctions := make([]DbRoutine, 0)
 
 	for _, function := range *functions {
-		schemaConfig, exists := schemaMap[function.Schema]
+		schemaConfig, exists := schemaMap[function.RoutineSchema]
 
 		// if config for given schema doest exits, don't generate for any function in given scheme
 		if !exists {
-			VerboseLog("No schema config for '%s'", function.Schema)
+			VerboseLog("No schema config for '%s'", function.RoutineSchema)
 			continue
 		}
 
-		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.DbFunctionName) {
+		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.RoutineName) {
 			// Case sensitive
-			if slices.Contains(schemaConfig.IgnoredFunctions, function.DbFunctionName) {
-				VerboseLog("Function '%s.%s' in ignored functions", function.Schema, function.DbFunctionName)
+			if slices.Contains(schemaConfig.IgnoredFunctions, function.RoutineName) {
+				VerboseLog("Function '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
 				continue
 			}
 
 			filteredFunctions = append(filteredFunctions, function)
 		} else {
 			VerboseLog("Function '%s.%s' not generated because all function is false or isnt included in functions",
-				function.Schema,
-				function.DbFunctionName)
+				function.RoutineSchema,
+				function.RoutineName)
 		}
 
 	}
