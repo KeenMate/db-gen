@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: db-gen
+            artifact_name: db-gen.exe
             asset_name: db-gen-linux-amd64
           - os: windows-latest
             artifact_name: db-gen.exe
