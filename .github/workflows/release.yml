@@ -10,15 +10,16 @@ permissions:
 jobs:
   publish:
     name: Publish for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          #          - os: ubuntu-latest
-          #            artifact_name: db-gen
-          #            asset_name: db-gen-linux-amd64
-          - os: windows-latest
-            binary_name: win-db-gen.exe
+          - goarch: amd64
+            goos: linux
+            binary: db-gen-win
+          - goarch: amd64
+            goos: windows
+            binary: db-gen-win.exe
 
     steps:
       - uses: actions/checkout@v3
@@ -27,12 +28,12 @@ jobs:
         with:
           go-version: '1.21'
       - name: Build
-        run: go build -x -v -o ${{ matrix.binary_name }} .
+        run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o ${{ matrix.binary }} .
       - name: LS
         run: ls
       - name: Upload to release
         uses: JasonEtco/upload-to-release@master
         with:
-          args: ${{ matrix.binary_name }}
+          args: ${{ matrix.binary }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
