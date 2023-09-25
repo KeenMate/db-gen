@@ -1,11 +1,13 @@
+name: Create release
+
 on:
-  release:
-    types: [ created ]
+  push:
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: write
   packages: write
-
 
 jobs:
   publish:
@@ -16,7 +18,7 @@ jobs:
         include:
           - goarch: amd64
             goos: linux
-            binary: db-gen-win
+            binary: db-gen-linux
           - goarch: amd64
             goos: windows
             binary: db-gen-win.exe
@@ -31,9 +33,9 @@ jobs:
         run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o ${{ matrix.binary }} .
       - name: LS
         run: ls
-      - name: Upload to release
-        uses: JasonEtco/upload-to-release@master
+      - name: Create release
+        uses: softprops/action-gh-release@v1
         with:
-          args: ./${{ matrix.binary }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{ matrix.binary }}
+            
