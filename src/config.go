@@ -26,6 +26,8 @@ func GetConfig() (*Config, error) {
 	}
 	config, err := readJsonConfigFile(args.configPath)
 
+	// TODO Allow some config values (connection_string) from separate file
+
 	// Cli args should override config loaded from file
 	config.Command = args.command
 	config.Verbose = args.verbose
