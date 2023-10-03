@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 func PrettyPrintSlice[T interface{}](values []T) {
