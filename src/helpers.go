@@ -85,7 +85,4 @@ func Hello() {
 	figure.NewColorFigure("db-gen", "", "green", true).Print()
 	fmt.Println("Ultimate db call code generator by " + bold + "KEEN|MATE" + colorReset)
 	fmt.Println()
-
-	time.Sleep(2 * time.Second)
-
 }
