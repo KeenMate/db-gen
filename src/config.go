@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -32,6 +33,10 @@ func GetConfig() (*Config, error) {
 	config.Command = args.command
 	config.Verbose = args.verbose
 	config.PathBase = path.Dir(args.configPath)
+
+	config.ProcessorTemplate = filepath.Join(config.PathBase, config.ProcessorTemplate)
+	config.DbContextTemplate = filepath.Join(config.PathBase, config.DbContextTemplate)
+	config.ModelTemplate = filepath.Join(config.PathBase, config.ModelTemplate)
 
 	if err != nil {
 		return nil, fmt.Errorf("getting configuration from file: %w", err)
