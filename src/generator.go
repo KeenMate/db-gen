@@ -15,7 +15,7 @@ import (
 const processorsFolder = "processors"
 const modelsFolder = "models"
 
-func Generate(routines []Function, config *Config) error {
+func Generate(routines []Routine, config *Config) error {
 	fileHashes, err := generateFileHashes(config.OutputFolder)
 	if err != nil {
 		return fmt.Errorf("generating file hashes: %s", err)
@@ -59,7 +59,7 @@ func Generate(routines []Function, config *Config) error {
 	return nil
 }
 
-func generateDbContext(routines []Function, hashMap *map[string]string, config *Config) error {
+func generateDbContext(routines []Routine, hashMap *map[string]string, config *Config) error {
 	dbcontextTemplate, err := parseTemplates(config.DbContextTemplate)
 	if err != nil {
 		return fmt.Errorf("loading dbContext template: %s", err)
@@ -86,7 +86,7 @@ func generateDbContext(routines []Function, hashMap *map[string]string, config *
 
 }
 
-func generateModels(routines []Function, hashMap *map[string]string, config *Config) error {
+func generateModels(routines []Routine, hashMap *map[string]string, config *Config) error {
 
 	moduleTemplate, err := parseTemplates(config.ModelTemplate)
 	if err != nil {
@@ -118,7 +118,7 @@ func generateModels(routines []Function, hashMap *map[string]string, config *Con
 	return nil
 }
 
-func generateProcessors(routines []Function, hashMap *map[string]string, config *Config) error {
+func generateProcessors(routines []Routine, hashMap *map[string]string, config *Config) error {
 	processorTemplate, err := parseTemplates(config.ProcessorTemplate)
 	if err != nil {
 		return fmt.Errorf("loading processor template: %s", err)
@@ -151,13 +151,22 @@ func generateProcessors(routines []Function, hashMap *map[string]string, config 
 	return nil
 }
 
-func parseTemplates(filepath string) (*template.Template, error) {
-	if !fileExists(filepath) {
-		return nil, fmt.Errorf("config file %s does not exist", filepath)
+func parseTemplates(templatePath string) (*template.Template, error) {
+	if !fileExists(templatePath) {
+		return nil, fmt.Errorf("template file %s does not exist", templatePath)
 
 	}
 
-	return template.ParseFiles(filepath)
+	name := filepath.Base(templatePath)
+
+	tmpl, err := template.New(name).
+		Funcs(getTemplateFunctions()).
+		ParseFiles(templatePath)
+
+	if err != nil {
+		return nil, err
+	}
+	return tmpl, nil
 }
 
 func generateFile(data interface{}, template *template.Template, fp string, hashMap *map[string]string) (bool, error) {

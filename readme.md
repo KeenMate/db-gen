@@ -59,6 +59,17 @@ Enable verbose logging with `--verbose` flag (can)
 processor and model templates have `Function` struct availible as `.` argument
 dbcontext has `DbContextData` struct as `.` argument
 
+### Case
+
+By default, all field use camel case. You should use `snake`/`lCamel`/`uCamel` to change case.
+for example:
+
+```gotemplate
+{{snake $func.FunctionName}}
+```
+
+Data available in template
+
 ```go
 package main
 

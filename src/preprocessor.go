@@ -10,7 +10,7 @@ import (
 
 // Transforms data returned by database to structures that are used in generator
 
-func Preprocess(routines []DbRoutine, config *Config) ([]Function, error) {
+func Preprocess(routines []DbRoutine, config *Config) ([]Routine, error) {
 	// In future this should be more modular
 
 	filteredFunctions := filterFunctions(&routines, config)
@@ -48,13 +48,13 @@ func filterFunctions(functions *[]DbRoutine, config *Config) []DbRoutine {
 		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.RoutineName) {
 			// Case sensitive
 			if slices.Contains(schemaConfig.IgnoredFunctions, function.RoutineName) {
-				VerboseLog("Function '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
+				VerboseLog("Routine '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
 				continue
 			}
 
 			filteredFunctions = append(filteredFunctions, function)
 		} else {
-			VerboseLog("Function '%s.%s' not generated because all function is false or isnt included in functions",
+			VerboseLog("Routine '%s.%s' not generated because all function is false or isnt included in functions",
 				function.RoutineSchema,
 				function.RoutineName)
 		}
@@ -74,8 +74,8 @@ func getSchemaConfigMap(config *Config) map[string]SchemaConfig {
 	return schemaMap
 }
 
-func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, config *Config) ([]Function, error) {
-	mappedFunctions := make([]Function, len(*routines))
+func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, config *Config) ([]Routine, error) {
+	mappedFunctions := make([]Routine, len(*routines))
 
 	for i, routine := range *routines {
 		VerboseLog("Mapping %s", routine.RoutineName)
@@ -95,7 +95,7 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 		modelName := getModelName(routine.RoutineName)
 		processorName := getProcessorName(routine.RoutineName)
 
-		function := &Function{
+		function := &Routine{
 			FunctionName:       functionName,
 			DbFullFunctionName: dbFullFunctionName,
 			ModelName:          modelName,
@@ -184,6 +184,7 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 	return properties, nil
 }
 
+// If you want to use different case, use template function in templates
 func getFunctionName(dbFunctionName string) string {
 	return strcase.UpperCamelCase(dbFunctionName)
 }
