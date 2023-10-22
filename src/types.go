@@ -46,6 +46,7 @@ type Config struct {
 	ModelTemplate              string         `json:"ModelTemplate,omitempty"`
 	ProcessorTemplate          string         `json:"ProcessorTemplate,omitempty"`
 	GeneratedFileExtension     string         `json:"GeneratedFileExtension,omitempty"`
+	GeneratedFileCase          string         `json:"GeneratedFileCase,omitempty"`
 	Verbose                    bool           `json:"Verbose,omitempty"`
 	ClearOutputFolder          bool           `json:"ClearOutputFolder,omitempty"`
 	Generate                   []SchemaConfig `json:"Generate,omitempty"`

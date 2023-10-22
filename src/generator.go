@@ -68,7 +68,8 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 		Functions: routines,
 	}
 
-	fp := filepath.Join(config.OutputFolder, "DbContext"+config.GeneratedFileExtension)
+	filename := changeCase("DbContext"+config.GeneratedFileExtension, config.GeneratedFileCase)
+	fp := filepath.Join(config.OutputFolder, filename)
 
 	changed, err := generateFile(data, dbcontextTemplate, fp, hashMap)
 	if err != nil {
@@ -99,7 +100,8 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 			continue
 		}
 
-		relPath := filepath.Join(modelsFolder, routine.ModelName+config.GeneratedFileExtension)
+		filename := changeCase(routine.ModelName+config.GeneratedFileExtension, config.GeneratedFileCase)
+		relPath := filepath.Join(modelsFolder, filename)
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		changed, err := generateFile(routine, moduleTemplate, filePath, hashMap)
@@ -132,7 +134,9 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		if !routine.HasReturn {
 			continue
 		}
-		relPath := filepath.Join(processorsFolder, routine.ProcessorName+config.GeneratedFileExtension)
+
+		filename := changeCase(routine.ProcessorName+config.GeneratedFileExtension, config.GeneratedFileCase)
+		relPath := filepath.Join(processorsFolder, filename)
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		changed, err := generateFile(routine, processorTemplate, filePath, hashMap)
