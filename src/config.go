@@ -26,21 +26,23 @@ func GetConfig() (*Config, error) {
 	}
 	config, err := readJsonConfigFile(args.configPath)
 
+	if err != nil {
+		return nil, fmt.Errorf("getting configuration from file: %w", err)
+	}
 	// TODO Allow some config values (connection_string) from separate file
 
 	// Cli args should override config loaded from file
 	config.Command = args.command
 	config.Verbose = args.verbose
 	config.PathBase = filepath.Dir(args.configPath)
-
 	//All paths are relative to config file
-	config.ProcessorTemplate = filepath.Join(config.PathBase, config.ProcessorTemplate)
-	config.DbContextTemplate = filepath.Join(config.PathBase, config.DbContextTemplate)
-	config.ModelTemplate = filepath.Join(config.PathBase, config.ModelTemplate)
-	config.OutputFolder = filepath.Join(config.PathBase, config.OutputFolder)
+	config.ProcessorTemplate = joinIfRelative(config.PathBase, config.ProcessorTemplate)
+	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
+	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
+	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 
-	if err != nil {
-		return nil, fmt.Errorf("getting configuration from file: %w", err)
+	if !contains(ValidCase, config.GeneratedFileCase) {
+		return nil, fmt.Errorf("%s is not valid case", config.GeneratedFileCase)
 	}
 
 	CurrentConfig = config
@@ -95,4 +97,12 @@ func parseCommand(command string) Command {
 	default:
 		return Gen
 	}
+}
+
+func joinIfRelative(basePath string, joiningPath string) string {
+	if filepath.IsAbs(joiningPath) {
+		return joiningPath
+	}
+
+	return filepath.Join(basePath, joiningPath)
 }
