@@ -81,7 +81,7 @@ type Property struct {
 	MapperFunction string
 }
 
-type Function struct {
+type Routine struct {
 	FunctionName       string
 	DbFullFunctionName string
 	ModelName          string
@@ -95,7 +95,7 @@ type Function struct {
 }
 
 type DbContextData struct {
-	Functions []Function
+	Functions []Routine
 }
 
 ```

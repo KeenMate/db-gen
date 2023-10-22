@@ -36,7 +36,7 @@ const (
 
 type Config struct {
 	Command                    Command
-	PathBase                   string         //everything should be relative to config file
+	PathBase                   string         //for now just using config folder
 	ConnectionString           string         `json:"ConnectionString"`
 	OutputFolder               string         `json:"OutputFolder,omitempty"`
 	GenerateModels             bool           `json:"GenerateModels,omitempty"`
