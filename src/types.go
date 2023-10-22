@@ -8,6 +8,7 @@ type Property struct {
 	PropertyType   string
 	Position       int
 	MapperFunction string
+	Nullable       bool // This can be unreliable
 }
 
 type Routine struct {

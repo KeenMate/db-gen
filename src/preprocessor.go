@@ -90,10 +90,10 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 			return nil, fmt.Errorf("mapping function %s: %s", routine.RoutineName, err)
 		}
 
-		functionName := getFunctionName(routine.RoutineName)
+		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema)
 		dbFullFunctionName := routine.RoutineSchema + "." + routine.RoutineName
-		modelName := getModelName(routine.RoutineName)
-		processorName := getProcessorName(routine.RoutineName)
+		modelName := getModelName(functionName)
+		processorName := getProcessorName(functionName)
 
 		function := &Routine{
 			FunctionName:       functionName,
@@ -176,6 +176,7 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 			PropertyType:   typeMapping.mappingType,
 			Position:       attribute.OrdinalPosition - positionOffset,
 			MapperFunction: typeMapping.mappingFunction,
+			Nullable:       attribute.IsNullable,
 		}
 
 		properties[i] = *property
@@ -184,19 +185,26 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 	return properties, nil
 }
 
+const hiddenSchema = "public"
+
 // If you want to use different case, use template function in templates
-func getFunctionName(dbFunctionName string) string {
-	return strcase.UpperCamelCase(dbFunctionName)
+func getFunctionName(dbFunctionName string, schema string) string {
+	schemaPrefix := ""
+	// don't add public_ to function names
+	if schema != hiddenSchema {
+		schemaPrefix = strcase.UpperCamelCase(schema)
+	}
+	return schemaPrefix + strcase.UpperCamelCase(dbFunctionName)
 }
 
 func getPropertyName(dbColumnName string) string {
 	return strcase.UpperCamelCase(dbColumnName)
 }
-func getModelName(dbColumnName string) string {
-	return strcase.UpperCamelCase(dbColumnName) + "Model"
+func getModelName(functionName string) string {
+	return strcase.UpperCamelCase(functionName) + "Model"
 }
-func getProcessorName(dbColumnName string) string {
-	return strcase.UpperCamelCase(dbColumnName) + "Processor"
+func getProcessorName(functionName string) string {
+	return strcase.UpperCamelCase(functionName) + "Processor"
 }
 
 type mapping struct {
@@ -233,7 +241,7 @@ func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, erro
 
 		}
 
-		VerboseLog("Using falllback value %+v for type %s", fallbackVal, dbDataType)
+		VerboseLog("Using fallback value %+v for type %s", fallbackVal, dbDataType)
 
 		return &fallbackVal, nil
 	}

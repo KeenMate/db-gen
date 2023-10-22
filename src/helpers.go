@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/stoewer/go-strcase"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func PrettyPrintSlice[T interface{}](values []T) {
@@ -85,4 +87,29 @@ func Hello() {
 	figure.NewColorFigure("db-gen", "", "green", true).Print()
 	fmt.Println("Ultimate db call code generator by " + bold + "KEEN|MATE" + colorReset)
 	fmt.Println()
+}
+
+var ValidCase = []string{"snake", "lcamel", "ucamel"}
+
+func changeCase(str string, desiredCase string) string {
+	switch strings.ToLower(desiredCase) {
+	case "ucamel":
+		return strcase.UpperCamelCase(str)
+	case "lcamel":
+		return strcase.LowerCamelCase(str)
+	case "snake":
+		return strcase.SnakeCase(str)
+	default:
+
+		return str
+	}
+}
+
+func contains[T comparable](s []T, e T) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
