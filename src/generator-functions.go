@@ -7,6 +7,9 @@ import (
 
 func getTemplateFunctions() template.FuncMap {
 	return template.FuncMap{
+		"inc": func(n int) int {
+			return n + 1
+		},
 		"uCamel": func(s string) string {
 			return strcase.UpperCamelCase(s)
 		},
