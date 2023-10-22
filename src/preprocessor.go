@@ -226,7 +226,16 @@ func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, erro
 	val, isFound := (*mappings)[dbDataType]
 
 	if !isFound {
-		return nil, fmt.Errorf("mapping for dbType '%s' not found", dbDataType)
+		fallbackVal, fallbackExists := (*mappings)["*"]
+
+		if !fallbackExists {
+			return nil, fmt.Errorf("mapping for dbType '%s' not found and fallback mapping * is not set ", dbDataType)
+
+		}
+
+		VerboseLog("Using falllback value %+v for type %s", fallbackVal, dbDataType)
+
+		return &fallbackVal, nil
 	}
 
 	return &val, nil
