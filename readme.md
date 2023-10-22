@@ -19,8 +19,6 @@ Enable verbose logging with `--verbose` flag (can)
 - **OutputFolder (string)**:
     - Specifies the folder where generated code files will be saved.
     - It can be relative to current working directory
-- **OutputNamespace (string)**:
-    - Sets the namespace for the generated code.
 - **GenerateModels (boolean)**:
     - If **True** Generates models
 - **GenerateProcessors (boolean)**:

@@ -39,7 +39,6 @@ type Config struct {
 	PathBase                   string         //everything should be relative to config file
 	ConnectionString           string         `json:"ConnectionString"`
 	OutputFolder               string         `json:"OutputFolder,omitempty"`
-	OutputNamespace            string         `json:"OutputNamespace,omitempty"`
 	GenerateModels             bool           `json:"GenerateModels,omitempty"`
 	GenerateProcessors         bool           `json:"GenerateProcessors,omitempty"`
 	SkipModelGenForVoidReturns bool           `json:"SkipModelGenForVoidReturns,omitempty"`

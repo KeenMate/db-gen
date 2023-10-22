@@ -32,7 +32,8 @@ func Exit(template string, args ...any) {
 }
 
 func VerboseLog(message string, args ...any) {
-	if CurrentConfig.Verbose {
+	// to be safe, use verbose log if current config isn't set
+	if CurrentConfig == nil || CurrentConfig.Verbose {
 		if len(args) == 0 {
 			log.Print(colorBlue + message + colorReset)
 

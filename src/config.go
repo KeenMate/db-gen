@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -32,17 +31,21 @@ func GetConfig() (*Config, error) {
 	// Cli args should override config loaded from file
 	config.Command = args.command
 	config.Verbose = args.verbose
-	config.PathBase = path.Dir(args.configPath)
+	config.PathBase = filepath.Dir(args.configPath)
 
+	//All paths are relative to config file
 	config.ProcessorTemplate = filepath.Join(config.PathBase, config.ProcessorTemplate)
 	config.DbContextTemplate = filepath.Join(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = filepath.Join(config.PathBase, config.ModelTemplate)
+	config.OutputFolder = filepath.Join(config.PathBase, config.OutputFolder)
 
 	if err != nil {
 		return nil, fmt.Errorf("getting configuration from file: %w", err)
 	}
 
 	CurrentConfig = config
+
+	VerboseLog("%+v", config)
 	return config, nil
 }
 
@@ -67,7 +70,7 @@ func readJsonConfigFile(path string) (*Config, error) {
 func parseCLIArgs() (*cliArgs, error) {
 
 	verboseFlag := flag.Bool("verbose", false, "If true it will print more stuff")
-	configPathFlag := flag.String("config", defaultConfigPath, "If true it will print more stuff")
+	configPathFlag := flag.String("config", defaultConfigPath, "Path to config file, all paths are relative it")
 	flag.Parse()
 
 	args := new(cliArgs)

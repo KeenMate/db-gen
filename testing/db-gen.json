@@ -1,7 +1,6 @@
 {
   "ConnectionString": "postgresql://postgres:Password3000!!@localhost:5432/db_gen",
   "OutputFolder": "C:\\Testbench\\CSharp\\AspNetCoreDbGen\\AspNetCoreDbGen\\output",
-  "OutputNamespace": "Database.Generated",
   "GenerateModels": true,
   "GenerateProcessors": true,
   "SkipModelGenForVoidReturns": false,

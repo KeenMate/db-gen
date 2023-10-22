@@ -3,7 +3,7 @@ package dbGen
 import (
 	"encoding/json"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -21,7 +21,7 @@ func SaveToTempFile(functions interface{}, fileNamePrefix string) (err error) {
 		return
 	}
 
-	filename := path.Join(tempFolder, time.Now().Format("2006-01-02-15-04-05")+"-"+fileNamePrefix+".json")
+	filename := filepath.Join(tempFolder, time.Now().Format("2006-01-02-15-04-05")+"-"+fileNamePrefix+".json")
 	err = os.WriteFile(filename, saveJson, 777)
 	if err != nil {
 		return

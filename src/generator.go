@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"text/template"
 )
@@ -69,7 +68,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 		Functions: routines,
 	}
 
-	fp := path.Join(config.OutputFolder, "DbContext"+config.GeneratedFileExtension)
+	fp := filepath.Join(config.OutputFolder, "DbContext"+config.GeneratedFileExtension)
 
 	changed, err := generateFile(data, dbcontextTemplate, fp, hashMap)
 	if err != nil {
@@ -93,15 +92,15 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		return fmt.Errorf("loading module template: %s", err)
 	}
 
-	err = os.MkdirAll(path.Join(config.OutputFolder, modelsFolder), 777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, modelsFolder), 777)
 
 	for _, routine := range routines {
 		if !routine.HasReturn {
 			continue
 		}
 
-		relPath := path.Join(modelsFolder, routine.ModelName+config.GeneratedFileExtension)
-		filePath := path.Join(config.OutputFolder, relPath)
+		relPath := filepath.Join(modelsFolder, routine.ModelName+config.GeneratedFileExtension)
+		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		changed, err := generateFile(routine, moduleTemplate, filePath, hashMap)
 		if err != nil {
@@ -124,7 +123,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		return fmt.Errorf("loading processor template: %s", err)
 	}
 
-	err = os.MkdirAll(path.Join(config.OutputFolder, processorsFolder), 777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, processorsFolder), 777)
 	if err != nil {
 		return fmt.Errorf("creating processor output folder: %s", err)
 	}
@@ -133,8 +132,8 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		if !routine.HasReturn {
 			continue
 		}
-		relPath := path.Join(processorsFolder, routine.ProcessorName+config.GeneratedFileExtension)
-		filePath := path.Join(config.OutputFolder, relPath)
+		relPath := filepath.Join(processorsFolder, routine.ProcessorName+config.GeneratedFileExtension)
+		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		changed, err := generateFile(routine, processorTemplate, filePath, hashMap)
 		if err != nil {
