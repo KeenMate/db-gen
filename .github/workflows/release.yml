@@ -29,6 +29,10 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
+      - name: add version
+        run: echo "GITHUB_ACTIONS ${{  github.ref_name }} unknown" > version.txt
+      - name: check version
+        run: cat version.txt
       - name: Build
         run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o ${{ matrix.binary }} .
       - name: LS

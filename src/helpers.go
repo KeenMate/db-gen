@@ -46,7 +46,7 @@ func VerboseLog(message string, args ...any) {
 }
 
 func VerboseLogStruct(val interface{}) {
-	if CurrentConfig.Verbose {
+	if CurrentConfig == nil || CurrentConfig.Verbose {
 		formattedStr, _ := json.MarshalIndent(val, "", "  ")
 		log.Printf(colorBlue+"%s"+colorReset, formattedStr)
 	}
@@ -85,7 +85,7 @@ const bold = "\033[5;1m"
 // Hello prints welcome message and waits fo a bit
 func Hello() {
 	figure.NewColorFigure("db-gen", "", "green", true).Print()
-	fmt.Println("Ultimate db call code generator by " + bold + "KEEN|MATE" + colorReset)
+	fmt.Println("Ultimate db call code generator by " + bold + "KEEN|MATE" + colorReset + " (" + GetVersion() + ") ")
 	fmt.Println()
 }
 
