@@ -8,8 +8,13 @@ Successor to ecto-gen
 
 ## Configuration
 
-All configuration is stored in file specified with `--config` flag or in `./db-gen.json`
-Enable verbose logging with `--verbose` flag (can)
+All configuration is stored in file specified with `--config` flag.
+If `--config` flag is not set it will try following default locations
+- `./db-gen.json`
+- `./db-gen/db-gen.json`
+- `./db-gen/config.json`
+
+Enable verbose logging with `--verbose` flag
 
 ### Configuration overview
 

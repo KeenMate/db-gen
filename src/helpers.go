@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+var VerboseOverride = false
+
 func PrettyPrintSlice[T interface{}](values []T) {
 	for i, val := range values {
 		formattedStr, _ := json.MarshalIndent(val, "", "  ")
@@ -35,7 +37,7 @@ func Exit(template string, args ...any) {
 
 func VerboseLog(message string, args ...any) {
 	// to be safe, use verbose log if current config isn't set
-	if CurrentConfig == nil || CurrentConfig.Verbose {
+	if VerboseOverride == true || (CurrentConfig != nil && CurrentConfig.Verbose) {
 		if len(args) == 0 {
 			log.Print(colorBlue + message + colorReset)
 

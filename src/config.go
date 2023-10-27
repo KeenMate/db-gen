@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-const defaultConfigPath = "./db-gen.json"
+var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
 type cliArgs struct {
 	command    Command
@@ -69,6 +70,16 @@ func GetCommand() Command {
 func GetConfig() (*Config, error) {
 	args := parseCLIArgs()
 
+	if args.configPath == "" {
+		VerboseLog("No config specified, trying default locations")
+		configPath, found := tryGetConfigInDefaultLocations()
+		if !found {
+			return nil, errors.New("no config file specified in args and no file found at default locations")
+		}
+
+		args.configPath = configPath
+	}
+
 	config, err := readJsonConfigFile(args.configPath)
 
 	if err != nil {
@@ -124,13 +135,17 @@ func parseCLIArgs() *cliArgs {
 	}
 
 	verboseFlag := flag.Bool("verbose", false, "If true it will print more stuff")
-	configPathFlag := flag.String("config", defaultConfigPath, "Path to config file, all paths are relative it")
+	configPathFlag := flag.String("config", "", "Path to config file, all paths are relative it")
 	flag.Parse()
 
 	args = new(cliArgs)
 	args.command = parseCommand(flag.Arg(0))
 	args.verbose = *verboseFlag
 	args.configPath = *configPathFlag
+
+	//Necessary to allow verbose logging before configuration is parsed
+	VerboseOverride = args.verbose
+
 	return args
 }
 
@@ -153,4 +168,16 @@ func joinIfRelative(basePath string, joiningPath string) string {
 	}
 
 	return filepath.Join(basePath, joiningPath)
+}
+
+func tryGetConfigInDefaultLocations() (string, bool) {
+	for _, defaultConfigPath := range defaultConfigPaths {
+		if fileExists(defaultConfigPath) {
+			VerboseLog("Config found at %s", defaultConfigPath)
+			return defaultConfigPath, true
+		}
+
+	}
+
+	return "", false
 }
