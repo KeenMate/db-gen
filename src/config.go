@@ -20,21 +20,21 @@ type cliArgs struct {
 }
 
 type Config struct {
-	PathBase                   string         //for now just using config folder
-	ConnectionString           string         `json:"ConnectionString"`
-	OutputFolder               string         `json:"OutputFolder,omitempty"`
-	GenerateModels             bool           `json:"GenerateModels,omitempty"`
-	GenerateProcessors         bool           `json:"GenerateProcessors,omitempty"`
-	SkipModelGenForVoidReturns bool           `json:"SkipModelGenForVoidReturns,omitempty"`
-	DbContextTemplate          string         `json:"DbContextTemplate,omitempty"`
-	ModelTemplate              string         `json:"ModelTemplate,omitempty"`
-	ProcessorTemplate          string         `json:"ProcessorTemplate,omitempty"`
-	GeneratedFileExtension     string         `json:"GeneratedFileExtension,omitempty"`
-	GeneratedFileCase          string         `json:"GeneratedFileCase,omitempty"`
-	Verbose                    bool           `json:"Verbose,omitempty"`
-	ClearOutputFolder          bool           `json:"ClearOutputFolder,omitempty"`
-	Generate                   []SchemaConfig `json:"Generate,omitempty"`
-	Mappings                   []Mapping      `json:"Mappings"`
+	PathBase                         string         //for now just using config folder
+	ConnectionString                 string         `json:"ConnectionString"`
+	OutputFolder                     string         `json:"OutputFolder,omitempty"`
+	GenerateModels                   bool           `json:"GenerateModels,omitempty"`
+	GenerateProcessors               bool           `json:"GenerateProcessors,omitempty"`
+	GenerateProcessorsForVoidReturns bool           `json:"GenerateProcessorsForVoidReturns,omitempty"`
+	DbContextTemplate                string         `json:"DbContextTemplate,omitempty"`
+	ModelTemplate                    string         `json:"ModelTemplate,omitempty"`
+	ProcessorTemplate                string         `json:"ProcessorTemplate,omitempty"`
+	GeneratedFileExtension           string         `json:"GeneratedFileExtension,omitempty"`
+	GeneratedFileCase                string         `json:"GeneratedFileCase,omitempty"`
+	Verbose                          bool           `json:"Verbose,omitempty"`
+	ClearOutputFolder                bool           `json:"ClearOutputFolder,omitempty"`
+	Generate                         []SchemaConfig `json:"Generate,omitempty"`
+	Mappings                         []Mapping      `json:"Mappings"`
 }
 
 type SchemaConfig struct {

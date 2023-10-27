@@ -28,8 +28,8 @@ Enable verbose logging with `--verbose` flag
     - If **True** Generates models
 - **GenerateProcessors (boolean)**:
     - If **True** Generates processors
-- **SkipModelGenForVoidReturns (boolean)**:
-    - If **True** doesn't generate models for functions without return type
+- **GenerateProcessorsForVoidReturns (boolean)**:
+    - If **True** it generates processor even for functions that doesn't return anything
 - **ClearOutputFolder (boolean)**:
     - If **True** deletes content of output folder before generating new files
 - **DbContextTemplate (string)**:

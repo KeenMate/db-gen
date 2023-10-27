@@ -131,7 +131,9 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 	}
 
 	for _, routine := range routines {
-		if !routine.HasReturn {
+		// if GenerateProcessorsForVoidReturns it processors for all void returns
+		if !config.GenerateProcessorsForVoidReturns && !routine.HasReturn {
+			VerboseLog("dont generate processor for %s", routine.DbFullFunctionName)
 			continue
 		}
 

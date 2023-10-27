@@ -3,7 +3,7 @@
   "OutputFolder": "C:\\Testbench\\CSharp\\AspNetCoreDbGen\\AspNetCoreDbGen\\output",
   "GenerateModels": true,
   "GenerateProcessors": true,
-  "SkipModelGenForVoidReturns": false,
+  "GenerateProcessorsForVoidReturns": false,
   "ClearOutputFolder": false,
   "DbContextTemplate": "./templates/dbcontext.gotmpl",
   "ModelTemplate": "./templates/model.gotmpl",
