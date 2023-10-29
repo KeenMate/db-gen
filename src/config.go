@@ -97,7 +97,7 @@ func GetConfig() (*Config, error) {
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 
-	if !contains(ValidCase, config.GeneratedFileCase) {
+	if !contains(ValidCase, strings.ToLower(config.GeneratedFileCase)) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
