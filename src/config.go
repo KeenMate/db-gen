@@ -98,7 +98,7 @@ func GetConfig() (*Config, error) {
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 
 	if !contains(ValidCase, config.GeneratedFileCase) {
-		return nil, fmt.Errorf("%s is not valid case", config.GeneratedFileCase)
+		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
 	CurrentConfig = config
