@@ -16,6 +16,8 @@ If `--config` flag is not set it will try following default locations
 
 Enable verbose logging with `--verbose` flag
 
+ConnectionString can be also set with `--connectionString "postgresql://usernmae:password@host:port/database_name"`
+
 ### Configuration overview
 
 - **ConnectionString (string)**:

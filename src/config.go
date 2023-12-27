@@ -14,9 +14,10 @@ import (
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
 type cliArgs struct {
-	command    Command
-	configPath string
-	verbose    bool
+	command          Command
+	configPath       string
+	verbose          bool
+	connectionString string
 }
 
 type Config struct {
@@ -67,6 +68,7 @@ func GetCommand() Command {
 	return args.command
 }
 
+// in future migrate whole configuration to viper
 func GetConfig() (*Config, error) {
 	args := parseCLIArgs()
 
@@ -91,6 +93,11 @@ func GetConfig() (*Config, error) {
 	// Cli args should override config loaded from file
 	config.Verbose = args.verbose
 	config.PathBase = filepath.Dir(args.configPath)
+	if args.connectionString != "" {
+		config.ConnectionString = args.connectionString
+	}
+
+	VerboseLog(config.ConnectionString)
 	//All paths are relative to config file
 	config.ProcessorTemplate = joinIfRelative(config.PathBase, config.ProcessorTemplate)
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
@@ -136,12 +143,14 @@ func parseCLIArgs() *cliArgs {
 
 	verboseFlag := flag.Bool("verbose", false, "If true it will print more stuff")
 	configPathFlag := flag.String("config", "", "Path to config file, all paths are relative it")
+	connectionStringFlag := flag.String("connectionString", "", "Connection string used to connect to database (overrides value from config file)")
 	flag.Parse()
 
 	args = new(cliArgs)
 	args.command = parseCommand(flag.Arg(0))
 	args.verbose = *verboseFlag
 	args.configPath = *configPathFlag
+	args.connectionString = *connectionStringFlag
 
 	//Necessary to allow verbose logging before configuration is parsed
 	VerboseOverride = args.verbose
