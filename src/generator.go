@@ -93,7 +93,7 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		return fmt.Errorf("loading module template: %s", err)
 	}
 
-	err = os.MkdirAll(filepath.Join(config.OutputFolder, modelsFolder), 777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, modelsFolder), 0777)
 
 	for _, routine := range routines {
 		if !routine.HasReturn {
@@ -125,7 +125,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		return fmt.Errorf("loading processor template: %s", err)
 	}
 
-	err = os.MkdirAll(filepath.Join(config.OutputFolder, processorsFolder), 777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, processorsFolder), 0777)
 	if err != nil {
 		return fmt.Errorf("creating processor output folder: %s", err)
 	}
@@ -214,7 +214,7 @@ func ensureOutputFolder(config *Config) error {
 		}
 	}
 
-	err := os.MkdirAll(config.OutputFolder, 777)
+	err := os.MkdirAll(config.OutputFolder, 0777)
 	if err != nil {
 		return fmt.Errorf("creating output folder: %s", err)
 	}
