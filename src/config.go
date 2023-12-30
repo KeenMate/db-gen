@@ -1,11 +1,9 @@
 package dbGen
 
 import (
-	"encoding/json"
-	"errors"
-	"flag"
 	"fmt"
-	"log"
+	"github.com/keenmate/db-gen/common"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,92 +11,59 @@ import (
 
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
-type cliArgs struct {
-	command          Command
-	configPath       string
-	verbose          bool
-	connectionString string
-}
-
 type Config struct {
 	PathBase                         string         //for now just using config folder
-	ConnectionString                 string         `json:"ConnectionString"`
-	OutputFolder                     string         `json:"OutputFolder,omitempty"`
-	GenerateModels                   bool           `json:"GenerateModels,omitempty"`
-	GenerateProcessors               bool           `json:"GenerateProcessors,omitempty"`
-	GenerateProcessorsForVoidReturns bool           `json:"GenerateProcessorsForVoidReturns,omitempty"`
-	DbContextTemplate                string         `json:"DbContextTemplate,omitempty"`
-	ModelTemplate                    string         `json:"ModelTemplate,omitempty"`
-	ProcessorTemplate                string         `json:"ProcessorTemplate,omitempty"`
-	GeneratedFileExtension           string         `json:"GeneratedFileExtension,omitempty"`
-	GeneratedFileCase                string         `json:"GeneratedFileCase,omitempty"`
-	Verbose                          bool           `json:"Verbose,omitempty"`
-	ClearOutputFolder                bool           `json:"ClearOutputFolder,omitempty"`
-	Generate                         []SchemaConfig `json:"Generate,omitempty"`
-	Mappings                         []Mapping      `json:"Mappings"`
+	ConnectionString                 string         `mapstructure:"ConnectionString"`
+	OutputFolder                     string         `mapstructure:"OutputFolder"`
+	GenerateModels                   bool           `mapstructure:"GenerateModels"`
+	GenerateProcessors               bool           `mapstructure:"GenerateProcessors"`
+	GenerateProcessorsForVoidReturns bool           `mapstructure:"GenerateProcessorsForVoidReturns"`
+	DbContextTemplate                string         `mapstructure:"DbContextTemplate"`
+	ModelTemplate                    string         `mapstructure:"ModelTemplate"`
+	ProcessorTemplate                string         `mapstructure:"ProcessorTemplate"`
+	GeneratedFileExtension           string         `mapstructure:"GeneratedFileExtension"`
+	GeneratedFileCase                string         `mapstructure:"GeneratedFileCase"`
+	Verbose                          bool           `mapstructure:"Verbose"`
+	ClearOutputFolder                bool           `mapstructure:"ClearOutputFolder"`
+	Generate                         []SchemaConfig `mapstructure:"Generate"`
+	Mappings                         []Mapping      `mapstructure:"Mappings"`
 }
 
 type SchemaConfig struct {
-	Schema           string   `json:"Schema,omitempty"`
-	AllFunctions     bool     `json:"AllFunctions,omitempty"`
-	Functions        []string `json:"Functions,omitempty"`
-	IgnoredFunctions []string `json:"IgnoredFunctions,omitempty"`
+	Schema           string   `mapstructure:"Schema"`
+	AllFunctions     bool     `mapstructure:"AllFunctions"`
+	Functions        []string `mapstructure:"Functions"`
+	IgnoredFunctions []string `mapstructure:"IgnoredFunctions"`
 }
 
 type Mapping struct {
-	DatabaseTypes   []string `json:"DatabaseTypes"`
-	MappedType      string   `json:"MappedType"`
-	MappingFunction string   `json:"MappingFunction"`
+	DatabaseTypes   []string `mapstructure:"DatabaseTypes"`
+	MappedType      string   `mapstructure:"MappedType"`
+	MappingFunction string   `mapstructure:"MappingFunction"`
 }
-
-type Command string
-
-const (
-	Init    Command = "init"
-	Gen             = "gen"
-	Version         = "version"
-)
 
 var CurrentConfig *Config = nil
 
-func GetCommand() Command {
-	// ignore error because we
-	args := parseCLIArgs()
-	log.Printf("executing command %s \n", args.command)
-	return args.command
-}
+// set in TryReadConfigFile
+var loadedConfigLocation string = ""
 
-// in future migrate whole configuration to viper
+// GetConfig gets configuration from viper
 func GetConfig() (*Config, error) {
-	args := parseCLIArgs()
+	config := new(Config)
 
-	if args.configPath == "" {
-		VerboseLog("No config specified, trying default locations")
-		configPath, found := tryGetConfigInDefaultLocations()
-		if !found {
-			return nil, errors.New("no config file specified in args and no file found at default locations")
-		}
-
-		args.configPath = configPath
-	}
-
-	config, err := readJsonConfigFile(args.configPath)
-
+	err := viper.Unmarshal(config)
 	if err != nil {
-		return nil, fmt.Errorf("getting configuration from file: %w", err)
+		return nil, fmt.Errorf("error mapping configuration: %s", err)
 	}
 
-	// TODO Allow some config values (connection_string) from separate file
-
-	// Cli args should override config loaded from file
-	config.Verbose = args.verbose
-	config.PathBase = filepath.Dir(args.configPath)
-	if args.connectionString != "" {
-		config.ConnectionString = args.connectionString
+	// no configuration file loaded
+	if loadedConfigLocation == "" {
+		return nil, fmt.Errorf("no configuration file loaded")
 	}
+	// set in TryReadConfigFile
+	config.PathBase = filepath.Dir(loadedConfigLocation)
 
-	VerboseLog(config.ConnectionString)
-	//All paths are relative to config file
+	//All paths are relative to basePath(config file folder)
 	config.ProcessorTemplate = joinIfRelative(config.PathBase, config.ProcessorTemplate)
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
@@ -108,67 +73,11 @@ func GetConfig() (*Config, error) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
+	// used by debug helpers
 	CurrentConfig = config
 
-	VerboseLog("%+v", config)
+	common.LogDebug("%+v", config)
 	return config, nil
-}
-
-func readJsonConfigFile(path string) (*Config, error) {
-	file, err := os.ReadFile(path)
-
-	if err != nil {
-		return nil, fmt.Errorf("opening file: %w", err)
-	}
-
-	config := new(Config)
-
-	err = json.Unmarshal(file, config)
-
-	if err != nil {
-		return nil, fmt.Errorf("parsing json: %w", err)
-	}
-
-	return config, nil
-}
-
-var args *cliArgs
-
-// TODO refactor to separate parsing and validating cli
-func parseCLIArgs() *cliArgs {
-	// only parse args once
-	if args != nil {
-		return args
-	}
-
-	verboseFlag := flag.Bool("verbose", false, "If true it will print more stuff")
-	configPathFlag := flag.String("config", "", "Path to config file, all paths are relative it")
-	connectionStringFlag := flag.String("connectionString", "", "Connection string used to connect to database (overrides value from config file)")
-	flag.Parse()
-
-	args = new(cliArgs)
-	args.command = parseCommand(flag.Arg(0))
-	args.verbose = *verboseFlag
-	args.configPath = *configPathFlag
-	args.connectionString = *connectionStringFlag
-
-	//Necessary to allow verbose logging before configuration is parsed
-	VerboseOverride = args.verbose
-
-	return args
-}
-
-func parseCommand(command string) Command {
-	switch strings.ToLower(command) {
-	case "gen":
-		return Gen
-	case "init":
-		return Init
-	case "version":
-		return Version
-	default:
-		return Gen
-	}
 }
 
 func joinIfRelative(basePath string, joiningPath string) string {
@@ -179,14 +88,58 @@ func joinIfRelative(basePath string, joiningPath string) string {
 	return filepath.Join(basePath, joiningPath)
 }
 
-func tryGetConfigInDefaultLocations() (string, bool) {
-	for _, defaultConfigPath := range defaultConfigPaths {
-		if fileExists(defaultConfigPath) {
-			VerboseLog("Config found at %s", defaultConfigPath)
-			return defaultConfigPath, true
+func ReadConfig(configLocation string) (string, error) {
+	// explicitly set configuration
+	if configLocation != "" {
+		err, fileExists := TryReadConfigFile(configLocation)
+		if !fileExists {
+			return "", fmt.Errorf("configuration file %s doesnt exist or cannot be read", configLocation)
 		}
 
+		if err != nil {
+			return "", fmt.Errorf("error reading/parsing configuration file %s: %s", configLocation, err)
+		}
+
+		return configLocation, nil
 	}
 
-	return "", false
+	for _, defaultConfigPath := range defaultConfigPaths {
+		err, exists := TryReadConfigFile(defaultConfigPath)
+		if exists {
+			if err != nil {
+				return "", fmt.Errorf("error reading/parsing configuration file %s: %s", configLocation, err)
+			}
+
+			return defaultConfigPath, nil
+		}
+	}
+
+	// no config file found
+	return "", fmt.Errorf("no configuration file set and no file found at default locations (see readme)")
+}
+
+func TryReadConfigFile(configPath string) (error, bool) {
+	common.LogDebug("Trying to read config file: %s", configPath)
+
+	if !common.PathExists(configPath) {
+
+		return nil, false
+	}
+
+	file, err := os.Open(configPath)
+	defer file.Close()
+	if err != nil {
+		return fmt.Errorf("opening file: %s", err), true
+	}
+
+	viper.SetConfigType(filepath.Ext(configPath)[1:])
+
+	err = viper.MergeConfig(file)
+	if err != nil {
+		return fmt.Errorf("reading configuration: %s", err), true
+	}
+	common.LogDebug("%s loaded", configPath)
+	// so we can use basePath
+	loadedConfigLocation = configPath
+	return nil, true
 }

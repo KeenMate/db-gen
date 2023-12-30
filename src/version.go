@@ -3,6 +3,7 @@ package dbGen
 import (
 	_ "embed"
 	"fmt"
+	"github.com/keenmate/db-gen/common"
 	"log"
 	"strings"
 )
@@ -17,7 +18,7 @@ var info *BuildInformation = nil
 
 func ParseBuildInformation(versionFileText string) error {
 	if strings.HasPrefix(versionFileText, "LOCAL") {
-		log.Println("Running locally build version, be careful")
+		common.LogWarn("Running locally build version, be careful")
 		return nil
 	}
 

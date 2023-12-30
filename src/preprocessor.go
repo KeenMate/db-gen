@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"fmt"
+	"github.com/keenmate/db-gen/common"
 	"github.com/stoewer/go-strcase"
 	"log"
 	"slices"
@@ -17,7 +18,7 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Routine, error) {
 
 	// don't need to compute for every property
 	typeMappings := getTypeMappings(config)
-	VerboseLog("Got %d type mappigns", len(typeMappings))
+	common.LogDebug("Got %d type mappigns", len(typeMappings))
 
 	// Map routines
 	functions, err := mapFunctions(&filteredFunctions, &typeMappings, config)
@@ -33,7 +34,7 @@ func Preprocess(routines []DbRoutine, config *Config) ([]Routine, error) {
 
 func filterFunctions(functions *[]DbRoutine, config *Config) []DbRoutine {
 	schemaMap := getSchemaConfigMap(config)
-	VerboseLog("Got %d schema configs  ", len(schemaMap))
+	common.LogDebug("Got %d schema configs  ", len(schemaMap))
 	filteredFunctions := make([]DbRoutine, 0)
 
 	for _, function := range *functions {
@@ -41,20 +42,20 @@ func filterFunctions(functions *[]DbRoutine, config *Config) []DbRoutine {
 
 		// if config for given schema doest exits, don't generate for any function in given scheme
 		if !exists {
-			VerboseLog("No schema config for '%s'", function.RoutineSchema)
+			common.LogDebug("No schema config for '%s'", function.RoutineSchema)
 			continue
 		}
 
 		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.RoutineName) {
 			// Case sensitive
 			if slices.Contains(schemaConfig.IgnoredFunctions, function.RoutineName) {
-				VerboseLog("Routine '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
+				common.LogDebug("Routine '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
 				continue
 			}
 
 			filteredFunctions = append(filteredFunctions, function)
 		} else {
-			VerboseLog("Routine '%s.%s' not generated because all function is false or isnt included in functions",
+			common.LogDebug("Routine '%s.%s' not generated because all function is false or isnt included in functions",
 				function.RoutineSchema,
 				function.RoutineName)
 		}
@@ -78,7 +79,7 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 	mappedFunctions := make([]Routine, len(*routines))
 
 	for i, routine := range *routines {
-		VerboseLog("Mapping %s", routine.RoutineName)
+		common.LogDebug("Mapping %s", routine.RoutineName)
 
 		returnProperties, err := getReturnProperties(routine, typeMappings)
 		if err != nil {
@@ -160,7 +161,7 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 
 	// First possition should be 0
 	positionOffset := attributes[0].OrdinalPosition
-	//VerboseLog("Possition offset is %d", positionOffset)
+	//common.LogDebug("Possition offset is %d", positionOffset)
 
 	for i, attribute := range attributes {
 		propertyName := getPropertyName(attribute.Name)
@@ -241,7 +242,7 @@ func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, erro
 
 		}
 
-		VerboseLog("Using fallback value %+v for type %s", fallbackVal, dbDataType)
+		common.LogDebug("Using fallback value %+v for type %s", fallbackVal, dbDataType)
 
 		return &fallbackVal, nil
 	}
