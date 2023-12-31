@@ -23,7 +23,7 @@ type Config struct {
 	ProcessorTemplate                string         `mapstructure:"ProcessorTemplate"`
 	GeneratedFileExtension           string         `mapstructure:"GeneratedFileExtension"`
 	GeneratedFileCase                string         `mapstructure:"GeneratedFileCase"`
-	Verbose                          bool           `mapstructure:"Verbose"`
+	Debug                            bool           `mapstructure:"Debug"`
 	ClearOutputFolder                bool           `mapstructure:"ClearOutputFolder"`
 	Generate                         []SchemaConfig `mapstructure:"Generate"`
 	Mappings                         []Mapping      `mapstructure:"Mappings"`
@@ -44,11 +44,11 @@ type Mapping struct {
 
 var CurrentConfig *Config = nil
 
-// set in TryReadConfigFile
+// set in ReadConfig
 var loadedConfigLocation string = ""
 
-// GetConfig gets configuration from viper
-func GetConfig() (*Config, error) {
+// GetAndValidateConfig gets configuration from viper
+func GetAndValidateConfig() (*Config, error) {
 	config := new(Config)
 
 	err := viper.Unmarshal(config)
@@ -76,7 +76,7 @@ func GetConfig() (*Config, error) {
 	// used by debug helpers
 	CurrentConfig = config
 
-	common.LogDebug("%+v", config)
+	common.LogDebug("Loaded configuration: \n%+v", config)
 	return config, nil
 }
 
@@ -91,7 +91,7 @@ func joinIfRelative(basePath string, joiningPath string) string {
 func ReadConfig(configLocation string) (string, error) {
 	// explicitly set configuration
 	if configLocation != "" {
-		err, fileExists := TryReadConfigFile(configLocation)
+		fileExists, err := TryReadConfigFile(configLocation)
 		if !fileExists {
 			return "", fmt.Errorf("configuration file %s doesnt exist or cannot be read", configLocation)
 		}
@@ -100,14 +100,40 @@ func ReadConfig(configLocation string) (string, error) {
 			return "", fmt.Errorf("error reading/parsing configuration file %s: %s", configLocation, err)
 		}
 
+		loadedConfigLocation = configLocation
+
+		// load local config
+
+		localConfigExists, err := TryReadLocalConfig(configLocation)
+		if err != nil {
+			return "", fmt.Errorf("loading local config: %w", err)
+		}
+
+		if localConfigExists {
+			common.Log("Local config override loaded")
+		}
+
 		return configLocation, nil
 	}
 
 	for _, defaultConfigPath := range defaultConfigPaths {
-		err, exists := TryReadConfigFile(defaultConfigPath)
-		if exists {
+		fileExists, err := TryReadConfigFile(defaultConfigPath)
+		if fileExists {
 			if err != nil {
 				return "", fmt.Errorf("error reading/parsing configuration file %s: %s", configLocation, err)
+			}
+
+			loadedConfigLocation = defaultConfigPath
+
+			// load local config
+			localConfigExists, err := TryReadLocalConfig(defaultConfigPath)
+
+			if err != nil {
+				return "", fmt.Errorf("loading local config: %w", err)
+			}
+
+			if localConfigExists {
+				common.Log("Local config override loaded")
 			}
 
 			return defaultConfigPath, nil
@@ -118,28 +144,35 @@ func ReadConfig(configLocation string) (string, error) {
 	return "", fmt.Errorf("no configuration file set and no file found at default locations (see readme)")
 }
 
-func TryReadConfigFile(configPath string) (error, bool) {
+func TryReadLocalConfig(configLocation string) (bool, error) {
+	folder := filepath.Dir(configLocation)
+	baseConfigFile := filepath.Base(configLocation)
+	localConfigLocation := filepath.Join(folder, "local."+baseConfigFile)
+	common.LogDebug("Trying to read local config %s", localConfigLocation)
+
+	return TryReadConfigFile(localConfigLocation)
+}
+
+func TryReadConfigFile(configPath string) (bool, error) {
 	common.LogDebug("Trying to read config file: %s", configPath)
 
 	if !common.PathExists(configPath) {
-
-		return nil, false
+		return false, nil
 	}
 
 	file, err := os.Open(configPath)
 	defer file.Close()
 	if err != nil {
-		return fmt.Errorf("opening file: %s", err), true
+		return true, fmt.Errorf("opening file: %s", err)
 	}
 
 	viper.SetConfigType(filepath.Ext(configPath)[1:])
 
 	err = viper.MergeConfig(file)
 	if err != nil {
-		return fmt.Errorf("reading configuration: %s", err), true
+		return true, fmt.Errorf("reading configuration: %s", err)
 	}
 	common.LogDebug("%s loaded", configPath)
-	// so we can use basePath
-	loadedConfigLocation = configPath
-	return nil, true
+
+	return true, nil
 }

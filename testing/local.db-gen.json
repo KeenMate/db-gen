@@ -1,0 +1,3 @@
+{
+  "ConnectionString": "postgresql://postgres:Password3000!!@localhost:5432/db_gen"
+}

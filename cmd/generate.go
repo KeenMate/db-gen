@@ -33,12 +33,12 @@ func init() {
 func doGenerate() error {
 	log.Printf("Getting configurations...")
 
-	config, err := dbGen.GetConfig()
+	config, err := dbGen.GetAndValidateConfig()
 	if err != nil {
 		return fmt.Errorf("error getting config %s", err)
 	}
 
-	common.LogDebug("Verbose logging is enabled")
+	common.LogDebug("Debug logging is enabled")
 
 	log.Printf("Connecting to database...")
 	conn, err := dbGen.Connect(config.ConnectionString)
@@ -53,7 +53,7 @@ func doGenerate() error {
 	}
 	log.Printf("Got %d routines", len(routines))
 
-	if config.Verbose {
+	if config.Debug {
 		common.LogDebug("Saving to debug file...")
 		err = dbGen.SaveToTempFile(routines, "dbRoutines")
 		if err != nil {
@@ -68,7 +68,7 @@ func doGenerate() error {
 	}
 	log.Printf("After preprocessing %d - %d = %d functions left", len(routines), len(routines)-len(processedFunctions), len(processedFunctions))
 
-	if config.Verbose {
+	if config.Debug {
 		common.LogDebug("Saving to debug file...")
 		err = dbGen.SaveToTempFile(processedFunctions, "mapped")
 		if err != nil {

@@ -10,13 +10,23 @@ Successor to ecto-gen
 
 All configuration is stored in file specified with `--config` flag.
 If `--config` flag is not set it will try following default locations
+
 - `./db-gen.json`
 - `./db-gen/db-gen.json`
 - `./db-gen/config.json`
 
-Enable verbose logging with `--verbose` flag
+Enable debug logging with `--debug` flag
 
 ConnectionString can be also set with `--connectionString "postgresql://usernmae:password@host:port/database_name"`
+
+### Local configuration
+
+For some secret or user-specific configuration, you can use local config.
+Db-gen looks for file with prefix `local.` to loaded configuration.
+The file can override any settings specified in the configuration file
+
+For example, if you load configuration from `./db-gen/config.json` it will check fi `./db-gen/local.config.json` exists
+and if it does, it will load it.
 
 ### Configuration overview
 
