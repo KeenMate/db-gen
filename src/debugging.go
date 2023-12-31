@@ -12,7 +12,7 @@ import (
 func SaveToTempFile(content interface{}, fileNamePrefix string) (err error) {
 	tempFolder := filepath.Join(os.TempDir(), "db-gen")
 
-	err = os.MkdirAll(tempFolder, 777)
+	err = os.MkdirAll(tempFolder, 0777)
 	if err != nil {
 		return
 	}
