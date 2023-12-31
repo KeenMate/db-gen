@@ -39,7 +39,7 @@ func LogDebug(msg string, args ...any) {
 func ToJson(val interface{}) string {
 	formatted, err := json.MarshalIndent(val, "", "  ")
 	if err != nil {
-		return fmt.Sprintf("error converting to json: %w", err)
+		return fmt.Sprintf("error converting to json: %v", err)
 	}
 	return string(formatted)
 }

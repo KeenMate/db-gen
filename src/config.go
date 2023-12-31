@@ -108,7 +108,7 @@ func ReadConfig(configLocation string) (string, error) {
 
 		localConfigExists, err := TryReadLocalConfig(configLocation)
 		if err != nil {
-			return "", fmt.Errorf("loading local config: %w", err)
+			return "", fmt.Errorf("loading local config: %v", err)
 		}
 
 		if localConfigExists {
