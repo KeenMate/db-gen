@@ -11,6 +11,8 @@ import (
 
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
+const localConfigurationPrefix = ".local"
+
 type Config struct {
 	PathBase                         string         //for now just using config folder
 	ConnectionString                 string         `mapstructure:"ConnectionString"`
@@ -147,7 +149,7 @@ func ReadConfig(configLocation string) (string, error) {
 func TryReadLocalConfig(configLocation string) (bool, error) {
 	folder := filepath.Dir(configLocation)
 	baseConfigFile := filepath.Base(configLocation)
-	localConfigLocation := filepath.Join(folder, "local."+baseConfigFile)
+	localConfigLocation := filepath.Join(folder, localConfigurationPrefix+baseConfigFile)
 	common.LogDebug("Trying to read local config %s", localConfigLocation)
 
 	return TryReadConfigFile(localConfigLocation)
