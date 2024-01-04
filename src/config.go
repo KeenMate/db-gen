@@ -149,7 +149,10 @@ func ReadConfig(configLocation string) (string, error) {
 func TryReadLocalConfig(configLocation string) (bool, error) {
 	folder := filepath.Dir(configLocation)
 	baseConfigFile := filepath.Base(configLocation)
-	localConfigLocation := filepath.Join(folder, localConfigurationPrefix+baseConfigFile)
+	localConfigFilename := fmt.Sprintf("%s.%s", localConfigurationPrefix, baseConfigFile)
+	localConfigLocation := filepath.Join(folder, localConfigFilename)
+	// log.Printf("Local config path: %s. Base: %s", localConfigLocation, baseConfigFile)
+
 	common.LogDebug("Trying to read local config %s", localConfigLocation)
 
 	return TryReadConfigFile(localConfigLocation)
