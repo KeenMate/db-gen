@@ -47,7 +47,7 @@ type Mapping struct {
 var CurrentConfig *Config = nil
 
 // set in ReadConfig
-var loadedConfigLocation string = ""
+var loadedConfigLocation = ""
 
 // GetAndValidateConfig gets configuration from viper
 func GetAndValidateConfig() (*Config, error) {
@@ -71,7 +71,7 @@ func GetAndValidateConfig() (*Config, error) {
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 
-	if !contains(ValidCase, strings.ToLower(config.GeneratedFileCase)) {
+	if !contains(ValidCaseNormalized, strings.ToLower(config.GeneratedFileCase)) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 

@@ -17,6 +17,8 @@ import (
 const processorsFolder = "processors"
 const modelsFolder = "models"
 
+var ValidCaseNormalized = []string{"snakecase", "camelcase", "pascalcase"}
+
 func Generate(routines []Routine, config *Config) error {
 	fileHashes, err := generateFileHashes(config.OutputFolder)
 	if err != nil {
@@ -278,15 +280,13 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 
 }
 
-var ValidCase = []string{"snake", "lcamel", "ucamel"}
-
 func changeCase(str string, desiredCase string) string {
 	switch strings.ToLower(desiredCase) {
-	case "ucamel":
+	case "pascalCase":
 		return strcase.UpperCamelCase(str)
-	case "lcamel":
+	case "camelCase":
 		return strcase.LowerCamelCase(str)
-	case "snake":
+	case "snakeCase":
 		return strcase.SnakeCase(str)
 	default:
 
