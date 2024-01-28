@@ -25,5 +25,16 @@ type Routine struct {
 }
 
 type DbContextData struct {
+	Config    *Config
 	Functions []Routine
+}
+
+type ProcessorTemplateData struct {
+	Config  *Config
+	Routine Routine
+}
+
+type ModelTemplateData struct {
+	Config  *Config
+	Routine Routine
 }

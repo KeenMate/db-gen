@@ -17,6 +17,8 @@ type Config struct {
 	PathBase                         string         //for now just using config folder
 	ConnectionString                 string         `mapstructure:"ConnectionString"`
 	OutputFolder                     string         `mapstructure:"OutputFolder"`
+	ProcessorsFolderName             string         `mapstructure:"ProcessorsFolderName"`
+	ModelsFolderName                 string         `mapstructure:"ModelsFolderName"`
 	GenerateModels                   bool           `mapstructure:"GenerateModels"`
 	GenerateProcessors               bool           `mapstructure:"GenerateProcessors"`
 	GenerateProcessorsForVoidReturns bool           `mapstructure:"GenerateProcessorsForVoidReturns"`
@@ -51,7 +53,25 @@ var loadedConfigLocation = ""
 
 // GetAndValidateConfig gets configuration from viper
 func GetAndValidateConfig() (*Config, error) {
-	config := new(Config)
+	config := &Config{
+		PathBase:                         "",
+		ConnectionString:                 "",
+		OutputFolder:                     "",
+		ProcessorsFolderName:             "processors",
+		ModelsFolderName:                 "models",
+		GenerateModels:                   false,
+		GenerateProcessors:               false,
+		GenerateProcessorsForVoidReturns: false,
+		DbContextTemplate:                "",
+		ModelTemplate:                    "",
+		ProcessorTemplate:                "",
+		GeneratedFileExtension:           "",
+		GeneratedFileCase:                "",
+		Debug:                            false,
+		ClearOutputFolder:                false,
+		Generate:                         nil,
+		Mappings:                         nil,
+	}
 
 	err := viper.Unmarshal(config)
 	if err != nil {

@@ -14,9 +14,6 @@ import (
 	"text/template"
 )
 
-const processorsFolder = "processors"
-const modelsFolder = "models"
-
 var ValidCaseNormalized = []string{"snakecase", "camelcase", "pascalcase"}
 
 func Generate(routines []Routine, config *Config) error {
@@ -64,19 +61,20 @@ func Generate(routines []Routine, config *Config) error {
 }
 
 func generateDbContext(routines []Routine, hashMap *map[string]string, config *Config) error {
-	dbcontextTemplate, err := parseTemplates(config.DbContextTemplate)
+	dbContextTemplate, err := parseTemplate(config.DbContextTemplate)
 	if err != nil {
 		return fmt.Errorf("loading dbContext template: %s", err)
 	}
 
 	data := &DbContextData{
+		Config:    config,
 		Functions: routines,
 	}
 
 	filename := changeCase("DbContext"+config.GeneratedFileExtension, config.GeneratedFileCase)
 	fp := filepath.Join(config.OutputFolder, filename)
 
-	changed, err := generateFile(data, dbcontextTemplate, fp, hashMap)
+	changed, err := generateFile(data, dbContextTemplate, fp, hashMap)
 	if err != nil {
 		return err
 	}
@@ -92,13 +90,12 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 }
 
 func generateModels(routines []Routine, hashMap *map[string]string, config *Config) error {
-
-	moduleTemplate, err := parseTemplates(config.ModelTemplate)
+	moduleTemplate, err := parseTemplate(config.ModelTemplate)
 	if err != nil {
 		return fmt.Errorf("loading module template: %s", err)
 	}
 
-	err = os.MkdirAll(filepath.Join(config.OutputFolder, modelsFolder), 0777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, config.ModelsFolderName), 0777)
 
 	for _, routine := range routines {
 		if !routine.HasReturn {
@@ -106,10 +103,15 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		}
 
 		filename := changeCase(routine.ModelName+config.GeneratedFileExtension, config.GeneratedFileCase)
-		relPath := filepath.Join(modelsFolder, filename)
+		relPath := filepath.Join(config.ModelsFolderName, filename)
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
-		changed, err := generateFile(routine, moduleTemplate, filePath, hashMap)
+		data := &ModelTemplateData{
+			Config:  config,
+			Routine: routine,
+		}
+
+		changed, err := generateFile(data, moduleTemplate, filePath, hashMap)
 		if err != nil {
 			return fmt.Errorf("generating models: %s", err)
 		}
@@ -125,12 +127,12 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 }
 
 func generateProcessors(routines []Routine, hashMap *map[string]string, config *Config) error {
-	processorTemplate, err := parseTemplates(config.ProcessorTemplate)
+	processorTemplate, err := parseTemplate(config.ProcessorTemplate)
 	if err != nil {
 		return fmt.Errorf("loading processor template: %s", err)
 	}
 
-	err = os.MkdirAll(filepath.Join(config.OutputFolder, processorsFolder), 0777)
+	err = os.MkdirAll(filepath.Join(config.OutputFolder, config.ProcessorsFolderName), 0777)
 	if err != nil {
 		return fmt.Errorf("creating processor output folder: %s", err)
 	}
@@ -143,10 +145,15 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		}
 
 		filename := changeCase(routine.ProcessorName+config.GeneratedFileExtension, config.GeneratedFileCase)
-		relPath := filepath.Join(processorsFolder, filename)
+		relPath := filepath.Join(config.ProcessorsFolderName, filename)
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
-		changed, err := generateFile(routine, processorTemplate, filePath, hashMap)
+		data := &ProcessorTemplateData{
+			Config:  config,
+			Routine: routine,
+		}
+
+		changed, err := generateFile(data, processorTemplate, filePath, hashMap)
 		if err != nil {
 			return fmt.Errorf("generating processor %s: %s", routine.ProcessorName, err)
 		}
@@ -161,7 +168,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 	return nil
 }
 
-func parseTemplates(templatePath string) (*template.Template, error) {
+func parseTemplate(templatePath string) (*template.Template, error) {
 	if !common.PathExists(templatePath) {
 		return nil, fmt.Errorf("template file %s does not exist", templatePath)
 

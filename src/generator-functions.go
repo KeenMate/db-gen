@@ -10,13 +10,13 @@ func getTemplateFunctions() template.FuncMap {
 		"inc": func(n int) int {
 			return n + 1
 		},
-		"uCamel": func(s string) string {
+		"pascalCased": func(s string) string {
 			return strcase.UpperCamelCase(s)
 		},
-		"lCamel": func(s string) string {
+		"camelCased": func(s string) string {
 			return strcase.LowerCamelCase(s)
 		},
-		"snake": func(s string) string {
+		"snakeCased": func(s string) string {
 			return strcase.SnakeCase(s)
 		},
 	}
