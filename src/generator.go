@@ -292,14 +292,14 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 
 func changeCase(str string, desiredCase string) string {
 	switch strings.ToLower(desiredCase) {
-	case "pascalCase":
+	case "pascalcase":
 		return strcase.UpperCamelCase(str)
-	case "camelCase":
+	case "camelcase":
 		return strcase.LowerCamelCase(str)
-	case "snakeCase":
+	case "snakecase":
 		return strcase.SnakeCase(str)
 	default:
-
+		common.LogWarn("unknown case, this should never happen")
 		return str
 	}
 }
