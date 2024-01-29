@@ -11,7 +11,7 @@ import (
 
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
-const localConfigurationPrefix = "local"
+var possibleLocalPrefixes = []string{"local.", ".local."}
 
 type Config struct {
 	PathBase                         string         //for now just using config folder
@@ -169,13 +169,20 @@ func ReadConfig(configLocation string) (string, error) {
 func TryReadLocalConfig(configLocation string) (bool, error) {
 	folder := filepath.Dir(configLocation)
 	baseConfigFile := filepath.Base(configLocation)
-	localConfigFilename := fmt.Sprintf("%s.%s", localConfigurationPrefix, baseConfigFile)
-	localConfigLocation := filepath.Join(folder, localConfigFilename)
-	// log.Printf("Local config path: %s. Base: %s", localConfigLocation, baseConfigFile)
 
-	common.LogDebug("Trying to read local config %s", localConfigLocation)
+	common.LogDebug("Checking if local config exists")
 
-	return TryReadConfigFile(localConfigLocation)
+	for _, prefix := range possibleLocalPrefixes {
+		localConfigLocation := filepath.Join(folder, prefix+baseConfigFile)
+		exists, err := TryReadConfigFile(localConfigLocation)
+
+		if exists {
+			common.LogDebug("Local config at %s loaded", localConfigLocation)
+			return exists, err
+		}
+	}
+
+	return false, nil
 }
 
 func TryReadConfigFile(configPath string) (bool, error) {
@@ -197,7 +204,7 @@ func TryReadConfigFile(configPath string) (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("reading configuration: %s", err)
 	}
-	common.LogDebug("%s loaded", configPath)
+	common.LogDebug("Configuration file at %s loaded", configPath)
 
 	return true, nil
 }
