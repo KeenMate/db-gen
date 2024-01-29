@@ -8,7 +8,7 @@
   "ModelTemplate": "./templates/model.gotmpl",
   "ProcessorTemplate": "./templates/processor.gotmpl",
   "GeneratedFileExtension": ".cs",
-  "GeneratedFileCase": "ucamel",
+  "GeneratedFileCase": "camelcase",
   "Generate": [
     {
       "Schema": "public",

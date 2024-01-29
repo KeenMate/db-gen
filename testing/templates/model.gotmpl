@@ -4,9 +4,9 @@ using Database.Common;
 
 namespace Database.Generated;
 
-public class {{.ModelName}}
+public class {{.Routine.ModelName}}
 {
-    {{range $property := .ReturnProperties}}
+    {{range $property := .Routine.ReturnProperties}}
 	[DbColumnMapping("{{$property.DbColumnName}}")] public {{$property.PropertyType}} {{$property.PropertyName}} { get; set; }
     {{end}}
 }

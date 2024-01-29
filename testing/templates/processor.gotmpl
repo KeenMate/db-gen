@@ -5,13 +5,13 @@ using Npgsql;
 
 namespace Database.Generated;
 
-public class {{.ProcessorName}}
+public class {{.Routine.ProcessorName}}
 {
-	public static {{.ModelName}} Process(NpgsqlDataReader reader, List< ColumnDescriptor> descriptors)
+	public static {{.Routine.ModelName}} Process(NpgsqlDataReader reader, List< ColumnDescriptor> descriptors)
 	{
-		var item = new {{.ModelName}}();
+		var item = new {{.Routine.ModelName}}();
 
-        {{range $property := .ReturnProperties}}
+        {{range $property := .Routine.ReturnProperties}}
     // {{.DbColumnName}} {{.DbColumnType}}
     item.{{.PropertyName}} = reader.{{.MapperFunction}}({{.Position}});
         {{end}}

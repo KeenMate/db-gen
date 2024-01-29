@@ -11,7 +11,7 @@ import (
 
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
-const localConfigurationPrefix = ".local"
+const localConfigurationPrefix = "local"
 
 type Config struct {
 	PathBase                         string         //for now just using config folder
