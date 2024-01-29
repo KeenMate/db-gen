@@ -9,48 +9,55 @@ import (
 )
 
 type BuildInformation struct {
-	builder    string
-	version    string
-	commitHash string
+	Builder    string
+	Version    string
+	CommitHash string
 }
 
-var info *BuildInformation = nil
+const localVersion = "LOCAL"
+const localBuilder = "LOCAL"
+
+var info BuildInformation = BuildInformation{
+	Builder:    localBuilder,
+	Version:    localVersion,
+	CommitHash: "",
+}
 
 func ParseBuildInformation(versionFileText string) error {
 	if strings.HasPrefix(versionFileText, "LOCAL") {
-		common.LogWarn("Running locally build version, be careful")
+		common.LogWarn("Running locally build Version, be careful")
 		return nil
 	}
 
 	splitted := strings.Split(versionFileText, " ")
 
 	if len(splitted) < 2 {
-		return fmt.Errorf("error with build, version file has incorrect format ")
+		return fmt.Errorf("error with build, Version file has incorrect format ")
 	}
 
-	info = &BuildInformation{
-		builder:    splitted[0],
-		version:    splitted[1],
-		commitHash: splitted[2],
+	info = BuildInformation{
+		Builder:    splitted[0],
+		Version:    splitted[1],
+		CommitHash: splitted[2],
 	}
 
 	return nil
 }
 
 func PrintVersion() {
-	if info == nil {
-		log.Printf("Locally build version")
+	if info.Builder == localBuilder {
+		log.Printf("Locally build Version")
 		return
 	}
-	log.Printf("db-gen build by %s ", info.builder)
-	log.Printf("version %s ", info.version)
-	log.Printf("last commit hash %s ", info.commitHash)
+	log.Printf("db-gen build by %s ", info.Builder)
+	log.Printf("Version %s ", info.Version)
+	log.Printf("last commit hash %s ", info.CommitHash)
 }
 
 func GetVersion() string {
-	if info == nil {
-		return "LOCAL"
-	} else {
-		return info.version
-	}
+	return info.Version
+}
+
+func GetBuildInfo() *BuildInformation {
+	return &info
 }

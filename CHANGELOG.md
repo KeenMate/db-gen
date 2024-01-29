@@ -1,8 +1,8 @@
 # CHANGELOG
 
-# 0.2.2
+## 0.3.0
 
-## Breaking changes!
+### Breaking changes!
 
 - `GeneratedFileCase` config values renamed to match world-wide accepted terms:
   - from: `"snake"` to: `"snakecase"`
@@ -16,9 +16,15 @@
 
 - Model template now has previous config values accessible through `Routine` variable
 
-## New features
+### New features
 
 - New config values for folder names where generated models and processors will be placed
   - `ProcessorsFolderName` with default value: `"processors"`
   - `ModelsFolderName` with default value: `"models"`
 - Model, Processor and DbContext templates now have new variable `Config` pointing to the config values of the application
+
+## 0.3.1
+
+### New features
+
+- Build information is now available in all templates `.BuildInfo`
