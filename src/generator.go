@@ -69,6 +69,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 	data := &DbContextData{
 		Config:    config,
 		Functions: routines,
+		BuildInfo: GetBuildInfo(),
 	}
 
 	filename := changeCase("DbContext"+config.GeneratedFileExtension, config.GeneratedFileCase)
@@ -107,8 +108,9 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		data := &ModelTemplateData{
-			Config:  config,
-			Routine: routine,
+			Config:    config,
+			Routine:   routine,
+			BuildInfo: GetBuildInfo(),
 		}
 
 		changed, err := generateFile(data, moduleTemplate, filePath, hashMap)
@@ -149,8 +151,9 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		filePath := filepath.Join(config.OutputFolder, relPath)
 
 		data := &ProcessorTemplateData{
-			Config:  config,
-			Routine: routine,
+			Config:    config,
+			Routine:   routine,
+			BuildInfo: GetBuildInfo(),
 		}
 
 		changed, err := generateFile(data, processorTemplate, filePath, hashMap)
