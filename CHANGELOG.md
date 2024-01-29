@@ -1,5 +1,13 @@
 # CHANGELOG
 
+
+## 0.3.1
+
+### New features
+
+- Build information is now available in all templates `.BuildInfo`
+
+
 ## 0.3.0
 
 ### Breaking changes!
@@ -22,9 +30,3 @@
   - `ProcessorsFolderName` with default value: `"processors"`
   - `ModelsFolderName` with default value: `"models"`
 - Model, Processor and DbContext templates now have new variable `Config` pointing to the config values of the application
-
-## 0.3.1
-
-### New features
-
-- Build information is now available in all templates `.BuildInfo`
