@@ -5,6 +5,13 @@
 
 ### New features
 
+- local config can have both `.local.` or `local.` as prefix
+
+
+## 0.3.1
+
+### New features
+
 - Build information is now available in all templates `.BuildInfo`
 
 
