@@ -1,12 +1,21 @@
 # db-gen - Language agnostic database function calls code generator for Enterprise use
 
 db-gen is a universal tool for generation of function calls to PostgreSQL database. 
-  
-It aims to address these issues:
+
+## Is this tool an ORM framework?
+
+No, this tool is no ORM framework in sense of C# Entity Framework, Elixir Ecto, PHP Doctrine and so on. In our experience, these full ORM tools are not worth it, they are usually clumsy, generate inefficient SQL code and lead programmers to dead ends.
+Typical example of inefficent database use is when you want is a multi step processing of imported data. Instead of one bulk copy and a single database call to process the data, you have to split your logic to multiple database calls. It's slower, more work and usually less safe.
+
+That's why we use stored functions/procedures in PostgreSQL and this tool just generate code that calls these functions/procedures and retrieves the data.
+ 
+## What issues this tool tries to address?
 - consistency of generation over years
 - in-house templates, in-house configuration
 - customization based on your needs
 - offline use
+
+Don't let the "Enterprise use" discourage you, there's is no reason for not to use this tool for your one function database.
 
 ## Consistency of generation over years
 
