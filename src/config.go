@@ -90,8 +90,9 @@ func GetAndValidateConfig() (*Config, error) {
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
+	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
 
-	if !contains(ValidCaseNormalized, strings.ToLower(config.GeneratedFileCase)) {
+	if !contains(ValidCaseNormalized, config.GeneratedFileCase) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
