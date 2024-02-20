@@ -3,7 +3,6 @@ package cmd
 import (
 	dbGen "github.com/keenmate/db-gen/src"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"os"
 )
 
@@ -45,12 +44,5 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	configLocation := viper.GetString("config")
 
-	_, err := dbGen.ReadConfig(configLocation)
-	if err != nil {
-		dbGen.Exit("configuration error: %s", err)
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
 }

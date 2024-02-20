@@ -5,6 +5,7 @@ import (
 	"github.com/keenmate/db-gen/common"
 	dbGen "github.com/keenmate/db-gen/src"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -13,7 +14,16 @@ var generateCmd = &cobra.Command{
 	Short: "Generate code",
 	Long:  "Generate code for calling database stored procedures",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doGenerate()
+		configLocation := viper.GetString("config")
+
+		_, err := dbGen.ReadConfig(configLocation)
+		if err != nil {
+			dbGen.Exit("configuration error: %s", err)
+		}
+
+		viper.AutomaticEnv() // read in environment variables that match
+
+		err = doGenerate()
 		if err != nil {
 			dbGen.Exit(err.Error())
 		}
