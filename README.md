@@ -15,7 +15,7 @@ That's why we use stored functions/procedures in PostgreSQL and this tool just g
 - customization based on your needs
 - offline use
 
-Don't let the "Enterprise use" discourage you, there's is no reason for not to use this tool for your one function database.
+Don't let the "Enterprise use" discourage you, there is no reason for not to use this tool for your one function database.
 
 ## Consistency of generation over years
 
@@ -24,7 +24,7 @@ We all know what kind of world we live in. Tool that was available yesterday, wo
 This is NOT sustainable in enterprise development.
   
 It's not like every application is constantly being updated and pushed to the latest version of every package. We have application that are untouched for years and years because of budget reasons. Why update them when they are running, right?
-We used LLBLGen on several projects, but after just few years we are unable to do that anymore, .NET framework was replace with another .NET framework and all is lost.
+We used LLBLGen on several projects, but after just a few years we are unable to do that anymore, .NET framework was replace with another .NET framework and all is lost.
 
 That's why this tool goes a different way. It's a small executable package that can be easily stored to the repository with your code. It will generate the same code today, tomorrow and in 5 years, and you won't have to search for it on internet.
 
