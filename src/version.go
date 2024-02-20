@@ -25,7 +25,8 @@ var info BuildInformation = BuildInformation{
 
 func ParseBuildInformation(versionFileText string) error {
 	if strings.HasPrefix(versionFileText, "LOCAL") {
-		common.LogWarn("Running locally build Version, be careful")
+		common.LogWarn("THIS IS LOCAL BUILD")
+		common.LogWarn("USE ONLY FOR TESTING!!!!")
 		return nil
 	}
 
@@ -60,4 +61,8 @@ func GetVersion() string {
 
 func GetBuildInfo() *BuildInformation {
 	return &info
+}
+
+func IsLocalBuild() bool {
+	return info.Version == localVersion
 }
