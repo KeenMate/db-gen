@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish for ${{ matrix.os }}
+    name: Publish for ${{ matrix.goos }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
