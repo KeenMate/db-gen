@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 )
 
@@ -291,7 +290,7 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 }
 
 func changeCase(str string, desiredCase string) string {
-	switch strings.ToLower(desiredCase) {
+	switch desiredCase {
 	case "pascalcase":
 		return strcase.UpperCamelCase(str)
 	case "camelcase":
