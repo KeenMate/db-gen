@@ -11,7 +11,8 @@ import (
 
 var defaultConfigPaths = []string{"./db-gen.json", "./db-gen/db-gen.json", "./db-gen/config.json"}
 
-var possibleLocalPrefixes = []string{"local.", ".local."}
+var localPrefixes = []string{"local.", ".local."}
+var localPostfixes = []string{".local"}
 
 type Config struct {
 	PathBase                         string         //for now just using config folder
@@ -112,6 +113,8 @@ func joinIfRelative(basePath string, joiningPath string) string {
 }
 
 func ReadConfig(configLocation string) (string, error) {
+	// TODO refactor out duplicit code
+
 	// explicitly set configuration
 	if configLocation != "" {
 		fileExists, err := TryReadConfigFile(configLocation)
@@ -168,17 +171,13 @@ func ReadConfig(configLocation string) (string, error) {
 }
 
 func TryReadLocalConfig(configLocation string) (bool, error) {
-	folder := filepath.Dir(configLocation)
-	baseConfigFile := filepath.Base(configLocation)
-
 	common.LogDebug("Checking if local config exists")
 
-	for _, prefix := range possibleLocalPrefixes {
-		localConfigLocation := filepath.Join(folder, prefix+baseConfigFile)
-		exists, err := TryReadConfigFile(localConfigLocation)
+	for _, path := range getPossibleLocalConfigs(configLocation) {
+		exists, err := TryReadConfigFile(path)
 
 		if exists {
-			common.LogDebug("Local config at %s loaded", localConfigLocation)
+			common.LogDebug("Local config at %s loaded", path)
 			return exists, err
 		}
 	}
@@ -208,4 +207,25 @@ func TryReadConfigFile(configPath string) (bool, error) {
 	common.LogDebug("Configuration file at %s loaded", configPath)
 
 	return true, nil
+}
+
+func getPossibleLocalConfigs(configLocation string) []string {
+	paths := make([]string, 0)
+
+	directory := filepath.Dir(configLocation)
+	file := filepath.Base(configLocation)
+	fileWithoutExtension := strings.TrimSuffix(file, filepath.Ext(configLocation))
+
+	// prefixes
+	for _, prefix := range localPrefixes {
+		paths = append(paths, filepath.Join(directory, prefix+file))
+	}
+
+	// postfixes
+	for _, postfix := range localPostfixes {
+		paths = append(paths, filepath.Join(directory, fileWithoutExtension+postfix))
+		paths = append(paths, filepath.Join(directory, file+postfix))
+	}
+
+	return paths
 }

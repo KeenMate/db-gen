@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.3.4
+
+### New features
+- local config can have both `.local` postfix
+
 
 ## 0.3.1
 
