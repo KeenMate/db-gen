@@ -12,7 +12,7 @@ import (
 var getRoutinesCmd = &cobra.Command{
 	Use:   "routines [out]",
 	Short: "Get routines",
-	Long:  "Get routines from database to generate later",
+	Long:  "Get routines from database and save them to file to generate later",
 	Run: func(cmd *cobra.Command, args []string) {
 		common.BindBoolFlag(cmd, keyDebug)
 		common.BindBoolFlag(cmd, keyUseRoutinesFile)

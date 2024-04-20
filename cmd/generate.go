@@ -19,7 +19,14 @@ const (
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate code",
-	Long:  "Generate code for calling database stored procedures",
+	Long: `
+	Generate code for calling stored procedures.
+	Procedures can be loaded from database or from provided file.
+	Output folder and templates are defined in configuration file.
+	
+	For more information, see github.com/keenmate/db-gen
+
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		common.BindBoolFlag(cmd, keyDebug)
 		common.BindBoolFlag(cmd, keyUseRoutinesFile)
