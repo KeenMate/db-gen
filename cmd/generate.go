@@ -9,23 +9,31 @@ import (
 	"log"
 )
 
+const (
+	keyDebug            = "debug"
+	keyConnectionString = "connectionString"
+	keyConfig           = "config"
+)
+
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate code",
 	Long:  "Generate code for calling database stored procedures",
 	Run: func(cmd *cobra.Command, args []string) {
-		configLocation := viper.GetString("config")
+		common.BindBoolFlag(cmd, keyDebug)
+		common.BindStringFlag(cmd, keyConnectionString)
+		common.BindStringFlag(cmd, keyConfig)
 
-		_, err := dbGen.ReadConfig(configLocation)
+		_, err := dbGen.ReadConfig(viper.GetString(keyConfig))
 		if err != nil {
-			dbGen.Exit("configuration error: %s", err)
+			common.Exit("configuration error: %s", err)
 		}
 
 		viper.AutomaticEnv() // read in environment variables that match
 
 		err = doGenerate()
 		if err != nil {
-			dbGen.Exit(err.Error())
+			common.Exit(err.Error())
 		}
 	},
 }
@@ -34,10 +42,9 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 
 	// set cli flags
-	common.ConfigurationBool(generateCmd, "debug", "d", false, "Print debug logs and create debug files")
-	common.ConfigurationString(generateCmd, "connectionString", "s", "", "Connection string used to connect to database")
-	common.ConfigurationString(generateCmd, "config", "c", "", "Path to configuration file")
-
+	common.DefineBoolFlag(generateCmd, keyDebug, "d", false, "Print debug logs and create debug files")
+	common.DefineStringFlag(generateCmd, keyConnectionString, "s", "", "Connection string used to connect to database")
+	common.DefineStringFlag(generateCmd, keyConfig, "c", "", "Path to configuration file")
 }
 
 func doGenerate() error {
@@ -65,7 +72,7 @@ func doGenerate() error {
 
 	if config.Debug {
 		common.LogDebug("Saving to debug file...")
-		err = dbGen.SaveToTempFile(routines, "dbRoutines")
+		err = common.SaveToTempFile(routines, "dbRoutines")
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
@@ -80,7 +87,7 @@ func doGenerate() error {
 
 	if config.Debug {
 		common.LogDebug("Saving to debug file...")
-		err = dbGen.SaveToTempFile(processedFunctions, "mapped")
+		err = common.SaveToTempFile(processedFunctions, "mapped")
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}

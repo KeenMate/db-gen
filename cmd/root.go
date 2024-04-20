@@ -14,7 +14,7 @@ var rootCmd = &cobra.Command{
 	Short: "Code generator for stored procedures and functions",
 	Long: `DB-GEN by KEEN|MATE
 ---------
-TODO better description
+For more information, see github.com/keenmate/db-gen
 `,
 }
 
@@ -42,7 +42,6 @@ func init() {
 
 }
 
-// initConfig reads in config file and ENV variables if set.
 func initConfig() {
 
 }

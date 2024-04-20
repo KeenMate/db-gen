@@ -30,6 +30,7 @@ type Config struct {
 	GeneratedFileCase                string         `mapstructure:"GeneratedFileCase"`
 	Debug                            bool           `mapstructure:"Debug"`
 	ClearOutputFolder                bool           `mapstructure:"ClearOutputFolder"`
+	RoutinesFile                     string         `mapstructure:"RoutinesFile"`
 	Generate                         []SchemaConfig `mapstructure:"Generate"`
 	Mappings                         []Mapping      `mapstructure:"Mappings"`
 }
@@ -72,6 +73,7 @@ func GetAndValidateConfig() (*Config, error) {
 		ClearOutputFolder:                false,
 		Generate:                         nil,
 		Mappings:                         nil,
+		RoutinesFile:                     "./db-gen-routines.json",
 	}
 
 	err := viper.Unmarshal(config)
@@ -91,9 +93,10 @@ func GetAndValidateConfig() (*Config, error) {
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
+	config.RoutinesFile = joinIfRelative(config.PathBase, config.RoutinesFile)
 	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
 
-	if !contains(ValidCaseNormalized, config.GeneratedFileCase) {
+	if !common.Contains(ValidCaseNormalized, config.GeneratedFileCase) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
@@ -142,6 +145,8 @@ func ReadConfig(configLocation string) (string, error) {
 		return configLocation, nil
 	}
 
+	common.LogDebug("No configuration file set, trying default locations")
+
 	for _, defaultConfigPath := range defaultConfigPaths {
 		fileExists, err := TryReadConfigFile(defaultConfigPath)
 		if fileExists {
@@ -188,7 +193,8 @@ func TryReadLocalConfig(configLocation string) (bool, error) {
 func TryReadConfigFile(configPath string) (bool, error) {
 	common.LogDebug("Trying to read config file: %s", configPath)
 
-	if !common.PathExists(configPath) {
+	// TODO this could hide some usefull errors, maybe log the reason in debug mode
+	if !common.FileIsReadable(configPath) {
 		return false, nil
 	}
 

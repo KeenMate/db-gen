@@ -1,8 +1,7 @@
-package dbGen
+package common
 
 import (
 	"encoding/json"
-	"github.com/keenmate/db-gen/common"
 	"os"
 	"path/filepath"
 	"time"
@@ -23,7 +22,7 @@ func SaveToTempFile(content interface{}, fileNamePrefix string) (err error) {
 	}
 
 	filename := filepath.Join(tempFolder, time.Now().Format("2006-01-02-15-04-05")+"-"+fileNamePrefix+".json")
-	common.LogDebug("Temp file saved: %s", filename)
+	LogDebug("Temp file saved: %s", filename)
 
 	err = os.WriteFile(filename, saveJson, 0777)
 	if err != nil {
