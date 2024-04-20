@@ -22,37 +22,41 @@ func Generate(routines []Routine, config *Config) error {
 	}
 	common.LogDebug("Got %d file hashes", len(*fileHashes))
 
+	log.Printf("Ensuring output folder...")
+
 	err = ensureOutputFolder(config)
 	if err != nil {
 		return fmt.Errorf("ensuring output folder: %s", err)
 	}
-	log.Printf("Ensured output folder")
+
+	log.Printf("Generating dbcontext...")
 
 	err = generateDbContext(routines, fileHashes, config)
 	if err != nil {
 		return fmt.Errorf("generating dbcontext: %s", err)
 
 	}
-	log.Printf("Generated dbcontext")
 
 	if config.GenerateModels {
+		log.Printf("Generating models...")
+
 		err = generateModels(routines, fileHashes, config)
 		if err != nil {
 			return fmt.Errorf("generating models: %s", err)
 
 		}
-		log.Printf("Generated models")
 	} else {
 		log.Printf("Skipping generating models")
 	}
 
 	if config.GenerateProcessors {
+		log.Printf("Generating processors...")
+
 		err = generateProcessors(routines, fileHashes, config)
 		if err != nil {
 			return fmt.Errorf("generating processors: %s", err)
 
 		}
-		log.Printf("Generated processors")
 	} else {
 		log.Printf("Skipping generating processors")
 	}

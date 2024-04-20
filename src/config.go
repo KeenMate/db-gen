@@ -31,6 +31,7 @@ type Config struct {
 	Debug                            bool           `mapstructure:"Debug"`
 	ClearOutputFolder                bool           `mapstructure:"ClearOutputFolder"`
 	RoutinesFile                     string         `mapstructure:"RoutinesFile"`
+	UseRoutinesFile                  bool           `mapstructure:"UseRoutinesFile"`
 	Generate                         []SchemaConfig `mapstructure:"Generate"`
 	Mappings                         []Mapping      `mapstructure:"Mappings"`
 }
