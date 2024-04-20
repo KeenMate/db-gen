@@ -1,4 +1,9 @@
 # CHANGELOG
+## 4.0.0
+
+### New features
+- Add new command `routines` loads routines from database and saves them to file set in `RoutinesFile`
+- added `--UseRoutinesFile` flag to generate, which loads routes from `RoutinesFile` instead of database
 
 ## 0.3.4
 
