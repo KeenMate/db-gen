@@ -59,3 +59,19 @@ func SaveAsJson(path string, data interface{}) error {
 
 	return nil
 }
+
+func LoadFromJson(path string, data interface{}) error {
+	LogDebug("Loading data from json file %s", path)
+
+	fileContent, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading file: %s", err)
+	}
+
+	err = json.Unmarshal(fileContent, data)
+	if err != nil {
+		return fmt.Errorf("parsing json: %s", err)
+	}
+	return nil
+
+}

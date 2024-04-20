@@ -2,36 +2,10 @@ package dbGen
 
 import (
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
+	"github.com/keenmate/db-gen/common"
+	"log"
 	"slices"
 )
-
-type DbConn struct {
-	conn *sqlx.DB
-}
-
-func Connect(connectionString string) (*DbConn, error) {
-	connection, err := sqlx.Connect("pgx", connectionString)
-	if err != nil {
-		return nil, err
-	}
-
-	err = connection.Ping()
-
-	if err != nil {
-		return nil, err
-	}
-
-	conn := &DbConn{conn: connection}
-
-	return conn, nil
-}
-
-func (conn DbConn) Select(output interface{}, query string, params ...interface{}) error {
-	err := conn.conn.Select(output, query, params...)
-	return err
-}
 
 type DbRoutine struct {
 	RowNumber     int    `db:"row_number"`
@@ -61,7 +35,32 @@ const (
 	Procedure = "procedure"
 )
 
-func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
+func GetRoutines(config *Config) ([]DbRoutine, error) {
+	if config.UseRoutinesFile {
+		return LoadRoutinesFromFile(config)
+	}
+
+	return getRoutinesFromDatabase(config)
+}
+
+func LoadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
+	routines := new([]DbRoutine)
+	err := common.LoadFromJson(config.RoutinesFile, routines)
+	if err != nil {
+		return nil, fmt.Errorf("loading routines from file: %s", err)
+	}
+
+	return *routines, nil
+}
+
+func getRoutinesFromDatabase(config *Config) ([]DbRoutine, error) {
+	log.Printf("Connecting to database...")
+	conn, err := common.Connect(config.ConnectionString)
+	if err != nil {
+
+		return nil, fmt.Errorf("error connecting to database: %s", err)
+	}
+
 	schemas := getSchemas(config)
 
 	routines := make([]DbRoutine, 0)
@@ -86,6 +85,7 @@ func GetRoutines(conn *DbConn, config *Config) ([]DbRoutine, error) {
 	return routines, nil
 
 }
+
 func getSchemas(config *Config) []string {
 	schemas := make([]string, 0)
 	for _, schemaConfig := range config.Generate {
@@ -97,7 +97,7 @@ func getSchemas(config *Config) []string {
 	return schemas
 }
 
-func getFunctionsInSchema(conn *DbConn, schema string) ([]DbRoutine, error) {
+func getFunctionsInSchema(conn *common.DbConn, schema string) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
 
 	// I am coalescing
@@ -127,7 +127,7 @@ func getFunctionsInSchema(conn *DbConn, schema string) ([]DbRoutine, error) {
 	return *routines, nil
 }
 
-func addParamsToRoutine(conn *DbConn, routine *DbRoutine) error {
+func addParamsToRoutine(conn *common.DbConn, routine *DbRoutine) error {
 	q := `
 		select ordinal_position::int,
 			   parameter_name::text,

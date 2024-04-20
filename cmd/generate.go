@@ -13,6 +13,7 @@ const (
 	keyDebug            = "debug"
 	keyConnectionString = "connectionString"
 	keyConfig           = "config"
+	keyUseRoutinesFile  = "useRoutinesFile"
 )
 
 var generateCmd = &cobra.Command{
@@ -21,6 +22,7 @@ var generateCmd = &cobra.Command{
 	Long:  "Generate code for calling database stored procedures",
 	Run: func(cmd *cobra.Command, args []string) {
 		common.BindBoolFlag(cmd, keyDebug)
+		common.BindBoolFlag(cmd, keyUseRoutinesFile)
 		common.BindStringFlag(cmd, keyConnectionString)
 		common.BindStringFlag(cmd, keyConfig)
 
@@ -43,6 +45,7 @@ func init() {
 
 	// set cli flags
 	common.DefineBoolFlag(generateCmd, keyDebug, "d", false, "Print debug logs and create debug files")
+	common.DefineBoolFlag(generateCmd, keyUseRoutinesFile, "", false, "Use routines file to generate code")
 	common.DefineStringFlag(generateCmd, keyConnectionString, "s", "", "Connection string used to connect to database")
 	common.DefineStringFlag(generateCmd, keyConfig, "c", "", "Path to configuration file")
 }
@@ -57,14 +60,10 @@ func doGenerate() error {
 
 	common.LogDebug("Debug logging is enabled")
 
-	log.Printf("Connecting to database...")
-	conn, err := dbGen.Connect(config.ConnectionString)
-	if err != nil {
-		return fmt.Errorf("error connecting to database: %s", err)
-	}
+	var routines []dbGen.DbRoutine
 
 	log.Printf("Getting routines...")
-	routines, err := dbGen.GetRoutines(conn, config)
+	routines, err = dbGen.GetRoutines(config)
 	if err != nil {
 		return fmt.Errorf("error getting routines: %s", err)
 	}
