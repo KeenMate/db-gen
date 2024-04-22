@@ -5,20 +5,23 @@ import (
 	"github.com/keenmate/db-gen/common"
 	"log"
 	"slices"
+	"strings"
 )
 
 type DbRoutine struct {
-	RowNumber     int    `db:"row_number"`
-	RoutineSchema string `db:"routine_schema"`
-	RoutineName   string `db:"routine_name"`
-	SpecificName  string `db:"specific_name"`
-	DataType      string `db:"data_type"`
-	UdtTypeScheme string `db:"type_udt_schema"`
-	UdtTypeName   string `db:"type_udt_name"`
-	ParamCount    int    `db:"param_count"`
-	FuncType      string `db:"func_type"`
-	InParameters  []DbParameter
-	OutParameters []DbParameter
+	RowNumber             int    `db:"row_number"`
+	RoutineSchema         string `db:"routine_schema"`
+	RoutineNameWithParams string
+	HasOverload           bool
+	RoutineName           string `db:"routine_name"`
+	SpecificName          string `db:"specific_name"`
+	DataType              string `db:"data_type"`
+	UdtTypeScheme         string `db:"type_udt_schema"`
+	UdtTypeName           string `db:"type_udt_name"`
+	ParamCount            int    `db:"param_count"`
+	FuncType              string `db:"func_type"`
+	InParameters          []DbParameter
+	OutParameters         []DbParameter
 }
 
 type DbParameter struct {
@@ -37,6 +40,7 @@ const (
 
 func GetRoutines(config *Config) ([]DbRoutine, error) {
 	if config.UseRoutinesFile {
+		common.LogDebug("Load routines from file %s", config.RoutinesFile)
 		return LoadRoutinesFromFile(config)
 	}
 
@@ -76,6 +80,7 @@ func getRoutinesFromDatabase(config *Config) ([]DbRoutine, error) {
 
 	for i, routine := range routines {
 		err := addParamsToRoutine(conn, &routines[i])
+		routines[i].RoutineNameWithParams = createRoutineNameWithParams(&routines[i])
 
 		if err != nil {
 			return nil, fmt.Errorf("getting params for routine %s: %s", routine.RoutineName, err)
@@ -169,4 +174,20 @@ func addParamsToRoutine(conn *common.DbConn, routine *DbRoutine) error {
 		}
 	}
 	return nil
+}
+
+func createRoutineNameWithParams(routine *DbRoutine) string {
+	var sb strings.Builder
+	sb.WriteString(routine.RoutineName)
+
+	params := make([]string, 0)
+	for _, param := range routine.InParameters {
+		params = append(params, param.UDTName)
+	}
+
+	sb.WriteString("(")
+	sb.WriteString(strings.Join(params, ","))
+	sb.WriteString(")")
+
+	return sb.String()
 }

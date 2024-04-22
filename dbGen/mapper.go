@@ -4,76 +4,9 @@ import (
 	"fmt"
 	"github.com/keenmate/db-gen/common"
 	"github.com/stoewer/go-strcase"
-	"log"
 	"slices"
 	"sort"
 )
-
-// Transforms data returned by database to structures that are used in generator
-
-func Preprocess(routines []DbRoutine, config *Config) ([]Routine, error) {
-	// In future this should be more modular
-
-	filteredFunctions := filterFunctions(&routines, config)
-
-	// don't need to compute for every property
-	typeMappings := getTypeMappings(config)
-	common.LogDebug("Got %d type mappigns", len(typeMappings))
-
-	// Map routines
-	functions, err := mapFunctions(&filteredFunctions, &typeMappings, config)
-
-	if err != nil {
-		log.Println("Error while mapping functions")
-		return nil, err
-	}
-
-	return functions, nil
-
-}
-
-func filterFunctions(functions *[]DbRoutine, config *Config) []DbRoutine {
-	schemaMap := getSchemaConfigMap(config)
-	common.LogDebug("Got %d schema configs  ", len(schemaMap))
-	filteredFunctions := make([]DbRoutine, 0)
-
-	for _, function := range *functions {
-		schemaConfig, exists := schemaMap[function.RoutineSchema]
-
-		// if config for given schema doest exits, don't generate for any function in given scheme
-		if !exists {
-			common.LogDebug("No schema config for '%s'", function.RoutineSchema)
-			continue
-		}
-
-		if schemaConfig.AllFunctions || slices.Contains(schemaConfig.Functions, function.RoutineName) {
-			// Case sensitive
-			if slices.Contains(schemaConfig.IgnoredFunctions, function.RoutineName) {
-				common.LogDebug("Routine '%s.%s' in ignored functions", function.RoutineSchema, function.RoutineName)
-				continue
-			}
-
-			filteredFunctions = append(filteredFunctions, function)
-		} else {
-			common.LogDebug("Routine '%s.%s' not generated because all function is false or isnt included in functions",
-				function.RoutineSchema,
-				function.RoutineName)
-		}
-
-	}
-
-	return filteredFunctions
-}
-
-func getSchemaConfigMap(config *Config) map[string]SchemaConfig {
-	schemaMap := make(map[string]SchemaConfig)
-
-	for _, schemaConfig := range config.Generate {
-		schemaMap[schemaConfig.Schema] = schemaConfig
-	}
-
-	return schemaMap
-}
 
 func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, config *Config) ([]Routine, error) {
 	mappedFunctions := make([]Routine, len(*routines))
@@ -83,12 +16,12 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 
 		returnProperties, err := getReturnProperties(routine, typeMappings)
 		if err != nil {
-			return nil, fmt.Errorf("mapping function %s: %s", routine.RoutineName, err)
+			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
 		parameters, err := getParameters(routine.InParameters, typeMappings)
 		if err != nil {
-			return nil, fmt.Errorf("mapping function %s: %s", routine.RoutineName, err)
+			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
 		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema)
@@ -167,16 +100,16 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 		propertyName := getPropertyName(attribute.Name)
 		typeMapping, err := getMapping(typeMappings, attribute.UDTName)
 		if err != nil {
-			return nil, fmt.Errorf("mapping parameter %s: %s", attribute.Name, err)
+			return nil, fmt.Errorf("processing parameter %s: %s", attribute.Name, err)
 		}
 
 		property := &Property{
 			DbColumnName:   attribute.Name,
 			DbColumnType:   attribute.UDTName,
 			PropertyName:   propertyName,
-			PropertyType:   typeMapping.mappingType,
+			PropertyType:   typeMapping.mappedType,
 			Position:       attribute.OrdinalPosition - positionOffset,
-			MapperFunction: typeMapping.mappingFunction,
+			MapperFunction: typeMapping.mappedFunction,
 			Nullable:       attribute.IsNullable,
 		}
 
@@ -209,26 +142,8 @@ func getProcessorName(functionName string) string {
 }
 
 type mapping struct {
-	mappingFunction string
-	mappingType     string
-}
-
-func getTypeMappings(config *Config) map[string]mapping {
-	mappings := make(map[string]mapping)
-
-	// If there are multiple mappings to one database type, last one will be used
-
-	for _, val := range config.Mappings {
-		for _, databaseType := range val.DatabaseTypes {
-			mappings[databaseType] = mapping{
-				mappingFunction: val.MappingFunction,
-				mappingType:     val.MappedType,
-			}
-		}
-
-	}
-
-	return mappings
+	mappedFunction string
+	mappedType     string
 }
 
 func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, error) {
@@ -238,7 +153,7 @@ func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, erro
 		fallbackVal, fallbackExists := (*mappings)["*"]
 
 		if !fallbackExists {
-			return nil, fmt.Errorf("mapping for dbType '%s' not found and fallback mapping * is not set ", dbDataType)
+			return nil, fmt.Errorf("processing for dbType '%s' not found and fallback processing * is not set ", dbDataType)
 
 		}
 

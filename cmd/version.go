@@ -2,7 +2,7 @@ package cmd
 
 import (
 	_ "embed"
-	dbGen "github.com/keenmate/db-gen/src"
+	dbGen "github.com/keenmate/db-gen/dbGen"
 	"github.com/spf13/cobra"
 )
 

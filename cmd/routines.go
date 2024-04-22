@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/keenmate/db-gen/common"
-	dbGen "github.com/keenmate/db-gen/src"
+	dbGen "github.com/keenmate/db-gen/dbGen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"

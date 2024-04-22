@@ -37,10 +37,32 @@ type Config struct {
 }
 
 type SchemaConfig struct {
-	Schema           string   `mapstructure:"Schema"`
-	AllFunctions     bool     `mapstructure:"AllFunctions"`
-	Functions        []string `mapstructure:"Functions"`
-	IgnoredFunctions []string `mapstructure:"IgnoredFunctions"`
+	Schema       string                     `mapstructure:"Schema"`
+	AllFunctions bool                       `mapstructure:"AllFunctions"`
+	Functions    map[string]FunctionMapping `mapstructure:"Functions"`
+}
+
+type FunctionMapping struct {
+	Generate         bool
+	MappedName       string                   `mapstructure:"MappedName"`
+	DontSelectValue  bool                     `mapstructure:"DontSelectValue"`
+	SelectAllColumns bool                     `mapstructure:"SelectAllColumns"`
+	Model            map[string]ColumnMapping `mapstructure:"Model"`
+	Parameters       map[string]ParamMapping  `mapstructure:"Parameters"`
+}
+
+type ColumnMapping struct {
+	SelectColumn    bool
+	MappedName      string `mapstructure:"MappedName"`
+	MappedType      string `mapstructure:"MappedType"`
+	MappingFunction string `mapstructure:"MappingFunction"`
+	IsNullable      bool   `mapstructure:"IsNullable"`
+}
+
+type ParamMapping struct {
+	IsNullable bool   `mapstructure:"IsNullable"`
+	MappedName string `mapstructure:"MappedName"`
+	MappedType string `mapstructure:"MappedType"`
 }
 
 type Mapping struct {
@@ -48,8 +70,6 @@ type Mapping struct {
 	MappedType      string   `mapstructure:"MappedType"`
 	MappingFunction string   `mapstructure:"MappingFunction"`
 }
-
-var CurrentConfig *Config = nil
 
 // set in ReadConfig
 var loadedConfigLocation = ""
@@ -75,11 +95,12 @@ func GetAndValidateConfig() (*Config, error) {
 		Generate:                         nil,
 		Mappings:                         nil,
 		RoutinesFile:                     "./db-gen-routines.json",
+		UseRoutinesFile:                  false,
 	}
 
-	err := viper.Unmarshal(config)
+	err := getConfigFromViper(config)
 	if err != nil {
-		return nil, fmt.Errorf("error mapping configuration: %s", err)
+		return nil, fmt.Errorf("error processing configuration: %s", err)
 	}
 
 	// no configuration file loaded
@@ -100,9 +121,6 @@ func GetAndValidateConfig() (*Config, error) {
 	if !common.Contains(ValidCaseNormalized, config.GeneratedFileCase) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
-
-	// used by debug helpers
-	CurrentConfig = config
 
 	common.LogDebug("Loaded configuration: \n%+v", config)
 	return config, nil

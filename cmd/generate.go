@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/keenmate/db-gen/common"
-	dbGen "github.com/keenmate/db-gen/src"
+	dbGen "github.com/keenmate/db-gen/dbGen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -85,7 +85,7 @@ func doGenerate() error {
 	}
 
 	log.Printf("Preprocessing...")
-	processedFunctions, err := dbGen.Preprocess(routines, config)
+	processedFunctions, err := dbGen.Process(routines, config)
 	if err != nil {
 		return fmt.Errorf("error preprocessing: %s", err)
 	}

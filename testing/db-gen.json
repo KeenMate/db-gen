@@ -13,16 +13,35 @@
 		{
 			"Schema": "public",
 			"AllFunctions": true,
-			"IgnoredFunctions": [
-				"ignored"
-			]
+			"Functions": {
+				"ignored": false,
+				"return_custom_type": {
+					"MappedName": "customName",
+					"SelectAllColumns": true,
+					"Model": {
+						"__number": false,
+						"__json": {
+							"MappedName": "jason",
+							"MappedType": "string",
+							"MappingFunction": "mapJsonAsString",
+							"IsNullable": false
+						}
+					}
+				},
+				"overloaded_function(int4)": {
+					"MappedName": "overload_int"
+				},
+				"overloaded_function(text)": {
+					"MappedName": "overload_text"
+				}
+			}
 		},
 		{
 			"Schema": "test",
 			"AllFunctions": false,
-			"Functions": [
-				"explicitly_included"
-			]
+			"Functions": {
+				"explicitly_included": true
+			}
 		}
 	],
 	"Mappings": [
