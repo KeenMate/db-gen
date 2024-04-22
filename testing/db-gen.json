@@ -17,9 +17,11 @@
 				"ignored": false,
 				"return_custom_type": {
 					"MappedName": "customName",
-					"SelectAllColumns": true,
+					"SelectOnlySpecified": true,
 					"Model": {
-						"__number": false,
+						"__number": {
+							"MappedType": "int"
+						},
 						"__json": {
 							"MappedName": "jason",
 							"MappedType": "string",

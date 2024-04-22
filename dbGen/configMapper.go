@@ -39,7 +39,7 @@ func decodeWithHook(in interface{}, out interface{}) error {
 // mapCustomTypes merges a slice of maps to a map
 func mapCustomTypes() mapstructure.DecodeHookFunc {
 	return func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
-		if to == reflect.TypeOf(map[string]FunctionMapping{}) {
+		if to == reflect.TypeOf(map[string]RoutineMapping{}) {
 			return decodeFunctionMap(data)
 		}
 
@@ -52,15 +52,15 @@ func mapCustomTypes() mapstructure.DecodeHookFunc {
 }
 
 func decodeFunctionMap(data interface{}) (interface{}, error) {
-	mappings := make(map[string]FunctionMapping)
+	mappings := make(map[string]RoutineMapping)
 	for dbFunctionName, functionMapping := range data.(map[string]interface{}) {
 
-		mappedValue := new(FunctionMapping)
+		mappedValue := new(RoutineMapping)
 
 		// default value for map is nil pointer
 		mappedValue.Model = make(map[string]ColumnMapping)
 		mappedValue.Parameters = make(map[string]ParamMapping)
-
+		mappedValue.Generate = true
 		if reflect.ValueOf(functionMapping).Kind() == reflect.Bool {
 			// simple processing value
 			mappedValue.Generate = functionMapping.(bool)
@@ -88,7 +88,7 @@ func decodeColumnMapping(data interface{}) (interface{}, error) {
 	for dbFunctionName, functionMapping := range fromAsMap {
 
 		mappedValue := new(ColumnMapping)
-
+		mappedValue.SelectColumn = true
 		if reflect.ValueOf(functionMapping).Kind() == reflect.Bool {
 
 			// simple processing value
