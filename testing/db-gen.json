@@ -35,6 +35,14 @@
 				},
 				"overloaded_function(text)": {
 					"MappedName": "overload_text"
+				},
+				"return_void(int4,int4)": {
+					"Parameters": {
+						"a": {
+							"MappedName": "aaa",
+							"MappedType": "long"
+						}
+					}
 				}
 			}
 		},
