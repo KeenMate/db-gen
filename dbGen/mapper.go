@@ -8,30 +8,35 @@ import (
 	"sort"
 )
 
+// TODO make configurable
+const hiddenSchema = "public"
+
 func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, config *Config) ([]Routine, error) {
 	mappedFunctions := make([]Routine, len(*routines))
+	schemaConfig := getSchemaConfigMap(config)
 
 	for i, routine := range *routines {
 		common.LogDebug("Mapping %s", routine.RoutineName)
+		routineMapping := getRoutineMapping(routine, schemaConfig)
 
-		returnProperties, err := getReturnProperties(routine, typeMappings)
+		returnProperties, err := mapReturnColumns(routine, typeMappings, &routineMapping, config)
 		if err != nil {
 			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
-		parameters, err := getParameters(routine.InParameters, typeMappings)
+		parameters, err := mapParameters(routine.InParameters, typeMappings, &routineMapping, config)
 		if err != nil {
 			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
-		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema)
-		dbFullFunctionName := routine.RoutineSchema + "." + routine.RoutineName
+		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema, routineMapping.MappedName)
+
 		modelName := getModelName(functionName)
 		processorName := getProcessorName(functionName)
 
 		function := &Routine{
 			FunctionName:       functionName,
-			DbFullFunctionName: dbFullFunctionName,
+			DbFullFunctionName: routine.RoutineSchema + "." + routine.RoutineName,
 			ModelName:          modelName,
 			Parameters:         parameters,
 			ReturnProperties:   returnProperties,
@@ -48,7 +53,7 @@ func mapFunctions(routines *[]DbRoutine, typeMappings *map[string]mapping, confi
 	return mappedFunctions, nil
 }
 
-func getReturnProperties(routine DbRoutine, typeMappings *map[string]mapping) ([]Property, error) {
+func mapReturnColumns(routine DbRoutine, typeMappings *map[string]mapping, routineMapping *RoutineMapping, config *Config) ([]Property, error) {
 
 	returnParameters := make([]Property, 0)
 	structuredTypes := []string{"record", "USER-DEFINED"}
@@ -76,10 +81,53 @@ func getReturnProperties(routine DbRoutine, typeMappings *map[string]mapping) ([
 
 	}
 
-	return getParameters(outParameters, typeMappings)
+	properties := make([]Property, 0)
+
+	if outParameters == nil || len(outParameters) == 0 {
+		return properties, nil
+	}
+
+	// Make sure attributes are in right order
+	sort.Slice(outParameters, func(i, j int) bool {
+		return outParameters[i].OrdinalPosition < outParameters[j].OrdinalPosition
+	})
+
+	// First possition should be 0
+	positionOffset := outParameters[0].OrdinalPosition
+	//common.LogDebug("Possition offset is %d", positionOffset)
+
+	for _, column := range outParameters {
+		shouldSelect, columnMapping := getColumnMapping(column.Name, routineMapping)
+
+		if !shouldSelect {
+			common.LogDebug("skipping selection of %s", column)
+			continue
+		}
+
+		propertyName := getPropertyName(column.Name, columnMapping.MappedName)
+
+		typeMapping, err := getTypeMapping(column.UDTName, columnMapping.MappedType, columnMapping.MappingFunction, typeMappings, config)
+		if err != nil {
+			return nil, fmt.Errorf("processing parameter %s: %s", column.Name, err)
+		}
+
+		property := &Property{
+			DbColumnName:   column.Name,
+			DbColumnType:   column.UDTName,
+			PropertyName:   propertyName,
+			PropertyType:   typeMapping.mappedType,
+			Position:       column.OrdinalPosition - positionOffset,
+			MapperFunction: typeMapping.mappedFunction,
+			Nullable:       column.IsNullable,
+		}
+
+		properties = append(properties, *property)
+	}
+
+	return properties, nil
 }
 
-func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) ([]Property, error) {
+func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, routineMapping *RoutineMapping, config *Config) ([]Property, error) {
 
 	properties := make([]Property, len(attributes))
 
@@ -96,21 +144,24 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 	positionOffset := attributes[0].OrdinalPosition
 	//common.LogDebug("Possition offset is %d", positionOffset)
 
-	for i, attribute := range attributes {
-		propertyName := getPropertyName(attribute.Name)
-		typeMapping, err := getMapping(typeMappings, attribute.UDTName)
+	for i, parameter := range attributes {
+		paramMapping := getParamMapping(parameter.Name, routineMapping)
+
+		propertyName := getPropertyName(parameter.Name, paramMapping.MappedName)
+
+		typeMapping, err := getTypeMapping(parameter.UDTName, paramMapping.MappedType, "", typeMappings, config)
 		if err != nil {
-			return nil, fmt.Errorf("processing parameter %s: %s", attribute.Name, err)
+			return nil, fmt.Errorf("processing parameter %s: %s", parameter.Name, err)
 		}
 
 		property := &Property{
-			DbColumnName:   attribute.Name,
-			DbColumnType:   attribute.UDTName,
+			DbColumnName:   parameter.Name,
+			DbColumnType:   parameter.UDTName,
 			PropertyName:   propertyName,
 			PropertyType:   typeMapping.mappedType,
-			Position:       attribute.OrdinalPosition - positionOffset,
+			Position:       parameter.OrdinalPosition - positionOffset,
 			MapperFunction: typeMapping.mappedFunction,
-			Nullable:       attribute.IsNullable,
+			Nullable:       parameter.IsNullable,
 		}
 
 		properties[i] = *property
@@ -119,10 +170,12 @@ func getParameters(attributes []DbParameter, typeMappings *map[string]mapping) (
 	return properties, nil
 }
 
-const hiddenSchema = "public"
-
 // If you want to use different case, use template function in templates
-func getFunctionName(dbFunctionName string, schema string) string {
+func getFunctionName(dbFunctionName string, schema string, mappedName string) string {
+	if mappedName != "" {
+		return mappedName
+	}
+
 	schemaPrefix := ""
 	// don't add public_ to function names
 	if schema != hiddenSchema {
@@ -131,7 +184,11 @@ func getFunctionName(dbFunctionName string, schema string) string {
 	return schemaPrefix + strcase.UpperCamelCase(dbFunctionName)
 }
 
-func getPropertyName(dbColumnName string) string {
+func getPropertyName(dbColumnName string, mappedName string) string {
+	if mappedName != "" {
+		return mappedName
+	}
+
 	return strcase.UpperCamelCase(dbColumnName)
 }
 func getModelName(functionName string) string {
@@ -146,7 +203,12 @@ type mapping struct {
 	mappedType     string
 }
 
-func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, error) {
+func getTypeMapping(dbDataType string, typeOverride string, mappingFunctionOverride string, mappings *map[string]mapping, config *Config) (*mapping, error) {
+	// mapped type override
+	if typeOverride != "" {
+		return handleMappingOverride(typeOverride, mappingFunctionOverride, config)
+	}
+
 	val, isFound := (*mappings)[dbDataType]
 
 	if !isFound {
@@ -163,4 +225,94 @@ func getMapping(mappings *map[string]mapping, dbDataType string) (*mapping, erro
 	}
 
 	return &val, nil
+}
+
+func handleMappingOverride(typeOverride string, mappingFunctionOverride string, config *Config) (*mapping, error) {
+	if mappingFunctionOverride != "" {
+		return &mapping{
+			mappedFunction: mappingFunctionOverride,
+			mappedType:     typeOverride,
+		}, nil
+	}
+
+	// get mapping function
+	for _, typeMapping := range config.Mappings {
+		if typeMapping.MappedType == typeOverride {
+			return &mapping{
+				mappedFunction: typeMapping.MappingFunction,
+				mappedType:     typeOverride,
+			}, nil
+		}
+	}
+	// no mapping function is set and no mapping exist for type given
+	return nil, fmt.Errorf("mapped type overriden to %s, but no mapping functions specified and mapping function for override type doenst exist in mappings", typeOverride)
+}
+
+var emptyMapping = RoutineMapping{
+	Generate:            true,
+	MappedName:          "",
+	DontSelectValue:     false,
+	SelectOnlySpecified: false,
+	Model:               make(map[string]ColumnMapping),
+	Parameters:          make(map[string]ParamMapping),
+}
+
+func getRoutineMapping(routine DbRoutine, schemaConfigs map[string]SchemaConfig) RoutineMapping {
+	schemaConfig, ok := schemaConfigs[routine.RoutineSchema]
+	if !ok {
+		// this should never happen
+		panic("trying ty get function mapping for function in schema that is not defined. This should never happen, because function should have been fitered out")
+	}
+
+	routineMapping, found := schemaConfig.Functions[routine.RoutineNameWithParams]
+	if found {
+		return routineMapping
+	}
+
+	routineMapping, found = schemaConfig.Functions[routine.RoutineName]
+	if found {
+		return routineMapping
+	}
+
+	return emptyMapping
+}
+
+var emptyColumnMapping = ColumnMapping{
+	SelectColumn:    true,
+	MappedName:      "",
+	MappedType:      "",
+	MappingFunction: "",
+	IsNullable:      false,
+}
+
+func getColumnMapping(columnName string, routineMapping *RoutineMapping) (bool, ColumnMapping) {
+	if routineMapping.DontSelectValue {
+		return false, emptyColumnMapping
+	}
+
+	columnMapping, hasExplicitColumnMapping := routineMapping.Model[columnName]
+	if hasExplicitColumnMapping {
+		common.LogDebug("explicit mapping on column %s", columnName)
+		return columnMapping.SelectColumn, columnMapping
+	}
+
+	return !routineMapping.SelectOnlySpecified, emptyColumnMapping
+
+}
+
+var emptyParamMapping = ParamMapping{
+	MappedName: "",
+	MappedType: "",
+	IsNullable: false,
+}
+
+func getParamMapping(paramName string, routineMapping *RoutineMapping) ParamMapping {
+
+	columnMapping, hasExplicitParamMapping := routineMapping.Parameters[paramName]
+	if hasExplicitParamMapping {
+		return columnMapping
+	}
+
+	return emptyParamMapping
+
 }

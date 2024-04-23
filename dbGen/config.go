@@ -37,18 +37,18 @@ type Config struct {
 }
 
 type SchemaConfig struct {
-	Schema       string                     `mapstructure:"Schema"`
-	AllFunctions bool                       `mapstructure:"AllFunctions"`
-	Functions    map[string]FunctionMapping `mapstructure:"Functions"`
+	Schema       string                    `mapstructure:"Schema"`
+	AllFunctions bool                      `mapstructure:"AllFunctions"`
+	Functions    map[string]RoutineMapping `mapstructure:"Functions"`
 }
 
-type FunctionMapping struct {
-	Generate         bool
-	MappedName       string                   `mapstructure:"MappedName"`
-	DontSelectValue  bool                     `mapstructure:"DontSelectValue"`
-	SelectAllColumns bool                     `mapstructure:"SelectAllColumns"`
-	Model            map[string]ColumnMapping `mapstructure:"Model"`
-	Parameters       map[string]ParamMapping  `mapstructure:"Parameters"`
+type RoutineMapping struct {
+	Generate            bool
+	MappedName          string                   `mapstructure:"MappedName"`
+	DontSelectValue     bool                     `mapstructure:"DontSelectValue"`
+	SelectOnlySpecified bool                     `mapstructure:"SelectOnlySpecified"`
+	Model               map[string]ColumnMapping `mapstructure:"Model"`
+	Parameters          map[string]ParamMapping  `mapstructure:"Parameters"`
 }
 
 type ColumnMapping struct {
