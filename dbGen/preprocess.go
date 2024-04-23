@@ -1,12 +1,22 @@
 package dbGen
 
-import "github.com/keenmate/db-gen/common"
+import (
+	"fmt"
+	"github.com/keenmate/db-gen/common"
+)
 
-func PreprocessRoutines(routines *[]DbRoutine) {
-	markFunctionAsOverloaded(routines)
+func PreprocessRoutines(routines *[]DbRoutine, config *Config) error {
+	err := markOverloadedRoutines(routines, config)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func markFunctionAsOverloaded(routines *[]DbRoutine) {
+func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
+	schemaMap := getSchemaConfigMap(config)
+
 	// first, we find all the overloaded functions
 	namesCounter := make(map[string]int)
 	for _, routine := range *routines {
@@ -31,6 +41,19 @@ func markFunctionAsOverloaded(routines *[]DbRoutine) {
 			continue
 		}
 
+		schemaConfig, exists := schemaMap[routine.RoutineSchema]
+
+		if !exists {
+			panic(fmt.Sprintf("schema config for schema %s missing"))
+		}
+
+		// enforce that overloaded routine has to have mapping
+		if routine.HasOverload && !hasCustomMappedName(&schemaConfig, &routine) {
+			// todo return error
+			common.Log("Overloaded function %s doesnt have mapping", routine.RoutineNameWithParams)
+			return fmt.Errorf("overloaded function %s.%s doesn't have mapping defined", routine.RoutineSchema, routine.RoutineNameWithParams)
+		}
+
 		overloadedFunctionCount++
 		(*routines)[i].HasOverload = true
 
@@ -38,4 +61,21 @@ func markFunctionAsOverloaded(routines *[]DbRoutine) {
 
 	common.Log("Marked %d functions as overload", overloadedFunctionCount)
 
+	return nil
+}
+
+func hasCustomMappedName(schemaConfig *SchemaConfig, routine *DbRoutine) bool {
+	mappingInfo, exists := schemaConfig.Functions[routine.RoutineNameWithParams]
+	if !exists {
+		common.LogDebug("mapping for function %s doesnt exist", routine.RoutineNameWithParams)
+		return false
+	}
+
+	if mappingInfo.MappedName == "" {
+		common.LogDebug("mapping for function %s exists, but mapped name is not set", routine.RoutineNameWithParams)
+
+		return false
+	}
+
+	return true
 }
