@@ -9,12 +9,11 @@ import (
 	"log"
 )
 
-const (
-	keyDebug            = "debug"
-	keyConnectionString = "connectionString"
-	keyConfig           = "config"
-	keyUseRoutinesFile  = "useRoutinesFile"
-)
+const keyUseRoutinesFile = "useRoutinesFile"
+
+var generateFlags = []common.FlagArgument{
+	common.NewBoolFlag(keyUseRoutinesFile, "", false, "Use routines file to generate code"),
+}
 
 var generateCmd = &cobra.Command{
 	Use:   "generate",
@@ -28,11 +27,7 @@ var generateCmd = &cobra.Command{
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		common.BindBoolFlag(cmd, keyDebug)
-		common.BindBoolFlag(cmd, keyUseRoutinesFile)
-		common.BindStringFlag(cmd, keyConnectionString)
-		common.BindStringFlag(cmd, keyConfig)
-
+		common.BindFlags(cmd, append(commonFlags, generateFlags...))
 		_, err := dbGen.ReadConfig(viper.GetString(keyConfig))
 		if err != nil {
 			common.Exit("configuration error: %s", err)
@@ -50,11 +45,7 @@ var generateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	// set cli flags
-	common.DefineBoolFlag(generateCmd, keyDebug, "d", false, "Print debug logs and create debug files")
-	common.DefineBoolFlag(generateCmd, keyUseRoutinesFile, "", false, "Use routines file to generate code")
-	common.DefineStringFlag(generateCmd, keyConnectionString, "s", "", "Connection string used to connect to database")
-	common.DefineStringFlag(generateCmd, keyConfig, "c", "", "Path to configuration file")
+	common.DefineFlags(generateCmd, append(commonFlags, generateFlags...))
 }
 
 func doGenerate() error {

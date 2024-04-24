@@ -14,10 +14,7 @@ var getRoutinesCmd = &cobra.Command{
 	Short: "Get routines",
 	Long:  "Get routines from database and save them to file to generate later",
 	Run: func(cmd *cobra.Command, args []string) {
-		common.BindBoolFlag(cmd, keyDebug)
-		common.BindBoolFlag(cmd, keyUseRoutinesFile)
-		common.BindStringFlag(cmd, keyConnectionString)
-		common.BindStringFlag(cmd, keyConfig)
+		common.BindFlags(cmd, commonFlags)
 
 		configLocation := viper.GetString("config")
 
@@ -30,6 +27,10 @@ var getRoutinesCmd = &cobra.Command{
 
 		viper.AutomaticEnv() // read in environment variables that match
 
+		if args[0] != "" {
+			viper.Set("routinesFile", args[0])
+		}
+
 		err = doGetRoutines()
 
 		if err != nil {
@@ -41,11 +42,7 @@ var getRoutinesCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(getRoutinesCmd)
 
-	// set cli flags
-	common.DefineBoolFlag(getRoutinesCmd, keyDebug, "d", false, "Print debug logs and create debug files")
-	common.DefineBoolFlag(getRoutinesCmd, keyUseRoutinesFile, "", false, "Use routines file to generate code")
-	common.DefineStringFlag(getRoutinesCmd, keyConnectionString, "s", "", "Connection string used to connect to database")
-	common.DefineStringFlag(getRoutinesCmd, keyConfig, "c", "", "Path to configuration file")
+	common.DefineFlags(getRoutinesCmd, commonFlags)
 }
 
 func doGetRoutines() error {
