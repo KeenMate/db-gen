@@ -22,7 +22,7 @@ func Process(routines []DbRoutine, config *Config) ([]Routine, error) {
 	common.LogDebug("Got %d type mappings", len(typeMappings))
 
 	// Map routines
-	functions, err := mapFunctions(&filteredRoutines, &typeMappings, config)
+	functions, err := mapRoutines(&filteredRoutines, &typeMappings, config)
 
 	if err != nil {
 		log.Println("Error while processing functions")

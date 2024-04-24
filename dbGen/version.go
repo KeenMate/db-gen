@@ -30,16 +30,16 @@ func ParseBuildInformation(versionFileText string) error {
 		return nil
 	}
 
-	splitted := strings.Split(versionFileText, " ")
+	parts := strings.Split(versionFileText, " ")
 
-	if len(splitted) < 2 {
+	if len(parts) < 2 {
 		return fmt.Errorf("error with build, Version file has incorrect format ")
 	}
 
 	info = BuildInformation{
-		Builder:    splitted[0],
-		Version:    splitted[1],
-		CommitHash: splitted[2],
+		Builder:    parts[0],
+		Version:    parts[1],
+		CommitHash: parts[2],
 	}
 
 	return nil
