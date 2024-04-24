@@ -1,6 +1,8 @@
 module github.com/keenmate/db-gen
 
-go 1.21
+go 1.21.4
+
+toolchain go1.21.9
 
 require (
 	github.com/jackc/pgx/v5 v5.5.1
@@ -12,6 +14,7 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/guregu/null/v5 v5.0.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

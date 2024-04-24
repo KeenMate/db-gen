@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"fmt"
+	"github.com/guregu/null/v5"
 	"github.com/keenmate/db-gen/common"
 	"github.com/spf13/viper"
 	"os"
@@ -56,13 +57,16 @@ type ColumnMapping struct {
 	MappedName      string `mapstructure:"MappedName"`
 	MappedType      string `mapstructure:"MappedType"`
 	MappingFunction string `mapstructure:"MappingFunction"`
-	IsNullable      bool   `mapstructure:"IsNullable"`
+
+	IsNullable null.Bool `mapstructure:"IsNullable"`
 }
 
 type ParamMapping struct {
-	IsNullable bool   `mapstructure:"IsNullable"`
 	MappedName string `mapstructure:"MappedName"`
 	MappedType string `mapstructure:"MappedType"`
+
+	// this is string because it can be empty
+	IsNullable null.Bool `mapstructure:"IsNullable"`
 }
 
 type Mapping struct {

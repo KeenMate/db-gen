@@ -20,13 +20,14 @@
 					"SelectOnlySpecified": true,
 					"Model": {
 						"__number": {
-							"MappedType": "int"
+							"MappedType": "int",
+							"IsNullable": true
 						},
 						"__json": {
 							"MappedName": "jason",
 							"MappedType": "string",
 							"MappingFunction": "mapJsonAsString",
-							"IsNullable": false
+							"IsNullable": null
 						}
 					}
 				},

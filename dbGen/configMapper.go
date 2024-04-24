@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"fmt"
+	"github.com/guregu/null/v5"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"reflect"
@@ -45,6 +46,9 @@ func mapCustomTypes() mapstructure.DecodeHookFunc {
 
 		if to == reflect.TypeOf(map[string]ColumnMapping{}) {
 			return decodeColumnMapping(data)
+		}
+		if to == reflect.TypeOf(null.Bool{}) {
+			return decodeNullBool(data)
 		}
 
 		return data, nil
@@ -108,4 +112,11 @@ func decodeColumnMapping(data interface{}) (interface{}, error) {
 	}
 
 	return columns, nil
+}
+
+func decodeNullBool(data interface{}) (interface{}, error) {
+	if reflect.TypeOf(data).Kind() == reflect.Bool {
+		return null.BoolFrom(data.(bool)), nil
+	}
+	return null.NewBool(false, false), nil
 }

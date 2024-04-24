@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"fmt"
+	"github.com/guregu/null/v5"
 	"github.com/keenmate/db-gen/common"
 	"github.com/stoewer/go-strcase"
 	"slices"
@@ -118,7 +119,7 @@ func mapReturnColumns(routine DbRoutine, typeMappings *map[string]mapping, routi
 			PropertyType:   typeMapping.mappedType,
 			Position:       column.OrdinalPosition - positionOffset,
 			MapperFunction: typeMapping.mappedFunction,
-			Nullable:       column.IsNullable,
+			Nullable:       getIsNullable(columnMapping.IsNullable, column.IsNullable),
 		}
 
 		properties = append(properties, *property)
@@ -145,8 +146,8 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 	//common.LogDebug("Possition offset is %d", positionOffset)
 
 	for i, parameter := range attributes {
-		paramMapping := getParamMapping(parameter.Name, routineMapping)
-
+		paramMapping := getParamMapping(parameter, routineMapping)
+		common.LogDebug("parameter %s custom mapping: %+v", parameter.Name, paramMapping)
 		propertyName := getPropertyName(parameter.Name, paramMapping.MappedName)
 
 		typeMapping, err := getTypeMapping(parameter.UDTName, paramMapping.MappedType, "", typeMappings, config)
@@ -160,8 +161,8 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 			PropertyName:   propertyName,
 			PropertyType:   typeMapping.mappedType,
 			Position:       parameter.OrdinalPosition - positionOffset,
-			MapperFunction: typeMapping.mappedFunction,
-			Nullable:       parameter.IsNullable,
+			MapperFunction: "",
+			Nullable:       getIsNullable(paramMapping.IsNullable, parameter.IsNullable),
 		}
 
 		properties[i] = *property
@@ -244,6 +245,7 @@ func handleMappingOverride(typeOverride string, mappingFunctionOverride string, 
 			}, nil
 		}
 	}
+
 	// no mapping function is set and no mapping exist for type given
 	return nil, fmt.Errorf("mapped type overriden to %s, but no mapping functions specified and mapping function for override type doenst exist in mappings", typeOverride)
 }
@@ -263,7 +265,6 @@ func getRoutineMapping(routine DbRoutine, schemaConfigs map[string]SchemaConfig)
 		// this should never happen
 		panic("trying ty get function mapping for function in schema that is not defined. This should never happen, because function should have been fitered out")
 	}
-
 	routineMapping, found := schemaConfig.Functions[routine.RoutineNameWithParams]
 	if found {
 		return routineMapping
@@ -282,7 +283,7 @@ var emptyColumnMapping = ColumnMapping{
 	MappedName:      "",
 	MappedType:      "",
 	MappingFunction: "",
-	IsNullable:      false,
+	IsNullable:      null.NewBool(false, false),
 }
 
 func getColumnMapping(columnName string, routineMapping *RoutineMapping) (bool, ColumnMapping) {
@@ -303,16 +304,25 @@ func getColumnMapping(columnName string, routineMapping *RoutineMapping) (bool, 
 var emptyParamMapping = ParamMapping{
 	MappedName: "",
 	MappedType: "",
-	IsNullable: false,
+	IsNullable: null.NewBool(false, false),
 }
 
-func getParamMapping(paramName string, routineMapping *RoutineMapping) ParamMapping {
+func getParamMapping(param DbParameter, routineMapping *RoutineMapping) ParamMapping {
 
-	columnMapping, hasExplicitParamMapping := routineMapping.Parameters[paramName]
+	columnMapping, hasExplicitParamMapping := routineMapping.Parameters[param.Name]
 	if hasExplicitParamMapping {
 		return columnMapping
 	}
 
 	return emptyParamMapping
 
+}
+
+func getIsNullable(typeMappingOverride null.Bool, implicitValue bool) bool {
+	if typeMappingOverride.Valid {
+		common.LogDebug("using explicit value of nullable %t", typeMappingOverride.Bool)
+		return typeMappingOverride.Bool
+	}
+
+	return implicitValue
 }
