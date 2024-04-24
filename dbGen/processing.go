@@ -32,21 +32,3 @@ func Process(routines []DbRoutine, config *Config) ([]Routine, error) {
 	return functions, nil
 
 }
-
-func getTypeMappings(config *Config) map[string]mapping {
-	mappings := make(map[string]mapping)
-
-	// If there are multiple mappings to one database type, last one will be used
-
-	for _, val := range config.Mappings {
-		for _, databaseType := range val.DatabaseTypes {
-			mappings[databaseType] = mapping{
-				mappedFunction: val.MappingFunction,
-				mappedType:     val.MappedType,
-			}
-		}
-
-	}
-
-	return mappings
-}

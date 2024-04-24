@@ -105,6 +105,9 @@ func decodeColumnMapping(data interface{}) (interface{}, error) {
 				return nil, fmt.Errorf("decoding complex value of ColumnMapping: %s", err)
 			}
 
+			if mappedValue.MappedType == "" && mappedValue.MappingFunction != "" {
+				return nil, fmt.Errorf("cant set mapping function mapping without setting mapped type")
+			}
 		}
 
 		columns[dbFunctionName] = *mappedValue
