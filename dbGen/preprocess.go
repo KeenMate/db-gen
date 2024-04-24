@@ -44,7 +44,7 @@ func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
 		schemaConfig, exists := schemaMap[routine.RoutineSchema]
 
 		if !exists {
-			panic(fmt.Sprintf("schema config for schema %s missing"))
+			panic(fmt.Sprintf("schema config for schema %s missing", routine.RoutineSchema))
 		}
 
 		// enforce that overloaded routine has to have mapping
