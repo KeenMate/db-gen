@@ -235,7 +235,7 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 		}
 
 		if explicitMapping.MappedType != "" {
-			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "", config)
+			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, explicitMapping.MappingFunction, config)
 			if err != nil {
 				return false, nil, err
 			}

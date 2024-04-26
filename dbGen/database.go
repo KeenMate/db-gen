@@ -143,7 +143,7 @@ func addParamsToRoutine(conn *common.DbConn, routine *DbRoutine) error {
 		where specific_schema = $1
 		  and specific_name = $2		
 		union
-		select c.ordinal_position::int, c.column_name::text, 'OUT', c.udt_name::text, c.column_default is not null
+		select c.ordinal_position::int, c.column_name::text, 'OUT', c.udt_name::text, c.is_nullable = 'YES'
 		from information_schema.columns c
 		where c.table_name = $3
 		  and c.table_schema = coalesce($4, 'public')
