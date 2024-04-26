@@ -3,7 +3,6 @@ package dbGen
 import (
 	"fmt"
 	"github.com/keenmate/db-gen/common"
-	"github.com/stoewer/go-strcase"
 	"slices"
 	"sort"
 )
@@ -211,7 +210,7 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 		return false, nil, nil
 	}
 
-	name := strcase.UpperCamelCase(param.Name)
+	name := common.ToPascalCase(param.Name)
 	isNullable := param.IsNullable
 	var typeMapping *mapping = nil
 	var err error = nil
@@ -308,16 +307,16 @@ func getFunctionName(dbFunctionName string, schema string, mappedName string) st
 	schemaPrefix := ""
 	// don't add public_ to function names
 	if schema != hiddenSchema {
-		schemaPrefix = strcase.UpperCamelCase(schema)
+		schemaPrefix = common.ToPascalCase(common.NormalizeStr(schema))
 	}
-	return schemaPrefix + strcase.UpperCamelCase(dbFunctionName)
+	return schemaPrefix + common.ToPascalCase(dbFunctionName)
 }
 
 func getModelName(functionName string) string {
-	return strcase.UpperCamelCase(functionName) + "Model"
+	return common.ToPascalCase(functionName) + "Model"
 }
 func getProcessorName(functionName string) string {
-	return strcase.UpperCamelCase(functionName) + "Processor"
+	return common.ToPascalCase(functionName) + "Processor"
 }
 
 // getTypeMapping if explicit mapping doesnt exist, try fallback

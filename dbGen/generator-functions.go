@@ -1,7 +1,7 @@
 package dbGen
 
 import (
-	"github.com/stoewer/go-strcase"
+	"github.com/keenmate/db-gen/common"
 	"text/template"
 )
 
@@ -11,13 +11,13 @@ func getTemplateFunctions() template.FuncMap {
 			return n + 1
 		},
 		"pascalCased": func(s string) string {
-			return strcase.UpperCamelCase(s)
+			return common.ToPascalCase(s)
 		},
 		"camelCased": func(s string) string {
-			return strcase.LowerCamelCase(s)
+			return common.ToCamelCase(s)
 		},
 		"snakeCased": func(s string) string {
-			return strcase.SnakeCase(s)
+			return common.ToSnakeCase(s)
 		},
 	}
 }

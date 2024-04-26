@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/keenmate/db-gen/common"
-	"github.com/stoewer/go-strcase"
 	"io"
 	"log"
 	"os"
@@ -296,11 +295,11 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 func changeCase(str string, desiredCase string) string {
 	switch desiredCase {
 	case "pascalcase":
-		return strcase.UpperCamelCase(str)
+		return common.ToPascalCase(str)
 	case "camelcase":
-		return strcase.LowerCamelCase(str)
+		return common.ToCamelCase(str)
 	case "snakecase":
-		return strcase.SnakeCase(str)
+		return common.ToSnakeCase(str)
 	default:
 		common.LogWarn("unknown case, this should never happen")
 		return str
