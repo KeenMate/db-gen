@@ -27,7 +27,7 @@ var getRoutinesCmd = &cobra.Command{
 
 		viper.AutomaticEnv() // read in environment variables that match
 
-		if args[0] != "" {
+		if len(args) > 0 && args[0] != "" {
 			viper.Set("routinesFile", args[0])
 		}
 
