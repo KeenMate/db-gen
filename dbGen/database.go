@@ -30,6 +30,7 @@ type DbParameter struct {
 	Mode            string `db:"parameter_mode"` // IN/OUT
 	UDTName         string `db:"udt_name"`       // User defined type
 	IsNullable      bool   `db:"is_nullable"`
+	IsOptional      bool   `db:"is_optional"`
 }
 
 const (
@@ -138,17 +139,19 @@ func addParamsToRoutine(conn *common.DbConn, routine *DbRoutine) error {
 			   parameter_name::text,
 			   parameter_mode::text,
 			   udt_name::text,
-			   parameter_default is not null as is_nullable
+			   false as is_nullable,
+			   parameter_default is not null as is_optional
+			
 		from information_schema.parameters
 		where specific_schema = $1
 		  and specific_name = $2		
 		union
-		select c.ordinal_position::int, c.column_name::text, 'OUT', c.udt_name::text, c.is_nullable = 'YES'
+		select c.ordinal_position::int, c.column_name::text, 'OUT', c.udt_name::text, c.is_nullable = 'YES',true
 		from information_schema.columns c
 		where c.table_name = $3
 		  and c.table_schema = coalesce($4, 'public')
 		union
-		select a.ordinal_position::int, a.attribute_name::text, 'OUT', a.attribute_udt_name::text, is_nullable = 'YES'
+		select a.ordinal_position::int, a.attribute_name::text, 'OUT', a.attribute_udt_name::text, is_nullable = 'YES',true
 		from information_schema.attributes a
 		where a.udt_name = $3
 		  and a.udt_schema = coalesce($4, 'public')

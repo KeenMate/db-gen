@@ -9,6 +9,7 @@ type Property struct {
 	Position       int
 	MapperFunction string
 	Nullable       bool // This can be unreliable
+	Optional       bool // only used in Params
 }
 
 type Routine struct {

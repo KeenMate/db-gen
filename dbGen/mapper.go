@@ -16,6 +16,7 @@ type effectiveParamMapping struct {
 	name        string
 	typeMapping mapping
 	isNullable  bool
+	isOptional  bool
 }
 
 // TODO make configurable
@@ -139,6 +140,7 @@ func mapModel(routine DbRoutine, globalTypeMappings *map[string]mapping, routine
 			Position:       column.OrdinalPosition - positionOffset,
 			MapperFunction: columnMapping.typeMapping.mappedFunction,
 			Nullable:       columnMapping.isNullable,
+			Optional:       columnMapping.isOptional,
 		}
 
 		properties = append(properties, property)
@@ -178,6 +180,7 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 			Position:       parameter.OrdinalPosition - positionOffset,
 			MapperFunction: "",
 			Nullable:       effectiveMapping.isNullable,
+			Optional:       effectiveMapping.isOptional,
 		}
 
 		properties[i] = *property
@@ -253,6 +256,8 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 		name:        name,
 		typeMapping: *typeMapping,
 		isNullable:  isNullable,
+		// no column has to be selected => column is always optional
+		isOptional: true,
 	}, nil
 
 }
@@ -260,6 +265,7 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMappings *map[string]mapping, config *Config) (*effectiveParamMapping, error) {
 	name := param.Name
 	isNullable := param.IsNullable
+	isOptional := param.IsOptional
 	var typeMapping *mapping = nil
 	var err error = nil
 
@@ -271,6 +277,10 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 
 		if explicitMapping.IsNullable.Valid {
 			isNullable = explicitMapping.IsNullable.Bool
+		}
+
+		if explicitMapping.IsOptional.Valid {
+			isOptional = explicitMapping.IsOptional.Bool
 		}
 
 		if explicitMapping.MappedType != "" {
@@ -293,6 +303,7 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 		name:        name,
 		typeMapping: *typeMapping,
 		isNullable:  isNullable,
+		isOptional:  isOptional,
 	}, nil
 
 }

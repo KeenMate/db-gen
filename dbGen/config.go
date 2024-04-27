@@ -62,11 +62,10 @@ type ColumnMapping struct {
 }
 
 type ParamMapping struct {
-	MappedName string `mapstructure:"MappedName"`
-	MappedType string `mapstructure:"MappedType"`
-
-	// this is string because it can be empty
+	MappedName string    `mapstructure:"MappedName"`
+	MappedType string    `mapstructure:"MappedType"`
 	IsNullable null.Bool `mapstructure:"IsNullable"`
+	IsOptional null.Bool `mapstructure:"IsOptional"`
 }
 
 type Mapping struct {
