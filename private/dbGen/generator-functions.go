@@ -1,7 +1,7 @@
 package dbGen
 
 import (
-	"github.com/keenmate/db-gen/common"
+	"github.com/keenmate/db-gen/private/common"
 	"text/template"
 )
 

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/keenmate/db-gen/dbGen"
+	"github.com/keenmate/db-gen/private/dbGen"
 	"github.com/spf13/cobra"
 	"os"
 )

@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/common"
+	common2 "github.com/keenmate/db-gen/private/common"
 	"log"
 	"slices"
 	"strings"
@@ -41,7 +41,7 @@ const (
 
 func GetRoutines(config *Config) ([]DbRoutine, error) {
 	if config.UseRoutinesFile {
-		common.LogDebug("Load routines from file %s", config.RoutinesFile)
+		common2.LogDebug("Load routines from file %s", config.RoutinesFile)
 		return LoadRoutinesFromFile(config)
 	}
 
@@ -50,7 +50,7 @@ func GetRoutines(config *Config) ([]DbRoutine, error) {
 
 func LoadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
-	err := common.LoadFromJson(config.RoutinesFile, routines)
+	err := common2.LoadFromJson(config.RoutinesFile, routines)
 	if err != nil {
 		return nil, fmt.Errorf("loading routines from file: %s", err)
 	}
@@ -60,7 +60,7 @@ func LoadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
 
 func getRoutinesFromDatabase(config *Config) ([]DbRoutine, error) {
 	log.Printf("Connecting to database...")
-	conn, err := common.Connect(config.ConnectionString)
+	conn, err := common2.Connect(config.ConnectionString)
 	if err != nil {
 
 		return nil, fmt.Errorf("error connecting to database: %s", err)
@@ -103,7 +103,7 @@ func getSchemas(config *Config) []string {
 	return schemas
 }
 
-func getFunctionsInSchema(conn *common.DbConn, schema string) ([]DbRoutine, error) {
+func getFunctionsInSchema(conn *common2.DbConn, schema string) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
 
 	// I am coalescing
@@ -133,7 +133,7 @@ func getFunctionsInSchema(conn *common.DbConn, schema string) ([]DbRoutine, erro
 	return *routines, nil
 }
 
-func addParamsToRoutine(conn *common.DbConn, routine *DbRoutine) error {
+func addParamsToRoutine(conn *common2.DbConn, routine *DbRoutine) error {
 	q := `
 		select ordinal_position::int,
 			   parameter_name::text,

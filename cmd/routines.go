@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/common"
-	dbGen "github.com/keenmate/db-gen/dbGen"
+	common2 "github.com/keenmate/db-gen/private/common"
+	dbGen2 "github.com/keenmate/db-gen/private/dbGen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -14,13 +14,13 @@ var getRoutinesCmd = &cobra.Command{
 	Short: "Get routines",
 	Long:  "Get routines from database and save them to file to generate later",
 	Run: func(cmd *cobra.Command, args []string) {
-		common.BindFlags(cmd, commonFlags)
+		common2.BindFlags(cmd, commonFlags)
 
 		configLocation := viper.GetString("config")
 
-		_, err := dbGen.ReadConfig(configLocation)
+		_, err := dbGen2.ReadConfig(configLocation)
 		if err != nil {
-			common.Exit("configuration error: %s", err)
+			common2.Exit("configuration error: %s", err)
 		}
 
 		log.Printf("arguments: %s", args)
@@ -34,7 +34,7 @@ var getRoutinesCmd = &cobra.Command{
 		err = doGetRoutines()
 
 		if err != nil {
-			common.Exit(err.Error())
+			common2.Exit(err.Error())
 		}
 	},
 }
@@ -42,23 +42,23 @@ var getRoutinesCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(getRoutinesCmd)
 
-	common.DefineFlags(getRoutinesCmd, commonFlags)
+	common2.DefineFlags(getRoutinesCmd, commonFlags)
 }
 
 func doGetRoutines() error {
 	log.Printf("Getting configurations...")
 
-	config, err := dbGen.GetAndValidateConfig()
+	config, err := dbGen2.GetAndValidateConfig()
 	if err != nil {
 		return fmt.Errorf("error getting config %s", err)
 	}
 
-	common.LogDebug("Debug logging is enabled")
+	common2.LogDebug("Debug logging is enabled")
 
 	// because we use shared config, we need to set this
 	config.UseRoutinesFile = false
 	log.Printf("Getting routines...")
-	routines, err := dbGen.GetRoutines(config)
+	routines, err := dbGen2.GetRoutines(config)
 	if err != nil {
 		return fmt.Errorf("error getting routines: %s", err)
 	}
@@ -67,7 +67,7 @@ func doGetRoutines() error {
 
 	// TODO show what routines changed
 
-	err = common.SaveAsJson(config.RoutinesFile, routines)
+	err = common2.SaveAsJson(config.RoutinesFile, routines)
 	if err != nil {
 		return fmt.Errorf("error saving routines: %s", err)
 	}

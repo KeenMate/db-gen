@@ -1,0 +1,274 @@
+[
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "ignored",
+    "SpecificName": "ignored_696425",
+    "DataType": "void",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "void",
+    "ParamCount": 0,
+    "FuncType": "function",
+    "InParameters": null,
+    "OutParameters": null
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "new_function",
+    "SpecificName": "new_function_696423",
+    "DataType": "text",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "text",
+    "ParamCount": 1,
+    "FuncType": "function",
+    "InParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "name",
+        "Mode": "IN",
+        "UDTName": "text",
+        "IsNullable": false
+      }
+    ],
+    "OutParameters": null
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "procedure",
+    "SpecificName": "procedure_688636",
+    "DataType": "",
+    "UdtTypeScheme": "",
+    "UdtTypeName": "",
+    "ParamCount": 2,
+    "FuncType": "procedure",
+    "InParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "a",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "b",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      }
+    ],
+    "OutParameters": null
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "return_custom_type",
+    "SpecificName": "return_custom_type_688632",
+    "DataType": "record",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "record",
+    "ParamCount": 3,
+    "FuncType": "function",
+    "InParameters": null,
+    "OutParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "__number",
+        "Mode": "OUT",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "__string",
+        "Mode": "OUT",
+        "UDTName": "text",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 3,
+        "Name": "__json",
+        "Mode": "OUT",
+        "UDTName": "json",
+        "IsNullable": false
+      }
+    ]
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "return_setof",
+    "SpecificName": "return_setof_688633",
+    "DataType": "USER-DEFINED",
+    "UdtTypeScheme": "public",
+    "UdtTypeName": "example_table",
+    "ParamCount": 0,
+    "FuncType": "function",
+    "InParameters": null,
+    "OutParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "number",
+        "Mode": "OUT",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "string",
+        "Mode": "OUT",
+        "UDTName": "text",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 3,
+        "Name": "json",
+        "Mode": "OUT",
+        "UDTName": "json",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 4,
+        "Name": "jsonb",
+        "Mode": "OUT",
+        "UDTName": "jsonb",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 5,
+        "Name": "ltree",
+        "Mode": "OUT",
+        "UDTName": "ltree",
+        "IsNullable": false
+      }
+    ]
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "return_void",
+    "SpecificName": "return_void_688634",
+    "DataType": "void",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "void",
+    "ParamCount": 2,
+    "FuncType": "function",
+    "InParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "a",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "b",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      }
+    ],
+    "OutParameters": null
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "public",
+    "RoutineName": "sum",
+    "SpecificName": "sum_688631",
+    "DataType": "integer",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "int4",
+    "ParamCount": 2,
+    "FuncType": "function",
+    "InParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "a",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "b",
+        "Mode": "IN",
+        "UDTName": "int4",
+        "IsNullable": false
+      }
+    ],
+    "OutParameters": null
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "test",
+    "RoutineName": "explicitly_included",
+    "SpecificName": "explicitly_included_696428",
+    "DataType": "record",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "record",
+    "ParamCount": 3,
+    "FuncType": "function",
+    "InParameters": null,
+    "OutParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "__number",
+        "Mode": "OUT",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "__string",
+        "Mode": "OUT",
+        "UDTName": "text",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 3,
+        "Name": "__json",
+        "Mode": "OUT",
+        "UDTName": "json",
+        "IsNullable": false
+      }
+    ]
+  },
+  {
+    "RowNumber": 1,
+    "RoutineSchema": "test",
+    "RoutineName": "implicitly_ignored",
+    "SpecificName": "implicitly_ignored_737383",
+    "DataType": "record",
+    "UdtTypeScheme": "pg_catalog",
+    "UdtTypeName": "record",
+    "ParamCount": 3,
+    "FuncType": "function",
+    "InParameters": null,
+    "OutParameters": [
+      {
+        "OrdinalPosition": 1,
+        "Name": "__number",
+        "Mode": "OUT",
+        "UDTName": "int4",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 2,
+        "Name": "__string",
+        "Mode": "OUT",
+        "UDTName": "text",
+        "IsNullable": false
+      },
+      {
+        "OrdinalPosition": 3,
+        "Name": "__json",
+        "Mode": "OUT",
+        "UDTName": "json",
+        "IsNullable": false
+      }
+    ]
+  }
+]

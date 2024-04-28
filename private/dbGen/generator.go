@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/keenmate/db-gen/common"
+	common2 "github.com/keenmate/db-gen/private/common"
 	"io"
 	"log"
 	"os"
@@ -19,7 +19,7 @@ func Generate(routines []Routine, config *Config) error {
 	if err != nil {
 		return fmt.Errorf("generating file hashes: %s", err)
 	}
-	common.LogDebug("Got %d file hashes", len(*fileHashes))
+	common2.LogDebug("Got %d file hashes", len(*fileHashes))
 
 	log.Printf("Ensuring output folder...")
 
@@ -85,7 +85,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 	if changed {
 		log.Printf("Updated: Dbcontext")
 	} else {
-		common.LogDebug("Same: Dbcontext")
+		common2.LogDebug("Same: Dbcontext")
 	}
 
 	return nil
@@ -123,7 +123,7 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		if changed {
 			log.Printf("Updated: %s", relPath)
 		} else {
-			common.LogDebug("Same: %s", relPath)
+			common2.LogDebug("Same: %s", relPath)
 		}
 	}
 
@@ -144,7 +144,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 	for _, routine := range routines {
 		// if GenerateProcessorsForVoidReturns it processors for all void returns
 		if !config.GenerateProcessorsForVoidReturns && !routine.HasReturn {
-			common.LogDebug("dont generate processor for %s", routine.DbFullFunctionName)
+			common2.LogDebug("dont generate processor for %s", routine.DbFullFunctionName)
 			continue
 		}
 
@@ -166,7 +166,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		if changed {
 			log.Printf("Updated: %s", relPath)
 		} else {
-			common.LogDebug("Same: %s", relPath)
+			common2.LogDebug("Same: %s", relPath)
 		}
 	}
 
@@ -174,7 +174,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 }
 
 func parseTemplate(templatePath string) (*template.Template, error) {
-	if !common.PathExists(templatePath) {
+	if !common2.PathExists(templatePath) {
 		return nil, fmt.Errorf("template file %s does not exist", templatePath)
 
 	}
@@ -222,10 +222,10 @@ func generateFile(data interface{}, template *template.Template, fp string, hash
 }
 
 func ensureOutputFolder(config *Config) error {
-	if config.ClearOutputFolder && common.PathExists(config.OutputFolder) {
-		common.LogDebug("Deleting contents of output folder")
+	if config.ClearOutputFolder && common2.PathExists(config.OutputFolder) {
+		common2.LogDebug("Deleting contents of output folder")
 
-		err := common.RemoveContents(config.OutputFolder)
+		err := common2.RemoveContents(config.OutputFolder)
 		if err != nil {
 			return fmt.Errorf("clearing output folder: %s", err)
 		}
@@ -295,13 +295,13 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 func changeCase(str string, desiredCase string) string {
 	switch desiredCase {
 	case "pascalcase":
-		return common.ToPascalCase(str)
+		return common2.ToPascalCase(str)
 	case "camelcase":
-		return common.ToCamelCase(str)
+		return common2.ToCamelCase(str)
 	case "snakecase":
-		return common.ToSnakeCase(str)
+		return common2.ToSnakeCase(str)
 	default:
-		common.LogWarn("unknown case, this should never happen")
+		common2.LogWarn("unknown case, this should never happen")
 		return str
 	}
 }

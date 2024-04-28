@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/common"
+	"github.com/keenmate/db-gen/private/common"
 )
 
 func PreprocessRoutines(routines *[]DbRoutine, config *Config) error {

@@ -3,7 +3,7 @@ package dbGen
 import (
 	_ "embed"
 	"fmt"
-	"github.com/keenmate/db-gen/common"
+	"github.com/keenmate/db-gen/private/common"
 	"log"
 	"strings"
 )

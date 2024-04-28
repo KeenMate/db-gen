@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/common"
+	common2 "github.com/keenmate/db-gen/private/common"
 	"slices"
 	"sort"
 )
@@ -44,7 +44,7 @@ func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, 
 	schemaConfig := getSchemaConfigMap(config)
 
 	for i, routine := range *routines {
-		common.LogDebug("Mapping %s", routine.RoutineName)
+		common2.LogDebug("Mapping %s", routine.RoutineName)
 		routineMapping := getRoutineMapping(routine, schemaConfig)
 
 		modelProperties, err := mapModel(routine, globalTypeMappings, &routineMapping, config)
@@ -128,7 +128,7 @@ func mapModel(routine DbRoutine, globalTypeMappings *map[string]mapping, routine
 		}
 
 		if !shouldSelect {
-			common.LogDebug("skipping selection of %s", column)
+			common2.LogDebug("skipping selection of %s", column)
 			continue
 		}
 
@@ -213,7 +213,7 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 		return false, nil, nil
 	}
 
-	name := common.ToPascalCase(param.Name)
+	name := common2.ToPascalCase(param.Name)
 	isNullable := param.IsNullable
 	var typeMapping *mapping = nil
 	var err error = nil
@@ -318,16 +318,16 @@ func getFunctionName(dbFunctionName string, schema string, mappedName string) st
 	schemaPrefix := ""
 	// don't add public_ to function names
 	if schema != hiddenSchema {
-		schemaPrefix = common.ToPascalCase(common.NormalizeStr(schema))
+		schemaPrefix = common2.ToPascalCase(common2.NormalizeStr(schema))
 	}
-	return schemaPrefix + common.ToPascalCase(dbFunctionName)
+	return schemaPrefix + common2.ToPascalCase(dbFunctionName)
 }
 
 func getModelName(functionName string) string {
-	return common.ToPascalCase(functionName) + "Model"
+	return common2.ToPascalCase(functionName) + "Model"
 }
 func getProcessorName(functionName string) string {
-	return common.ToPascalCase(functionName) + "Processor"
+	return common2.ToPascalCase(functionName) + "Processor"
 }
 
 // getTypeMapping if explicit mapping doesnt exist, try fallback
@@ -342,7 +342,7 @@ func getTypeMapping(dbDataType string, globalTypesMappings *map[string]mapping) 
 
 		}
 
-		common.LogDebug("Using fallback value %+v for type %s", fallbackVal, dbDataType)
+		common2.LogDebug("Using fallback value %+v for type %s", fallbackVal, dbDataType)
 
 		return &fallbackVal, nil
 	}

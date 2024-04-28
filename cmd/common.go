@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/keenmate/db-gen/common"
+import (
+	"github.com/keenmate/db-gen/private/common"
+)
 
 const (
 	keyDebug            = "debug"

@@ -3,7 +3,7 @@ package dbGen
 import (
 	"fmt"
 	"github.com/guregu/null/v5"
-	"github.com/keenmate/db-gen/common"
+	common2 "github.com/keenmate/db-gen/private/common"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -122,11 +122,11 @@ func GetAndValidateConfig() (*Config, error) {
 
 	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
 
-	if !common.Contains(ValidCaseNormalized, config.GeneratedFileCase) {
+	if !common2.Contains(ValidCaseNormalized, config.GeneratedFileCase) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
 	}
 
-	common.LogDebug("Loaded configuration: \n%+v", config)
+	common2.LogDebug("Loaded configuration: \n%+v", config)
 	return config, nil
 }
 
@@ -162,13 +162,13 @@ func ReadConfig(configLocation string) (string, error) {
 		}
 
 		if localConfigExists {
-			common.Log("Local config override loaded")
+			common2.Log("Local config override loaded")
 		}
 
 		return configLocation, nil
 	}
 
-	common.LogDebug("No configuration file set, trying default locations")
+	common2.LogDebug("No configuration file set, trying default locations")
 
 	for _, defaultConfigPath := range defaultConfigPaths {
 		fileExists, err := TryReadConfigFile(defaultConfigPath)
@@ -187,7 +187,7 @@ func ReadConfig(configLocation string) (string, error) {
 			}
 
 			if localConfigExists {
-				common.Log("Local config override loaded")
+				common2.Log("Local config override loaded")
 			}
 
 			return defaultConfigPath, nil
@@ -199,13 +199,13 @@ func ReadConfig(configLocation string) (string, error) {
 }
 
 func TryReadLocalConfig(configLocation string) (bool, error) {
-	common.LogDebug("Checking if local config exists")
+	common2.LogDebug("Checking if local config exists")
 
 	for _, path := range getPossibleLocalConfigs(configLocation) {
 		exists, err := TryReadConfigFile(path)
 
 		if exists {
-			common.LogDebug("Local config at %s loaded", path)
+			common2.LogDebug("Local config at %s loaded", path)
 			return exists, err
 		}
 	}
@@ -214,10 +214,10 @@ func TryReadLocalConfig(configLocation string) (bool, error) {
 }
 
 func TryReadConfigFile(configPath string) (bool, error) {
-	common.LogDebug("Trying to read config file: %s", configPath)
+	common2.LogDebug("Trying to read config file: %s", configPath)
 
 	// TODO this could hide some usefull errors, maybe log the reason in debug mode
-	if !common.FileIsReadable(configPath) {
+	if !common2.FileIsReadable(configPath) {
 		return false, nil
 	}
 
@@ -233,7 +233,7 @@ func TryReadConfigFile(configPath string) (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("reading configuration: %s", err)
 	}
-	common.LogDebug("Configuration file at %s loaded", configPath)
+	common2.LogDebug("Configuration file at %s loaded", configPath)
 
 	return true, nil
 }
