@@ -4,7 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	common2 "github.com/keenmate/db-gen/private/common"
+	common2 "github.com/keenmate/db-gen/private/helpers"
+	"github.com/keenmate/db-gen/private/version"
 	"io"
 	"log"
 	"os"
@@ -71,7 +72,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 	data := &DbContextData{
 		Config:    config,
 		Functions: routines,
-		BuildInfo: GetBuildInfo(),
+		BuildInfo: version.GetBuildInfo(),
 	}
 
 	filename := changeCase("DbContext"+config.GeneratedFileExtension, config.GeneratedFileCase)
@@ -112,7 +113,7 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 		data := &ModelTemplateData{
 			Config:    config,
 			Routine:   routine,
-			BuildInfo: GetBuildInfo(),
+			BuildInfo: version.GetBuildInfo(),
 		}
 
 		changed, err := generateFile(data, moduleTemplate, filePath, hashMap)
@@ -155,7 +156,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 		data := &ProcessorTemplateData{
 			Config:    config,
 			Routine:   routine,
-			BuildInfo: GetBuildInfo(),
+			BuildInfo: version.GetBuildInfo(),
 		}
 
 		changed, err := generateFile(data, processorTemplate, filePath, hashMap)

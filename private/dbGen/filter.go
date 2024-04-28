@@ -1,12 +1,12 @@
 package dbGen
 
 import (
-	"github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/helpers"
 )
 
 func FilterFunctions(routines *[]DbRoutine, config *Config) ([]DbRoutine, error) {
 	schemaMap := getSchemaConfigMap(config)
-	common.LogDebug("Got %d schema configs  ", len(schemaMap))
+	helpers.LogDebug("Got %d schema configs  ", len(schemaMap))
 	filteredFunctions := make([]DbRoutine, 0)
 
 	for _, routine := range *routines {
@@ -14,7 +14,7 @@ func FilterFunctions(routines *[]DbRoutine, config *Config) ([]DbRoutine, error)
 
 		// if config for given schema doest exits, don't generate for any routine in given scheme
 		if !exists {
-			common.LogDebug("No schema config for '%s'", routine.RoutineSchema)
+			helpers.LogDebug("No schema config for '%s'", routine.RoutineSchema)
 			continue
 		}
 
@@ -36,7 +36,7 @@ func functionShouldBeGenerated(functionName string, schemaConfig *SchemaConfig) 
 		return schemaConfig.AllFunctions
 	}
 
-	common.LogDebug("Function %s has generation explicitly set to %t", functionName, val.Generate)
+	helpers.LogDebug("Function %s has generation explicitly set to %t", functionName, val.Generate)
 	return val.Generate
 }
 

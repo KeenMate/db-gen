@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	common2 "github.com/keenmate/db-gen/private/common"
+	common2 "github.com/keenmate/db-gen/private/helpers"
 	"slices"
 	"sort"
 )
@@ -164,7 +164,7 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 
 	// First possition should be 0
 	positionOffset := attributes[0].OrdinalPosition
-	//common.LogDebug("Possition offset is %d", positionOffset)
+	//helpers.LogDebug("Possition offset is %d", positionOffset)
 
 	for i, parameter := range attributes {
 		effectiveMapping, err := getParamMapping(parameter, routineMapping, typeMappings, config)

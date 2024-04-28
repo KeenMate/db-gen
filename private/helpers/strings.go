@@ -1,4 +1,4 @@
-package common
+package helpers
 
 import (
 	"github.com/stoewer/go-strcase"

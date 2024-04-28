@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/keenmate/db-gen/private/dbGen"
+	"github.com/keenmate/db-gen/private/version"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -20,7 +20,7 @@ For more information, see github.com/keenmate/db-gen
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(versionStringFile string) {
 	// because this is a top level file, we have to pass it like this
-	_ = dbGen.ParseBuildInformation(versionStringFile)
+	_ = version.ParseBuildInformation(versionStringFile)
 
 	err := rootCmd.Execute()
 	if err != nil {

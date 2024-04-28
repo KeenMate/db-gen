@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/helpers"
 	"log"
 )
 
@@ -19,7 +19,7 @@ func Process(routines []DbRoutine, config *Config) ([]Routine, error) {
 
 	// don't need to compute for every property
 	typeMappings := getTypeMappings(config)
-	common.LogDebug("Got %d type mappings", len(typeMappings))
+	helpers.LogDebug("Got %d type mappings", len(typeMappings))
 
 	// Map routines
 	functions, err := mapRoutines(&filteredRoutines, &typeMappings, config)

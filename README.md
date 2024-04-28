@@ -120,11 +120,11 @@ The local config file is not required.
 	- **Schema (string)**:
 		- Specifies the database schema name.
 	- **AllFunctions (boolean)**:
-		- If true generated all functions except
-	- **IgnoredFunctions (array of strings)**:
-		- Functions to be ignored when generating code in the schema.
-	- **Functions (array of strings)**:
-		- Functions to be explicitly included when generating code in the schema.
+		- If true generated all functions except explicitly ignored by adding functions entry with false value
+	- **Functions (object where values are bool or object)**:
+		- Keys of object are function names, you can you only name, or name with parameters (`function(text,int)` =`function`)
+		- If value is just bool, it only specifies if it should be generated
+    - You can supply object and it will override global mappings see [Mapping](#Mapping-override-per-routines)
 - **Mappings**
 	- **DatabaseTypes (array of strings)**:
 		- If one database type has multiple mappings, last will be used
@@ -138,48 +138,51 @@ The local config file is not required.
 Templates have there information available in `.`
 
 ```go
-// DbContextTemplate
 type DbContextData struct {
-Config    *Config
-Functions []Routine
-BuildInfo *BuildInformation
+	Config    *Config
+	Functions []Routine
+	BuildInfo *version.BuildInformation
 }
 
-//ProcessorTemplate
 type ProcessorTemplateData struct {
-Config    *Config
-Routine   Routine
-BuildInfo *BuildInformation
+	Config    *Config
+	Routine   Routine
+	BuildInfo *version.BuildInformation
 }
 
-//ModelTemplate
 type ModelTemplateData struct {
-Config    *Config
-Routine   Routine
-BuildInfo *BuildInformation
+	Config    *Config
+	Routine   Routine
+	BuildInfo *version.BuildInformation
 }
 
+// Types used in template
 type Property struct {
-DbColumnName   string
-DbColumnType   string
-PropertyName   string
-PropertyType   string
-Position       int
-MapperFunction string
+	DbColumnName   string
+	DbColumnType   string
+	PropertyName   string
+	PropertyType   string
+	Position       int
+	MapperFunction string
+	Nullable       bool // This can be unreliable
+	Optional       bool // only used in Params
 }
 
 type Routine struct {
-FunctionName       string
-DbFullFunctionName string
-ModelName          string
-ProcessorName      string
-Schema             string
-DbFunctionName     string
-HasReturn          bool
-IsProcedure        bool
-Parameters         []Property
-ReturnProperties   []Property
+	FunctionName       string
+	DbFullFunctionName string
+	ModelName          string
+	ProcessorName      string
+	Schema             string
+	DbFunctionName     string
+	HasReturn          bool
+	IsProcedure        bool
+	Parameters         []Property
+	ReturnProperties   []Property
 }
+
+
+
 
 ```
 
@@ -192,3 +195,35 @@ For example:
 ```gotemplate
 {{pascalCased $func.FunctionName}}
 ```
+
+
+### Mapping override per routines
+
+_TODO Improve this section_
+
+
+You can specify custom mapping for each function, parameter and model by providing object to `Functions` properties
+
+You can override: 
+
+Name using `MappedName`, Processors and models name will be created by adding model/processor to this name
+
+HasReturn using `DontRetrieveValues`, it can only be used to disable selection of function which has return, 
+not other way around.
+
+#### Model
+
+Use `SelectOnlySpecified` to only select columns you explicitly specify in model by setting them to true,
+or providing custom mapping
+
+In `Model` provide object with where keys correspond to columns in database. 
+If you set value to false, it will not select it. Setting value to true or providing object with mapping
+will select it. 
+
+In mapping object you can override `MappedName`, `IsNullable`, `MappedType` and `MappingFunction`.
+If you only specify `MappedType` it will try to find mapping function in global mappings, stoping generation with error if it didnt.
+Setting `MappingFunction` without `MappedType` will do nothing.
+
+#### Parameters
+
+It doesnt make sense to only use some parameter, so you can only change `MappedName`,`MappedType`, and `IsNUllable`

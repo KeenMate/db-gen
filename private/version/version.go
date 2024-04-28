@@ -1,9 +1,9 @@
-package dbGen
+package version
 
 import (
 	_ "embed"
 	"fmt"
-	"github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/helpers"
 	"log"
 	"strings"
 )
@@ -17,7 +17,7 @@ type BuildInformation struct {
 const localVersion = "LOCAL"
 const localBuilder = "LOCAL"
 
-var info BuildInformation = BuildInformation{
+var info = BuildInformation{
 	Builder:    localBuilder,
 	Version:    localVersion,
 	CommitHash: "",
@@ -25,8 +25,8 @@ var info BuildInformation = BuildInformation{
 
 func ParseBuildInformation(versionFileText string) error {
 	if strings.HasPrefix(versionFileText, "LOCAL") {
-		common.LogWarn("THIS IS LOCAL BUILD")
-		common.LogWarn("USE ONLY FOR TESTING!!!!")
+		helpers.LogWarn("THIS IS LOCAL BUILD")
+		helpers.LogWarn("USE ONLY FOR TESTING!!!!")
 		return nil
 	}
 

@@ -2,7 +2,7 @@ package dbGen
 
 import (
 	"fmt"
-	"github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/helpers"
 )
 
 func PreprocessRoutines(routines *[]DbRoutine, config *Config) error {
@@ -50,7 +50,7 @@ func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
 		// enforce that overloaded routine has to have mapping
 		if routine.HasOverload && !hasCustomMappedName(&schemaConfig, &routine) {
 			// todo return error
-			common.Log("Overloaded function %s doesnt have mapping", routine.RoutineNameWithParams)
+			helpers.Log("Overloaded function %s doesnt have mapping", routine.RoutineNameWithParams)
 			return fmt.Errorf("overloaded function %s.%s doesn't have mapping defined", routine.RoutineSchema, routine.RoutineNameWithParams)
 		}
 
@@ -59,7 +59,7 @@ func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
 
 	}
 
-	common.Log("Marked %d functions as overload", overloadedFunctionCount)
+	helpers.Log("Marked %d functions as overload", overloadedFunctionCount)
 
 	return nil
 }
@@ -67,12 +67,12 @@ func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
 func hasCustomMappedName(schemaConfig *SchemaConfig, routine *DbRoutine) bool {
 	mappingInfo, exists := schemaConfig.Functions[routine.RoutineNameWithParams]
 	if !exists {
-		common.LogDebug("mapping for function %s doesnt exist", routine.RoutineNameWithParams)
+		helpers.LogDebug("mapping for function %s doesnt exist", routine.RoutineNameWithParams)
 		return false
 	}
 
 	if mappingInfo.MappedName == "" {
-		common.LogDebug("mapping for function %s exists, but mapped name is not set", routine.RoutineNameWithParams)
+		helpers.LogDebug("mapping for function %s exists, but mapped name is not set", routine.RoutineNameWithParams)
 
 		return false
 	}

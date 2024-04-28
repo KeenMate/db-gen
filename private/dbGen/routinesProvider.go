@@ -2,7 +2,8 @@ package dbGen
 
 import (
 	"fmt"
-	common2 "github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/database"
+	common2 "github.com/keenmate/db-gen/private/helpers"
 	"log"
 	"slices"
 	"strings"
@@ -60,7 +61,7 @@ func LoadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
 
 func getRoutinesFromDatabase(config *Config) ([]DbRoutine, error) {
 	log.Printf("Connecting to database...")
-	conn, err := common2.Connect(config.ConnectionString)
+	conn, err := database.Connect(config.ConnectionString)
 	if err != nil {
 
 		return nil, fmt.Errorf("error connecting to database: %s", err)
@@ -103,7 +104,7 @@ func getSchemas(config *Config) []string {
 	return schemas
 }
 
-func getFunctionsInSchema(conn *common2.DbConn, schema string) ([]DbRoutine, error) {
+func getFunctionsInSchema(conn *database.DbConn, schema string) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
 
 	// I am coalescing
@@ -133,7 +134,7 @@ func getFunctionsInSchema(conn *common2.DbConn, schema string) ([]DbRoutine, err
 	return *routines, nil
 }
 
-func addParamsToRoutine(conn *common2.DbConn, routine *DbRoutine) error {
+func addParamsToRoutine(conn *database.DbConn, routine *DbRoutine) error {
 	q := `
 		select ordinal_position::int,
 			   parameter_name::text,

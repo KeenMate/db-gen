@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	common2 "github.com/keenmate/db-gen/private/common"
 	dbGen2 "github.com/keenmate/db-gen/private/dbGen"
+	common2 "github.com/keenmate/db-gen/private/helpers"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"

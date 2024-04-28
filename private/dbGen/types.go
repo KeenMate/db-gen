@@ -1,5 +1,7 @@
 package dbGen
 
+import "github.com/keenmate/db-gen/private/version"
+
 // Types used in template
 type Property struct {
 	DbColumnName   string
@@ -28,17 +30,17 @@ type Routine struct {
 type DbContextData struct {
 	Config    *Config
 	Functions []Routine
-	BuildInfo *BuildInformation
+	BuildInfo *version.BuildInformation
 }
 
 type ProcessorTemplateData struct {
 	Config    *Config
 	Routine   Routine
-	BuildInfo *BuildInformation
+	BuildInfo *version.BuildInformation
 }
 
 type ModelTemplateData struct {
 	Config    *Config
 	Routine   Routine
-	BuildInfo *BuildInformation
+	BuildInfo *version.BuildInformation
 }

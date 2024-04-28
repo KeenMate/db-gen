@@ -1,7 +1,7 @@
 package dbGen
 
 import (
-	"github.com/keenmate/db-gen/private/common"
+	"github.com/keenmate/db-gen/private/helpers"
 	"text/template"
 )
 
@@ -11,13 +11,13 @@ func getTemplateFunctions() template.FuncMap {
 			return n + 1
 		},
 		"pascalCased": func(s string) string {
-			return common.ToPascalCase(s)
+			return helpers.ToPascalCase(s)
 		},
 		"camelCased": func(s string) string {
-			return common.ToCamelCase(s)
+			return helpers.ToCamelCase(s)
 		},
 		"snakeCased": func(s string) string {
-			return common.ToSnakeCase(s)
+			return helpers.ToSnakeCase(s)
 		},
 	}
 }

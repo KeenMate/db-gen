@@ -3,7 +3,7 @@ package dbGen
 import (
 	"fmt"
 	"github.com/guregu/null/v5"
-	common2 "github.com/keenmate/db-gen/private/common"
+	common2 "github.com/keenmate/db-gen/private/helpers"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"

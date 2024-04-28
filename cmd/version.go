@@ -2,7 +2,7 @@ package cmd
 
 import (
 	_ "embed"
-	"github.com/keenmate/db-gen/private/dbGen"
+	"github.com/keenmate/db-gen/private/version"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,7 @@ var versionCmd = &cobra.Command{
 	Short: "prints versions",
 	Long:  `Prints executable version and build information`,
 	Run: func(cmd *cobra.Command, args []string) {
-		dbGen.PrintVersion()
+		version.PrintVersion()
 	},
 }
 
