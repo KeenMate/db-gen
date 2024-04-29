@@ -226,4 +226,10 @@ Setting `MappingFunction` without `MappedType` will do nothing.
 
 #### Parameters
 
-It doesnt make sense to only use some parameter, so you can only change `MappedName`,`MappedType`, and `IsNUllable`
+It doesnt make sense to only use some parameter, so you can only change `MappedName`,`MappedType`, and `IsNUllable`. This also means that you cant set parameter value to boolean, you can only set it to object with custom mapping
+
+### Overloaded function
+
+To prevent a LOT of issue with overloaded functions, you are forced to specify mapped name for each function that has some overload. 
+
+The name has to be unique in schema, but checking is not yet implemented, so be carefull!!!
