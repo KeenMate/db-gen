@@ -46,7 +46,7 @@ type SchemaConfig struct {
 type RoutineMapping struct {
 	Generate            bool
 	MappedName          string                   `mapstructure:"MappedName"`
-	DontSelectValue     bool                     `mapstructure:"DontSelectValue"`
+	DontRetrieveValues  bool                     `mapstructure:"DontRetrieveValues"`
 	SelectOnlySpecified bool                     `mapstructure:"SelectOnlySpecified"`
 	Model               map[string]ColumnMapping `mapstructure:"Model"`
 	Parameters          map[string]ParamMapping  `mapstructure:"Parameters"`
@@ -120,6 +120,7 @@ func GetAndValidateConfig() (*Config, error) {
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 	config.RoutinesFile = joinIfRelative(config.PathBase, config.RoutinesFile)
+
 	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
 
 	if !common.Contains(ValidCaseNormalized, config.GeneratedFileCase) {

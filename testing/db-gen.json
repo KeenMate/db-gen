@@ -17,7 +17,7 @@
 				"ignored": false,
 				"return_custom_type": {
 					"MappedName": "customName",
-					"SelectOnlySpecified": true,
+					"DontRetrieveValues": true,
 					"Model": {
 						"__number": {
 							"MappedType": "int",

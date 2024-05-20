@@ -22,19 +22,24 @@ type effectiveParamMapping struct {
 // TODO make configurable
 const hiddenSchema = "public"
 
+const fallbackMappingKey = "*"
+
+// this data types represent structured data
 var structuredTypes = []string{"record", "USER-DEFINED"}
+
+// data types that represents no return types
 var voidTypes = []string{"void"}
 
 var emptyMapping = RoutineMapping{
 	Generate:            true,
 	MappedName:          "",
-	DontSelectValue:     false,
+	DontRetrieveValues:  false,
 	SelectOnlySpecified: false,
 	Model:               make(map[string]ColumnMapping),
 	Parameters:          make(map[string]ParamMapping),
 }
 
-func mapFunctions(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, config *Config) ([]Routine, error) {
+func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, config *Config) ([]Routine, error) {
 	mappedFunctions := make([]Routine, len(*routines))
 	schemaConfig := getSchemaConfigMap(config)
 
@@ -42,7 +47,7 @@ func mapFunctions(routines *[]DbRoutine, globalTypeMappings *map[string]mapping,
 		common.LogDebug("Mapping %s", routine.RoutineName)
 		routineMapping := getRoutineMapping(routine, schemaConfig)
 
-		returnProperties, err := mapModel(routine, globalTypeMappings, &routineMapping, config)
+		modelProperties, err := mapModel(routine, globalTypeMappings, &routineMapping, config)
 		if err != nil {
 			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
@@ -52,24 +57,25 @@ func mapFunctions(routines *[]DbRoutine, globalTypeMappings *map[string]mapping,
 			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
+		// default case for names is UpperCamelcase
 		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema, routineMapping.MappedName)
 		modelName := getModelName(functionName)
 		processorName := getProcessorName(functionName)
 
-		function := &Routine{
+		mappedRoutine := Routine{
 			FunctionName:       functionName,
 			DbFullFunctionName: routine.RoutineSchema + "." + routine.RoutineName,
 			ModelName:          modelName,
 			Parameters:         parameters,
-			ReturnProperties:   returnProperties,
+			ReturnProperties:   modelProperties,
 			ProcessorName:      processorName,
-			HasReturn:          len(returnProperties) > 0,
+			HasReturn:          len(modelProperties) > 0,
 			IsProcedure:        routine.FuncType == Procedure,
 			Schema:             routine.RoutineSchema,
 			DbFunctionName:     routine.RoutineName,
 		}
 
-		mappedFunctions[i] = *function
+		mappedFunctions[i] = mappedRoutine
 	}
 
 	return mappedFunctions, nil
@@ -77,11 +83,11 @@ func mapFunctions(routines *[]DbRoutine, globalTypeMappings *map[string]mapping,
 
 func mapModel(routine DbRoutine, globalTypeMappings *map[string]mapping, routineMapping *RoutineMapping, config *Config) ([]Property, error) {
 
-	returnParameters := make([]Property, 0)
+	modelProperties := make([]Property, 0)
 
 	//procedures in pg don't have return type
 	if routine.FuncType == Procedure || slices.Contains(voidTypes, routine.DataType) {
-		return returnParameters, nil
+		return modelProperties, nil
 	}
 
 	columns := routine.OutParameters
@@ -180,6 +186,7 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 
 	return properties, nil
 }
+
 func getRoutineMapping(routine DbRoutine, schemaConfigs map[string]SchemaConfig) RoutineMapping {
 	schemaConfig, ok := schemaConfigs[routine.RoutineSchema]
 	if !ok {
@@ -200,7 +207,7 @@ func getRoutineMapping(routine DbRoutine, schemaConfigs map[string]SchemaConfig)
 }
 
 func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalMappings *map[string]mapping, config *Config) (bool, *effectiveParamMapping, error) {
-	if routineMapping.DontSelectValue {
+	if routineMapping.DontRetrieveValues {
 		return false, nil, nil
 	}
 
@@ -228,7 +235,7 @@ func getColumnMapping(param DbParameter, routineMapping *RoutineMapping, globalM
 		}
 
 		if explicitMapping.MappedType != "" {
-			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "", config)
+			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, explicitMapping.MappingFunction, config)
 			if err != nil {
 				return false, nil, err
 			}
@@ -313,11 +320,12 @@ func getProcessorName(functionName string) string {
 	return strcase.UpperCamelCase(functionName) + "Processor"
 }
 
-func getTypeMapping(dbDataType string, mappings *map[string]mapping) (*mapping, error) {
-	val, isFound := (*mappings)[dbDataType]
+// getTypeMapping if explicit mapping doesnt exist, try fallback
+func getTypeMapping(dbDataType string, globalTypesMappings *map[string]mapping) (*mapping, error) {
+	val, specificMappingExists := (*globalTypesMappings)[dbDataType]
 
-	if !isFound {
-		fallbackVal, fallbackExists := (*mappings)["*"]
+	if !specificMappingExists {
+		fallbackVal, fallbackExists := (*globalTypesMappings)[fallbackMappingKey]
 
 		if !fallbackExists {
 			return nil, fmt.Errorf("processing for dbType '%s' not found and fallback processing * is not set ", dbDataType)
@@ -332,6 +340,7 @@ func getTypeMapping(dbDataType string, mappings *map[string]mapping) (*mapping, 
 	return &val, nil
 }
 
+// handleTypeMappingOverride used when parsing model and parameters when mappedType is set
 func handleTypeMappingOverride(typeOverride string, mappingFunctionOverride string, config *Config) (*mapping, error) {
 	if mappingFunctionOverride != "" {
 		return &mapping{
