@@ -49,6 +49,7 @@ func init() {
 }
 
 func doGenerate() error {
+	timer := common.NewTimer()
 	log.Printf("Getting configurations...")
 
 	config, err := dbGen.GetAndValidateConfig()
@@ -56,6 +57,7 @@ func doGenerate() error {
 		return fmt.Errorf("error getting config %s", err)
 	}
 
+	timer.AddEntry("getting config")
 	common.LogDebug("Debug logging is enabled")
 
 	var routines []dbGen.DbRoutine
@@ -67,12 +69,15 @@ func doGenerate() error {
 	}
 	log.Printf("Got %d routines", len(routines))
 
+	timer.AddEntry("getting routines")
 	if config.Debug {
 		common.LogDebug("Saving to debug file...")
 		err = common.SaveToTempFile(routines, "dbRoutines")
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
+		timer.AddEntry("saving debug file")
+
 	}
 
 	log.Printf("Preprocessing...")
@@ -81,6 +86,7 @@ func doGenerate() error {
 		return fmt.Errorf("error preprocessing: %s", err)
 	}
 	log.Printf("After preprocessing %d - %d = %d functions left", len(routines), len(routines)-len(processedFunctions), len(processedFunctions))
+	timer.AddEntry("preprocessing")
 
 	if config.Debug {
 		common.LogDebug("Saving to debug file...")
@@ -88,6 +94,8 @@ func doGenerate() error {
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
+		timer.AddEntry("saving debug file")
+
 	}
 
 	log.Printf("Generating...")
@@ -96,5 +104,8 @@ func doGenerate() error {
 		return fmt.Errorf("error generating: %s", err)
 	}
 
+	timer.AddEntry("generating files")
+	timer.Finish()
+	log.Printf(timer.String())
 	return nil
 }
