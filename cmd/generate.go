@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	dbGen2 "github.com/keenmate/db-gen/private/dbGen"
-	common2 "github.com/keenmate/db-gen/private/helpers"
+	"github.com/keenmate/db-gen/private/dbGen"
+	"github.com/keenmate/db-gen/private/helpers"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -11,8 +11,8 @@ import (
 
 const keyUseRoutinesFile = "useRoutinesFile"
 
-var generateFlags = []common2.FlagArgument{
-	common2.NewBoolFlag(keyUseRoutinesFile, "", false, "Use routines file to generate code"),
+var generateFlags = []helpers.FlagArgument{
+	helpers.NewBoolFlag(keyUseRoutinesFile, "", false, "Use routines file to generate code"),
 }
 
 var generateCmd = &cobra.Command{
@@ -27,17 +27,17 @@ var generateCmd = &cobra.Command{
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		common2.BindFlags(cmd, append(commonFlags, generateFlags...))
-		_, err := dbGen2.ReadConfig(viper.GetString(keyConfig))
+		helpers.BindFlags(cmd, append(commonFlags, generateFlags...))
+		_, err := dbGen.ReadConfig(viper.GetString(keyConfig))
 		if err != nil {
-			common2.Exit("configuration error: %s", err)
+			helpers.Exit("configuration error: %s", err)
 		}
 
 		viper.AutomaticEnv() // read in environment variables that match
 
 		err = doGenerate()
 		if err != nil {
-			common2.Exit(err.Error())
+			helpers.Exit(err.Error())
 		}
 	},
 }
@@ -45,56 +45,67 @@ var generateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	common2.DefineFlags(generateCmd, append(commonFlags, generateFlags...))
+	helpers.DefineFlags(generateCmd, append(commonFlags, generateFlags...))
 }
 
 func doGenerate() error {
+	timer := helpers.NewTimer()
 	log.Printf("Getting configurations...")
 
-	config, err := dbGen2.GetAndValidateConfig()
+	config, err := dbGen.GetAndValidateConfig()
 	if err != nil {
 		return fmt.Errorf("error getting config %s", err)
 	}
 
-	common2.LogDebug("Debug logging is enabled")
+	helpers.LogDebug("Debug logging is enabled")
+	timer.AddEntry("getting config")
 
-	var routines []dbGen2.DbRoutine
+	var routines []dbGen.DbRoutine
 
 	log.Printf("Getting routines...")
-	routines, err = dbGen2.GetRoutines(config)
+	routines, err = dbGen.GetRoutines(config)
 	if err != nil {
 		return fmt.Errorf("error getting routines: %s", err)
 	}
 	log.Printf("Got %d routines", len(routines))
 
+	timer.AddEntry("getting routines")
 	if config.Debug {
-		common2.LogDebug("Saving to debug file...")
-		err = common2.SaveToTempFile(routines, "dbRoutines")
+		helpers.LogDebug("Saving to debug file...")
+		err = helpers.SaveToTempFile(routines, "dbRoutines")
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
+		timer.AddEntry("saving debug file")
+
 	}
 
 	log.Printf("Preprocessing...")
-	processedFunctions, err := dbGen2.Process(routines, config)
+	processedFunctions, err := dbGen.Process(routines, config)
 	if err != nil {
 		return fmt.Errorf("error preprocessing: %s", err)
 	}
 	log.Printf("After preprocessing %d - %d = %d functions left", len(routines), len(routines)-len(processedFunctions), len(processedFunctions))
+	timer.AddEntry("preprocessing")
 
 	if config.Debug {
-		common2.LogDebug("Saving to debug file...")
-		err = common2.SaveToTempFile(processedFunctions, "mapped")
+		helpers.LogDebug("Saving to debug file...")
+		err = helpers.SaveToTempFile(processedFunctions, "mapped")
 		if err != nil {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
+		timer.AddEntry("saving debug file")
+
 	}
 
 	log.Printf("Generating...")
-	err = dbGen2.Generate(processedFunctions, config)
+	err = dbGen.Generate(processedFunctions, config)
 	if err != nil {
 		return fmt.Errorf("error generating: %s", err)
 	}
 
+	timer.AddEntry("generating files")
+	timer.Finish()
+	log.Printf(timer.String())
 	return nil
 }
