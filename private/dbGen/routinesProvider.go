@@ -3,7 +3,7 @@ package dbGen
 import (
 	"fmt"
 	"github.com/keenmate/db-gen/private/database"
-	common2 "github.com/keenmate/db-gen/private/helpers"
+	helpers "github.com/keenmate/db-gen/private/helpers"
 	"log"
 	"slices"
 	"strings"
@@ -42,16 +42,29 @@ const (
 
 func GetRoutines(config *Config) ([]DbRoutine, error) {
 	if config.UseRoutinesFile {
-		common2.LogDebug("Load routines from file %s", config.RoutinesFile)
-		return LoadRoutinesFromFile(config)
+		helpers.LogDebug("Load routines from file %s", config.RoutinesFile)
+		return loadRoutinesFromFile(config)
 	}
 
-	return getRoutinesFromDatabase(config)
+	routines, err := getRoutinesFromDatabase(config)
+	if err != nil {
+		return nil, fmt.Errorf("error loading routines from db: %v", err)
+	}
+
+	return routines, nil
 }
 
-func LoadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
+func SaveRoutinesFile(routines []DbRoutine, config *Config) error {
+	err := helpers.SaveAsJson(config.RoutinesFile, routines)
+	if err != nil {
+		return fmt.Errorf("error saving routines to file: %v", err)
+	}
+	return nil
+}
+
+func loadRoutinesFromFile(config *Config) ([]DbRoutine, error) {
 	routines := new([]DbRoutine)
-	err := common2.LoadFromJson(config.RoutinesFile, routines)
+	err := helpers.LoadFromJson(config.RoutinesFile, routines)
 	if err != nil {
 		return nil, fmt.Errorf("loading routines from file: %s", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/keenmate/db-gen/private/dbGen"
 	"github.com/keenmate/db-gen/private/helpers"
+	"github.com/keenmate/db-gen/private/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -60,6 +61,18 @@ func doGenerate() error {
 	helpers.LogDebug("Debug logging is enabled")
 	timer.AddEntry("getting config")
 
+	// TODO it will be ideal to load build information before loading and validating config
+	buildInfo, infoExist := dbGen.LoadGenerationInformation(config)
+	timer.AddEntry("loading build information")
+
+	if infoExist {
+		log.Printf("Build information loaded, last build was at %s", buildInfo.Time.String())
+
+		if !buildInfo.CheckVersion() {
+			return nil
+		}
+	}
+
 	var routines []dbGen.DbRoutine
 
 	log.Printf("Getting routines...")
@@ -77,7 +90,14 @@ func doGenerate() error {
 			return fmt.Errorf("error saving debug file: %s", err)
 		}
 		timer.AddEntry("saving debug file")
+	}
 
+	if infoExist {
+		// TODO we should only show changes of routines after filtering
+		changesMsg := buildInfo.GetRoutinesChanges(routines)
+		log.Printf("Database changes:\n" + changesMsg)
+	} else {
+		log.Printf("No previous build information found")
 	}
 
 	log.Printf("Preprocessing...")
@@ -103,8 +123,14 @@ func doGenerate() error {
 	if err != nil {
 		return fmt.Errorf("error generating: %s", err)
 	}
-
 	timer.AddEntry("generating files")
+
+	err = dbGen.SaveGenerationInformation(config, routines, version.GetVersion())
+	if err != nil {
+		log.Printf("Error saving generation information: %v", err)
+	}
+
+	timer.AddEntry("saving generation info")
 	timer.Finish()
 	log.Printf(timer.String())
 	return nil

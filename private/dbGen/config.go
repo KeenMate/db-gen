@@ -117,7 +117,9 @@ func GetAndValidateConfig() (*Config, error) {
 	config.ProcessorTemplate = joinIfRelative(config.PathBase, config.ProcessorTemplate)
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
+
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
+	// TODO maybe it is better to be relative to Output folder, not Base path
 	config.RoutinesFile = joinIfRelative(config.PathBase, config.RoutinesFile)
 
 	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
