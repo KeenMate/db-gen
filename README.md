@@ -38,7 +38,7 @@ code today, tomorrow and in 5 years, and you won't have to search for it on inte
 ## In-house templates, In-house configuration
 
 All configuration, including templates used for code generation are part of the repository. Nothing depends on some service in internet, or a tool installation.
-Everything is under your control, versioned, easily updateable.
+Everything is under your control, versioned, easily updatable.
 
 ## Customization based on your needs
 
@@ -51,9 +51,25 @@ In Enterprise development, it is often the case that your internet connection is
 have internet at all. In case of digital nomads, you might be currently working in K2 2nd base camp. In all these cases you are covered, db-gen is
 self-contained executable, it needs nothing else than configuration and templates.
 
-## Known Limitations
+## How to use it
 
-- generating code for functions that return one value acts like the function return void
+We usually put the downloaded `db-gen-win.exe`, `db-gen-linux` or both directly to the repo. Yes, the repo gets bigger but in five years, when you have to update your project, you won't have to look for it on the ever forgetting internet. 
+Also, when it's part of the repo, you can run specific `db-gen generate` as part of your CD\CI and use different templates. Why would you do that? For example, to remove log messages that should be visible only in Development environment. This is what Erlang/Elixir does to speed up their code.
+
+When you run `db-gen` you are offered these two main options:
+- `generate` - will run the generation of code
+- `routines` - will generate json file that contains definition of all stored functions/procedures that you have defined in `db-gen.json`, this can later be used for offline generation 
+- `help [command]` - will print out help for specific command with additional details
+
+## How to start
+
+The easiest way, is to:
+- take content from `test` folder
+- use `test/database/testing-db.sql` to create a test database
+- update connection string to proper values in `test/local.db-gen.json` 
+- download a latest `db-gen` from [Releases page](https://github.com/KeenMate/db-gen/releases)
+- run `./db-gen-win.exe generate` or `./db-gen-linux generate`
+- be properly amazed, shocked, stunned
 
 ## Configuration
 
@@ -66,7 +82,8 @@ If `--config` flag is not set it will try following default locations
 
 Enable debug logging with `--debug` flag
 
-ConnectionString can be also set with `--connectionString "postgresql://usernmae:password@host:port/database_name"`
+ConnectionString can be also set with `--connectionString "postgresql://username:password@host:port/database_name"`
+
 
 ### Local configuration
 
@@ -90,7 +107,7 @@ The local config file is not required.
 
 - **ConnectionString (string)**:
 	- Defines the PostgreSQL database connection string.
-	- For example `postgresql://usernmae:password@localhost:5432/database_name`
+	- For example `postgresql://username:password@localhost:5432/database_name`
 - **OutputFolder (string)**:
 	- Specifies the folder where generated code files will be saved.
 	- It can be relative to the current working directory
@@ -135,7 +152,12 @@ The local config file is not required.
 
 ## Templates
 
-Templates have there information available in `.`
+Templates to use are defined in these properties of `db-gen.json`
+ - DbContextTemplate - this will generate database calls
+ - ModelTemplate - this will generate models to represent data coming from db
+ - ProcessorTemplate - this will generate mappers mapping data from db to models
+
+Templates use database metadata in format:
 
 ```go
 type DbContextData struct {
@@ -181,10 +203,9 @@ type Routine struct {
 	ReturnProperties   []Property
 }
 
-
-
-
 ```
+
+Templates themselves are written in Go Templates and can be changed to your liking. You are in charge.
 
 ### Case
 
@@ -195,7 +216,6 @@ For example:
 ```gotemplate
 {{pascalCased $func.FunctionName}}
 ```
-
 
 ### Mapping override per routines
 
@@ -224,12 +244,17 @@ In mapping object you can override `MappedName`, `IsNullable`, `MappedType` and 
 If you only specify `MappedType` it will try to find mapping function in global mappings, stoping generation with error if it didnt.
 Setting `MappingFunction` without `MappedType` will do nothing.
 
+
 #### Parameters
 
-It doesnt make sense to only use some parameter, so you can only change `MappedName`,`MappedType`, and `IsNUllable`. This also means that you cant set parameter value to boolean, you can only set it to object with custom mapping
+> DISCLAIMER: Needs clarification
+
+It doesn't make sense to only use some parameter, so you can only change `MappedName`,`MappedType`, and `IsNUllable`. This also means that you can't set parameter value to boolean, you can only set it to object with custom mapping
 
 ### Overloaded function
 
+> DISCLAIMER: Needs clarification
+
 To prevent a LOT of issue with overloaded functions, you are forced to specify mapped name for each function that has some overload. 
 
-The name has to be unique in schema, but checking is not yet implemented, so be carefull!!!
+The name has to be unique in schema, but checking is not yet implemented, so be careful!!!
