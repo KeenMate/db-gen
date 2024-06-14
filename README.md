@@ -64,12 +64,12 @@ When you run `db-gen` you are offered these two main options:
 ## How to start
 
 The easiest way, is to:
-- take content from `test` folder
-- use `test/database/testing-db.sql` to create a test database
+- take the content from `test` folder
+- use the `test/database/testing-db.sql` script to create a test database
 - update connection string to proper values in `test/local.db-gen.json` 
-- download a latest `db-gen` from [Releases page](https://github.com/KeenMate/db-gen/releases)
+- download a latest `db-gen` release from [Releases page](https://github.com/KeenMate/db-gen/releases)
 - run `./db-gen-win.exe generate` or `./db-gen-linux generate`
-- be properly amazed, shocked, stunned
+- be properly amazed, shocked, stunned!
 
 ## Configuration
 
