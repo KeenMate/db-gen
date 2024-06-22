@@ -51,11 +51,20 @@ func LoadGenerationInformation(config *Config) (*GenerationInformation, bool) {
 	return info, true
 }
 
+// SaveGenerationInformation Saves json with generation info inside output folder.
 func SaveGenerationInformation(config *Config, routines []DbRoutine, version string) error {
+	// make local copy because we will be removing specific name
+	routinesCopy := make([]DbRoutine, len(routines))
+	copy(routinesCopy, routines)
+
+	for i := range routinesCopy {
+		routinesCopy[i].SpecificName = ""
+	}
+
 	info := GenerationInformation{
 		Version:  version,
 		Time:     time.Now(),
-		Routines: routines,
+		Routines: routinesCopy,
 	}
 
 	path := filepath.Join(config.OutputFolder, generationInfoFileName)
@@ -213,7 +222,7 @@ func getParameterChanges(oldParams []DbParameter, newParams []DbParameter) strin
 	}
 
 	if newLength > oldLength {
-		for _, oldParam := range oldParams[oldLength:newLength] {
+		for _, oldParam := range newParams[oldLength:newLength] {
 			outBuilder.WriteString(fmt.Sprintf("\t added parameter: %s\n", oldParam.Name))
 		}
 	}
