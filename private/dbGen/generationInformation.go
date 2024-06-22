@@ -24,12 +24,12 @@ type GenerationInformation struct {
 }
 
 type databaseChanges struct {
-	deletedRoutines []DbRoutine
-	createdRoutines []DbRoutine
-	changedRoutines []routineChanges
+	deletedRoutines      []DbRoutine
+	createdRoutines      []DbRoutine
+	maybeChangedRoutines []routinePain
 }
 
-type routineChanges struct {
+type routinePain struct {
 	oldRoutine DbRoutine
 	newRoutine DbRoutine
 }
@@ -108,11 +108,11 @@ func (info *GenerationInformation) GetRoutinesChanges(newRoutines []DbRoutine) s
 	for _, newRoutine := range newRoutines {
 		oldRoutine, exists := findRoutine(oldRoutines, newRoutine)
 		if !exists {
-			changes.createdRoutines = append(changes.deletedRoutines, newRoutine)
+			changes.createdRoutines = append(changes.createdRoutines, newRoutine)
 			continue
 		}
 
-		changes.changedRoutines = append(changes.changedRoutines, routineChanges{
+		changes.maybeChangedRoutines = append(changes.maybeChangedRoutines, routinePain{
 			oldRoutine: *oldRoutine,
 			newRoutine: newRoutine,
 		})
@@ -127,28 +127,35 @@ func (databaseChanges *databaseChanges) String() string {
 	if len(databaseChanges.deletedRoutines) > 0 {
 		out.WriteString("Deleted routines:\n")
 		for _, routine := range databaseChanges.deletedRoutines {
-			out.WriteString(fmt.Sprintf(" - %s.%s\n", routine.RoutineSchema, routine.RoutineName))
+			out.WriteString(fmt.Sprintf(" - %s.%s\n", routine.RoutineSchema, routine.RoutineNameWithParams))
 		}
 	}
 
 	if len(databaseChanges.createdRoutines) > 0 {
 		out.WriteString("Created routines:\n")
 		for _, routine := range databaseChanges.createdRoutines {
-			out.WriteString(fmt.Sprintf(" - %s.%s\n", routine.RoutineSchema, routine.RoutineName))
+			out.WriteString(fmt.Sprintf(" - %s.%s\n", routine.RoutineSchema, routine.RoutineNameWithParams))
 		}
 	}
 
-	if len(databaseChanges.changedRoutines) > 0 {
-		out.WriteString("Changed routines:\n")
-		for _, changes := range databaseChanges.changedRoutines {
-			out.WriteString(changes.String())
+	log.Printf("number of changed routines: %d\n", len(databaseChanges.maybeChangedRoutines))
+	if len(databaseChanges.maybeChangedRoutines) > 0 {
+		changesDetected := false
+		for _, routinesInfo := range databaseChanges.maybeChangedRoutines {
+			changes := routinesInfo.String()
+			if !changesDetected && len(changes) > 0 {
+				out.WriteString("Changed routines:\n")
+				changesDetected = true
+			}
+			out.WriteString(changes)
+
 		}
 	}
 
 	return out.String()
 }
 
-func (change *routineChanges) String() string {
+func (change *routinePain) String() string {
 	var changes strings.Builder
 
 	oldR := change.oldRoutine
@@ -232,6 +239,11 @@ func getParameterChanges(oldParams []DbParameter, newParams []DbParameter) strin
 
 func findRoutine(routines []DbRoutine, routine DbRoutine) (*DbRoutine, bool) {
 	index := slices.IndexFunc(routines, func(oldRoutine DbRoutine) bool {
+		// for function with overloads we can't detect parameter changes
+		if routine.HasOverload {
+			return routine.RoutineNameWithParams == oldRoutine.RoutineNameWithParams
+		}
+
 		return routine.RoutineName == oldRoutine.RoutineName && routine.RoutineSchema == oldRoutine.RoutineSchema
 	})
 

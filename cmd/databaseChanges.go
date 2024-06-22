@@ -61,17 +61,22 @@ func doDatabaseChanges() error {
 		return nil
 	}
 
-	var routines []dbGen.DbRoutine
-
 	log.Printf("Getting routines...")
-	routines, err = dbGen.GetRoutines(config)
+	routines, err := dbGen.GetRoutines(config)
 	if err != nil {
 		return fmt.Errorf("error getting routines: %s", err)
 	}
 	log.Printf("Got %d routines", len(routines))
 
+	err = dbGen.PreprocessRoutines(&routines, config)
+	if err != nil {
+		return fmt.Errorf("error preprocessing routines: %s", err)
+	}
+
+	log.Printf("Routines preprocessed")
+
 	databaseChanges := buildInfo.GetRoutinesChanges(routines)
-	log.Printf("Database changes:\n" + databaseChanges)
+	printDatabaseChanges(databaseChanges)
 
 	return nil
 }

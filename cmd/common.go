@@ -15,3 +15,12 @@ var commonFlags = []helpers.FlagArgument{
 	helpers.NewStringFlag(keyConfig, "s", "", "Connection string used to connect to database"),
 	helpers.NewStringFlag(keyConnectionString, "c", "", "Path to configuration file"),
 }
+
+func printDatabaseChanges(databaseChanges string) {
+	if len(databaseChanges) == 0 {
+		helpers.LogBold("No database changes detected")
+		return
+	}
+
+	helpers.LogBold("Database changes:\n" + databaseChanges)
+}

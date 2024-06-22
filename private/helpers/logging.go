@@ -11,9 +11,14 @@ const colorReset = "\033[0m"
 const colorBlue = "\033[34m"
 const colorRed = "\033[31m"
 const colorYellow = "\033[33m"
+const colorBold = "\033[1m"
 
 func Log(msg string, args ...any) {
 	log.Printf(msg, args...)
+}
+
+func LogBold(msg string, args ...any) {
+	log.Printf(colorBold+msg+colorReset, args...)
 }
 
 func LogError(msg string, args ...any) {

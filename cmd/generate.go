@@ -92,15 +92,22 @@ func doGenerate() error {
 		timer.AddEntry("saving debug file")
 	}
 
+	// mark function as overloads
+	log.Printf("Preprocessing...")
+	err = dbGen.PreprocessRoutines(&routines, config)
+	if err != nil {
+		return fmt.Errorf("error preprocessing: %s", err)
+	}
+
 	if infoExist {
-		// TODO we should only show changes of routines after filtering
-		changesMsg := buildInfo.GetRoutinesChanges(routines)
-		log.Printf("Database changes:\n" + changesMsg)
+		// TODO maybe only handle changes after filtering
+		changes := buildInfo.GetRoutinesChanges(routines)
+		printDatabaseChanges(changes)
 	} else {
 		log.Printf("No previous build information found")
 	}
 
-	log.Printf("Preprocessing...")
+	log.Printf("Processing...")
 	processedFunctions, err := dbGen.Process(routines, config)
 	if err != nil {
 		return fmt.Errorf("error preprocessing: %s", err)

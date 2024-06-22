@@ -15,8 +15,6 @@ func Process(routines []DbRoutine, config *Config) ([]Routine, error) {
 		return nil, fmt.Errorf("filtering routines: %s", err)
 	}
 
-	err = PreprocessRoutines(&routines, config)
-
 	// don't need to compute for every property
 	typeMappings := getTypeMappings(config)
 	helpers.LogDebug("Got %d type mappings", len(typeMappings))
