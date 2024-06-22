@@ -67,6 +67,7 @@ func doGetRoutines() error {
 	log.Printf("Saving %d routines...", len(routines))
 
 	// TODO show what routines changed
+	// TODO remove specific name
 
 	err = dbGen.SaveRoutinesFile(routines, config)
 	if err != nil {
