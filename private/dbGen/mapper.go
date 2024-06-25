@@ -284,7 +284,7 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 		}
 
 		if explicitMapping.MappedType != "" {
-			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "", config)
+			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "NO MAPPING FUNCTION FOR PARAMS", config)
 			if err != nil {
 				return nil, err
 			}
