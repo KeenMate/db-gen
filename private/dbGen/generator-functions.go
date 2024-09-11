@@ -2,6 +2,7 @@ package dbGen
 
 import (
 	"github.com/keenmate/db-gen/private/helpers"
+	"strings"
 	"text/template"
 )
 
@@ -18,6 +19,9 @@ func getTemplateFunctions() template.FuncMap {
 		},
 		"snakeCased": func(s string) string {
 			return helpers.ToSnakeCase(s)
+		},
+		"trimPrefix": func(p string, s string) string {
+			return strings.TrimPrefix(s, p)
 		},
 	}
 }
