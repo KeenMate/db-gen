@@ -24,6 +24,7 @@ The codebase follows a standard Go CLI structure:
 - `generate` - Main command that connects to database and generates code files
 - `routines` - Exports database function definitions to JSON for offline use
 - `databaseChanges` - Detects schema changes since last generation
+- `completion` - Generates shell completion scripts (bash, zsh, fish, powershell)
 
 ### Core Generation Flow
 1. Load configuration from `db-gen.json` (with optional local overrides)
@@ -79,6 +80,15 @@ The tool maps PostgreSQL types to target language types via:
 2. Per-function overrides for custom handling
 3. Template functions for case conversion (pascalCased, camelCased, snakeCased)
 
+## Configuration Options
+
+Key boolean settings (all default to false):
+- `GenerateModels`, `GenerateProcessors`, `GenerateProcessorsForVoidReturns`
+- `ClearOutputFolder`, `UseRoutinesFile`
+
+Valid enum values:
+- `GeneratedFileCase`: "snakecase", "camelcase", "pascalcase"
+
 ## Template Development
 
 Templates use Go template syntax with access to:
@@ -88,3 +98,10 @@ Templates use Go template syntax with access to:
 - `BuildInfo` - Version and build information
 
 Each `Routine` includes function metadata, parameters, return properties, and naming information.
+
+## Recent Updates
+
+- Added comprehensive Mermaid architecture diagram to README.md showing complete workflow
+- Updated README with all valid enum values and configuration options
+- Fixed grammar and styling issues throughout documentation
+- Verified all struct definitions match current codebase
