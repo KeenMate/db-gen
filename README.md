@@ -51,6 +51,74 @@ In enterprise development, it is often the case that your internet connection is
 have internet at all. In case of digital nomads, you might be currently working in K2's 2nd base camp. In all these cases you are covered; db-gen is a
 self-contained executable that needs nothing else than configuration and templates.
 
+## Architecture Overview
+
+```mermaid
+graph TD
+    A[CLI Commands] --> B{Command Type}
+    B -->|generate| C[Load Configuration]
+    B -->|routines| D[Export Routines]
+    B -->|databaseChanges| E[Detect Changes]
+
+    C --> F{Data Source}
+    F -->|Database| G[Connect to PostgreSQL]
+    F -->|Offline| H[Load Routines File]
+
+    G --> I[Query Database Schema]
+    H --> J[Parse JSON Routines]
+    I --> K[Extract Function Metadata]
+    J --> K
+
+    K --> L[Apply Filters & Mappings]
+    L --> M[Generate Routine Objects]
+
+    M --> N{Generation Type}
+    N -->|DbContext| O[Apply DbContext Template]
+    N -->|Models| P[Apply Model Template]
+    N -->|Processors| Q[Apply Processor Template]
+
+    O --> R[Generate DbContext File]
+    P --> S[Generate Model Files]
+    Q --> T[Generate Processor Files]
+
+    R --> U[Output Folder]
+    S --> U
+    T --> U
+
+    D --> V[Save Routines JSON]
+    E --> W[Compare Schema Changes]
+
+    subgraph "Configuration Files"
+        X[db-gen.json]
+        Y[local.db-gen.json]
+        Z[Templates/*.gotmpl]
+    end
+
+    subgraph "Database"
+        AA[PostgreSQL]
+        AB[Stored Functions/Procedures]
+    end
+
+    subgraph "Output"
+        AC[Generated Code Files]
+        AD[DbContext]
+        AE[Models]
+        AF[Processors]
+    end
+
+    C --> X
+    C --> Y
+    O --> Z
+    P --> Z
+    Q --> Z
+    G --> AA
+    I --> AB
+    U --> AC
+    R --> AD
+    S --> AE
+    T --> AF
+```
+
 ## How to use it
 
 We usually put the downloaded `db-gen-win.exe`, `db-gen-linux`, or both directly into the repo. Yes, the repo gets bigger, but in five years, when you have to update your project, you won't have to look for it on the ever-forgetting internet.
