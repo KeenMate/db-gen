@@ -4,14 +4,27 @@ import "github.com/keenmate/db-gen/private/version"
 
 // Types used in template
 type Property struct {
-	DbColumnName   string
-	DbColumnType   string
-	PropertyName   string
-	PropertyType   string
-	Position       int
-	MapperFunction string
-	Nullable       bool // This can be unreliable
-	Optional       bool // only used in Params
+	DbColumnName        string
+	DbColumnType        string
+	PropertyName        string
+	PropertyType        string // The actual type to use (resolved based on nullable/optional)
+	BaseType            string // Base non-nullable type
+	NullableReturnType  string // Type for nullable return values/model properties
+	NullableParamType   string // Type for nullable parameters
+	OptionalParamType   string // Type for optional parameters (with defaults)
+	Position            int
+	MapperFunction      string
+	Nullable            bool // This can be unreliable
+	Optional            bool // only used in Params
+	IsContextParameter  bool
+	ContextPath         string
+	ValidationRules     []ValidationRule
+}
+
+type ValidationRule struct {
+	Name       string
+	Definition *ValidationRuleDefinition
+	Parameters map[string]interface{}
 }
 
 type Routine struct {
@@ -25,6 +38,9 @@ type Routine struct {
 	IsProcedure        bool
 	Parameters         []Property
 	ReturnProperties   []Property
+	UsesUserContext    bool
+	ContextParameters  []Property
+	RegularParameters  []Property
 }
 
 type DbContextData struct {

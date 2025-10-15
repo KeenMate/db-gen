@@ -88,8 +88,11 @@ func getTypeMappings(config *Config) map[string]mapping {
 	for _, val := range config.Mappings {
 		for _, databaseType := range val.DatabaseTypes {
 			mappings[databaseType] = mapping{
-				mappedFunction: val.MappingFunction,
-				mappedType:     val.MappedType,
+				mappedFunction:        val.MappingFunction,
+				mappedType:            val.MappedType,
+				nullableReturnType:    val.NullableReturnType,
+				nullableParameterType: val.NullableParameterType,
+				optionalParameterType: val.OptionalParameterType,
 			}
 		}
 

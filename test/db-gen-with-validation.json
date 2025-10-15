@@ -1,0 +1,248 @@
+{
+	"OutputFolder": "./output",
+	"GenerateModels": true,
+	"GenerateProcessors": false,
+	"GenerateProcessorsForVoidReturns": false,
+	"ClearOutputFolder": false,
+	"DbContextTemplate": "./templates/dbcontext.gotmpl",
+	"ModelTemplate": "./templates/model.gotmpl",
+	"ProcessorTemplate": "./templates/processor.gotmpl",
+	"GeneratedFileExtension": ".cs",
+	"GeneratedFileCase": "camelcase",
+
+	"UseUserContext": true,
+	"UserContextParameterName": "ctx",
+	"UserContextType": "UserContext",
+	"ContextParameterMappings": [
+		{
+			"ParameterNames": ["userid"],
+			"ContextPath": "User.UserId"
+		},
+		{
+			"ParameterNames": ["displaylanguagecode"],
+			"ContextPath": "Locale"
+		},
+		{
+			"ParameterNames": ["createdby", "updatedby", "deletedby", "modifiedby", "removedby", "ensuredby", "runby"],
+			"ContextPath": "Username"
+		},
+		{
+			"ParameterNames": ["tenantid"],
+			"ContextPath": "SelectedTenant.TenantId"
+		}
+	],
+
+	"Validation": {
+		"ValidationStrategy": "Manual",
+		"ValidationLocations": ["Controller"],
+		"ValidationBehavior": {
+			"CollectAllErrors": true,
+			"ReturnType": "ValidationResult"
+		},
+		"ValidationRuleDefinitions": [
+			{
+				"Name": "CheckBusinessCode",
+				"Type": "Custom",
+				"ExecutorType": "ExistingFunction",
+				"ExecutorReference": "ValidationHelpers.ValidateBusinessCode",
+				"ErrorMessage": "Invalid business unit code",
+				"ErrorCode": "INVALID_BUSINESS_CODE",
+				"Templates": {
+					"FluentValidation": ".Must(ValidationHelpers.ValidateBusinessCode).WithMessage(\"Invalid business unit code\").WithErrorCode(\"INVALID_BUSINESS_CODE\")",
+					"Manual": {
+						"Check": "ValidationHelpers.ValidateBusinessCode({{.ParamName}})",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"Invalid business unit code\", \"INVALID_BUSINESS_CODE\")"
+					}
+				}
+			},
+			{
+				"Name": "Required",
+				"Type": "Built-in",
+				"ErrorMessage": "{{.ParamDisplayName}} is required",
+				"ErrorCode": "REQUIRED_FIELD",
+				"Templates": {
+					"FluentValidation": ".NotNull().NotEmpty().WithErrorCode(\"REQUIRED_FIELD\")",
+					"Manual": {
+						"Check": "{{.ParamName}} != null && !string.IsNullOrEmpty({{.ParamName}})",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"{{.ParamDisplayName}} is required\", \"REQUIRED_FIELD\")"
+					}
+				}
+			},
+			{
+				"Name": "Range",
+				"Type": "Built-in",
+				"ErrorMessage": "{{.ParamDisplayName}} must be between {{.Min}} and {{.Max}}",
+				"ErrorCode": "OUT_OF_RANGE",
+				"Templates": {
+					"FluentValidation": ".InclusiveBetween({{.Min}}, {{.Max}}).WithErrorCode(\"OUT_OF_RANGE\")",
+					"Manual": {
+						"Check": "{{.ParamName}} >= {{.Min}} && {{.ParamName}} <= {{.Max}}",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"{{.ParamDisplayName}} must be between {{.Min}} and {{.Max}}\", \"OUT_OF_RANGE\")"
+					}
+				}
+			},
+			{
+				"Name": "MaxLength",
+				"Type": "Built-in",
+				"ErrorMessage": "{{.ParamDisplayName}} exceeds maximum length of {{.Value}}",
+				"ErrorCode": "MAX_LENGTH_EXCEEDED",
+				"Templates": {
+					"FluentValidation": ".MaximumLength({{.Value}}).WithErrorCode(\"MAX_LENGTH_EXCEEDED\")",
+					"Manual": {
+						"Check": "{{.ParamName}}?.Length <= {{.Value}}",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"{{.ParamDisplayName}} exceeds maximum length of {{.Value}}\", \"MAX_LENGTH_EXCEEDED\")"
+					}
+				}
+			},
+			{
+				"Name": "EmailFormat",
+				"Type": "Built-in",
+				"ErrorMessage": "Invalid email format",
+				"ErrorCode": "INVALID_EMAIL",
+				"Templates": {
+					"FluentValidation": ".EmailAddress().WithErrorCode(\"INVALID_EMAIL\")",
+					"Manual": {
+						"Check": "System.Text.RegularExpressions.Regex.IsMatch({{.ParamName}} ?? \"\", @\"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$\")",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"Invalid email format\", \"INVALID_EMAIL\")"
+					}
+				}
+			},
+			{
+				"Name": "PositiveNumber",
+				"Type": "Built-in",
+				"ErrorMessage": "{{.ParamDisplayName}} must be greater than zero",
+				"ErrorCode": "MUST_BE_POSITIVE",
+				"Templates": {
+					"FluentValidation": ".GreaterThan(0).WithErrorCode(\"MUST_BE_POSITIVE\")",
+					"Manual": {
+						"Check": "{{.ParamName}} > 0",
+						"ErrorBuilder": "new ValidationError(\"{{.ParamName}}\", \"{{.ParamDisplayName}} must be greater than zero\", \"MUST_BE_POSITIVE\")"
+					}
+				}
+			}
+		],
+		"ParameterValidationMappings": [
+			{
+				"ParameterNames": ["businessunitcode", "businesscode", "businessunit"],
+				"Rules": ["CheckBusinessCode"]
+			},
+			{
+				"ParameterNames": ["email", "emailaddress"],
+				"Rules": ["Required", "EmailFormat", {"Name": "MaxLength", "Value": 255}]
+			},
+			{
+				"ParameterNames": ["customerid", "orderid"],
+				"Rules": ["Required", "PositiveNumber"]
+			}
+		],
+		"FunctionSpecificValidations": {}
+	},
+
+	"AdditionalGenerators": [
+		{
+			"Name": "TypeScript",
+			"Enabled": true,
+			"Template": "./templates/typescript.gotmpl",
+			"OutputFolder": "./output/typescript",
+			"FileExtension": ".ts",
+			"FileCase": "camelcase",
+			"GenerationType": "per-routine"
+		},
+		{
+			"Name": "Provider",
+			"Enabled": true,
+			"Template": "./templates/provider.gotmpl",
+			"OutputFolder": "./output",
+			"FileName": "CommonProvider.cs",
+			"GenerationType": "single-file"
+		},
+		{
+			"Name": "ValidationSupport",
+			"Enabled": true,
+			"Template": "./templates/validation-support.gotmpl",
+			"OutputFolder": "./output/validation",
+			"FileName": "ValidationSupport.cs",
+			"GenerationType": "single-file"
+		},
+		{
+			"Name": "Controller",
+			"Enabled": true,
+			"Template": "./templates/controller-with-validation.gotmpl",
+			"OutputFolder": "./output",
+			"FileName": "DatabaseController.cs",
+			"GenerationType": "single-file"
+		}
+	],
+
+	"Generate": [
+		{
+			"Schema": "public",
+			"AllFunctions": true,
+			"Functions": {
+				"ignored": false
+			}
+		}
+	],
+	"Mappings": [
+		{
+			"DatabaseTypes": ["boolean", "bool"],
+			"MappedType": "bool",
+			"MappingFunction": "GetBoolean"
+		},
+		{
+			"DatabaseTypes": ["smallint", "int2"],
+			"MappedType": "short",
+			"MappingFunction": "GetInt16"
+		},
+		{
+			"DatabaseTypes": ["integer", "int4"],
+			"MappedType": "int",
+			"MappingFunction": "GetInt32"
+		},
+		{
+			"DatabaseTypes": ["bigint", "int8"],
+			"MappedType": "long",
+			"MappingFunction": "GetInt64"
+		},
+		{
+			"DatabaseTypes": ["real", "float4"],
+			"MappedType": "float",
+			"MappingFunction": "GetFloat"
+		},
+		{
+			"DatabaseTypes": ["double precision", "float8"],
+			"MappedType": "double",
+			"MappingFunction": "GetDouble"
+		},
+		{
+			"DatabaseTypes": ["numeric", "money"],
+			"MappedType": "decimal",
+			"MappingFunction": "GetDecimal"
+		},
+		{
+			"DatabaseTypes": ["text", "character varying", "character", "citext", "json", "jsonb", "xml", "varchar"],
+			"MappedType": "string",
+			"MappingFunction": "GetString"
+		},
+		{
+			"DatabaseTypes": ["uuid"],
+			"MappedType": "Guid",
+			"MappingFunction": "GetGuid"
+		},
+		{
+			"DatabaseTypes": ["bytea"],
+			"MappedType": "byte[]",
+			"MappingFunction": "GetByteArray"
+		},
+		{
+			"DatabaseTypes": ["timestamptz", "date", "timestamp"],
+			"MappedType": "DateTime",
+			"MappingFunction": "GetDateTime"
+		},
+		{
+			"DatabaseTypes": ["interval"],
+			"MappedType": "TimeSpan",
+			"MappingFunction": "GetTimeSpan"
+		}
+	]
+}

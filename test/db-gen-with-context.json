@@ -1,0 +1,210 @@
+{
+	"OutputFolder": "./output",
+	"GenerateModels": true,
+	"GenerateProcessors": true,
+	"GenerateProcessorsForVoidReturns": false,
+	"ClearOutputFolder": false,
+	"DbContextTemplate": "./templates/dbcontext.gotmpl",
+	"ModelTemplate": "./templates/model.gotmpl",
+	"ProcessorTemplate": "./templates/processor.gotmpl",
+	"GeneratedFileExtension": ".cs",
+	"GeneratedFileCase": "camelcase",
+
+	"UseUserContext": true,
+	"UserContextParameterName": "ctx",
+	"UserContextType": "UserContext",
+	"ContextParameterMappings": [
+		{
+			"ParameterNames": ["userid"],
+			"ContextPath": "User.UserId"
+		},
+		{
+			"ParameterNames": ["displaylanguagecode"],
+			"ContextPath": "Locale"
+		},
+		{
+			"ParameterNames": ["createdby", "updatedby", "deletedby", "modifiedby", "removedby", "ensuredby", "runby"],
+			"ContextPath": "Username"
+		},
+		{
+			"ParameterNames": ["tenantid"],
+			"ContextPath": "SelectedTenant.TenantId"
+		}
+	],
+
+	"AdditionalGenerators": [
+		{
+			"Name": "TypeScript",
+			"Enabled": true,
+			"Template": "./templates/typescript.gotmpl",
+			"OutputFolder": "./output/typescript",
+			"FileExtension": ".ts",
+			"FileCase": "camelcase",
+			"GenerationType": "per-routine"
+		},
+		{
+			"Name": "Provider",
+			"Enabled": true,
+			"Template": "./templates/provider.gotmpl",
+			"OutputFolder": "./output",
+			"FileName": "CommonProvider.cs",
+			"GenerationType": "single-file"
+		}
+	],
+
+	"Generate": [
+		{
+			"Schema": "public",
+			"AllFunctions": true,
+			"Functions": {
+				"ignored": false,
+				"return_custom_type": {
+					"MappedName": "customName",
+					"DontRetrieveValues": true,
+					"Model": {
+						"__number": {
+							"MappedType": "int",
+							"IsNullable": true
+						},
+						"__json": {
+							"MappedName": "jason",
+							"MappedType": "string",
+							"MappingFunction": "mapJsonAsString",
+							"IsNullable": null
+						}
+					}
+				},
+				"overloaded_function(int4)": {
+					"MappedName": "overload_int"
+				},
+				"overloaded_function(text)": {
+					"MappedName": "overload_text"
+				},
+				"return_void(int4,int4)": {
+					"Parameters": {
+						"a": {
+							"MappedName": "aaa",
+							"MappedType": "long"
+						}
+					}
+				}
+			}
+		},
+		{
+			"Schema": "test",
+			"AllFunctions": false,
+			"Functions": {
+				"explicitly_included": true
+			}
+		}
+	],
+	"Mappings": [
+		{
+			"DatabaseTypes": [
+				"boolean",
+				"bool"
+			],
+			"MappedType": "bool",
+			"MappingFunction": "GetBoolean"
+		},
+		{
+			"DatabaseTypes": [
+				"smallint",
+				"int2"
+			],
+			"MappedType": "short",
+			"MappingFunction": "GetInt16"
+		},
+		{
+			"DatabaseTypes": [
+				"integer",
+				"int4"
+			],
+			"MappedType": "int",
+			"MappingFunction": "GetInt32"
+		},
+		{
+			"DatabaseTypes": [
+				"bigint",
+				"int8"
+			],
+			"MappedType": "long",
+			"MappingFunction": "GetInt64"
+		},
+		{
+			"DatabaseTypes": [
+				"real",
+				"float4"
+			],
+			"MappedType": "float",
+			"MappingFunction": "GetFloat"
+		},
+		{
+			"DatabaseTypes": [
+				"double precision",
+				"float8"
+			],
+			"MappedType": "double",
+			"MappingFunction": "GetDouble"
+		},
+		{
+			"DatabaseTypes": [
+				"numeric",
+				"money"
+			],
+			"MappedType": "decimal",
+			"MappingFunction": "GetDecimal"
+		},
+		{
+			"DatabaseTypes": [
+				"text",
+				"character varying",
+				"character",
+				"citext",
+				"json",
+				"jsonb",
+				"xml",
+				"varchar"
+			],
+			"MappedType": "string",
+			"MappingFunction": "GetString"
+		},
+		{
+			"DatabaseTypes": [
+				"uuid"
+			],
+			"MappedType": "Guid",
+			"MappingFunction": "GetGuid"
+		},
+		{
+			"DatabaseTypes": [
+				"bytea"
+			],
+			"MappedType": "byte[]",
+			"MappingFunction": "GetByteArray"
+		},
+		{
+			"DatabaseTypes": [
+				"timestamptz",
+				"date",
+				"timestamp"
+			],
+			"MappedType": "DateTime",
+			"MappingFunction": "GetDateTime"
+		},
+		{
+			"DatabaseTypes": [
+				"interval"
+			],
+			"MappedType": "TimeSpan",
+			"MappingFunction": "GetTimeSpan"
+		},
+		{
+			"DatabaseTypes": [
+				"ltree"
+			],
+			"MappedType": "String",
+			"MappingFunction": "GetString"
+		}
+	]
+}

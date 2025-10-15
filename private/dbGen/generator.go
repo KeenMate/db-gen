@@ -20,7 +20,26 @@ func Generate(routines []Routine, config *Config) error {
 	if err != nil {
 		return fmt.Errorf("generating file hashes: %s", err)
 	}
+
+	// Also generate hashes for additional generator output folders
+	for _, generator := range config.AdditionalGenerators {
+		if !generator.Enabled || generator.CleanOutputFolder {
+			continue
+		}
+		additionalHashes, err := generateFileHashes(generator.OutputFolder)
+		if err != nil {
+			return fmt.Errorf("generating file hashes for %s: %s", generator.Name, err)
+		}
+		// Merge into main hash map
+		for k, v := range *additionalHashes {
+			(*fileHashes)[k] = v
+		}
+	}
+
 	common2.LogDebug("Got %d file hashes", len(*fileHashes))
+
+	// Track generated files for orphan removal
+	generatedFiles := make(map[string]bool)
 
 	log.Printf("Ensuring output folder...")
 
@@ -31,7 +50,7 @@ func Generate(routines []Routine, config *Config) error {
 
 	log.Printf("Generating dbcontext...")
 
-	err = generateDbContext(routines, fileHashes, config)
+	err = generateDbContext(routines, fileHashes, &generatedFiles, config)
 	if err != nil {
 		return fmt.Errorf("generating dbcontext: %s", err)
 
@@ -40,7 +59,7 @@ func Generate(routines []Routine, config *Config) error {
 	if config.GenerateModels {
 		log.Printf("Generating models...")
 
-		err = generateModels(routines, fileHashes, config)
+		err = generateModels(routines, fileHashes, &generatedFiles, config)
 		if err != nil {
 			return fmt.Errorf("generating models: %s", err)
 
@@ -52,7 +71,7 @@ func Generate(routines []Routine, config *Config) error {
 	if config.GenerateProcessors {
 		log.Printf("Generating processors...")
 
-		err = generateProcessors(routines, fileHashes, config)
+		err = generateProcessors(routines, fileHashes, &generatedFiles, config)
 		if err != nil {
 			return fmt.Errorf("generating processors: %s", err)
 
@@ -60,10 +79,25 @@ func Generate(routines []Routine, config *Config) error {
 	} else {
 		log.Printf("Skipping generating processors")
 	}
+
+	// Generate additional outputs
+	err = generateAdditionalOutputs(routines, fileHashes, &generatedFiles, config)
+	if err != nil {
+		return fmt.Errorf("generating additional outputs: %s", err)
+	}
+
+	// Remove orphaned files if configured
+	if config.RemoveOrphanedFiles && !config.ClearOutputFolder {
+		err = removeOrphanedFiles(fileHashes, &generatedFiles, config)
+		if err != nil {
+			return fmt.Errorf("removing orphaned files: %s", err)
+		}
+	}
+
 	return nil
 }
 
-func generateDbContext(routines []Routine, hashMap *map[string]string, config *Config) error {
+func generateDbContext(routines []Routine, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
 	dbContextTemplate, err := parseTemplate(config.DbContextTemplate)
 	if err != nil {
 		return fmt.Errorf("loading dbContext template: %s", err)
@@ -78,7 +112,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 	filename := changeCase("DbContext"+config.GeneratedFileExtension, config.GeneratedFileCase)
 	fp := filepath.Join(config.OutputFolder, filename)
 
-	changed, err := generateFile(data, dbContextTemplate, fp, hashMap)
+	changed, err := generateFile(data, dbContextTemplate, fp, hashMap, generatedFiles)
 	if err != nil {
 		return err
 	}
@@ -93,7 +127,7 @@ func generateDbContext(routines []Routine, hashMap *map[string]string, config *C
 
 }
 
-func generateModels(routines []Routine, hashMap *map[string]string, config *Config) error {
+func generateModels(routines []Routine, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
 	moduleTemplate, err := parseTemplate(config.ModelTemplate)
 	if err != nil {
 		return fmt.Errorf("loading module template: %s", err)
@@ -116,7 +150,7 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 			BuildInfo: version.GetBuildInfo(),
 		}
 
-		changed, err := generateFile(data, moduleTemplate, filePath, hashMap)
+		changed, err := generateFile(data, moduleTemplate, filePath, hashMap, generatedFiles)
 		if err != nil {
 			return fmt.Errorf("generating models: %s", err)
 		}
@@ -131,7 +165,7 @@ func generateModels(routines []Routine, hashMap *map[string]string, config *Conf
 	return nil
 }
 
-func generateProcessors(routines []Routine, hashMap *map[string]string, config *Config) error {
+func generateProcessors(routines []Routine, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
 	processorTemplate, err := parseTemplate(config.ProcessorTemplate)
 	if err != nil {
 		return fmt.Errorf("loading processor template: %s", err)
@@ -159,7 +193,7 @@ func generateProcessors(routines []Routine, hashMap *map[string]string, config *
 			BuildInfo: version.GetBuildInfo(),
 		}
 
-		changed, err := generateFile(data, processorTemplate, filePath, hashMap)
+		changed, err := generateFile(data, processorTemplate, filePath, hashMap, generatedFiles)
 		if err != nil {
 			return fmt.Errorf("generating processor %s: %s", routine.ProcessorName, err)
 		}
@@ -192,9 +226,12 @@ func parseTemplate(templatePath string) (*template.Template, error) {
 	return tmpl, nil
 }
 
-func generateFile(data interface{}, template *template.Template, fp string, hashMap *map[string]string) (bool, error) {
+func generateFile(data interface{}, template *template.Template, fp string, hashMap *map[string]string, generatedFiles *map[string]bool) (bool, error) {
 
 	fp = filepath.Clean(fp)
+
+	// Track this file as generated
+	(*generatedFiles)[fp] = true
 
 	// we want to ignore error for now
 	oldHash, _ := (*hashMap)[fp]
@@ -293,6 +330,112 @@ func generateFileHashes(outputFolder string) (*map[string]string, error) {
 
 }
 
+func generateAdditionalOutputs(routines []Routine, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
+	for _, generator := range config.AdditionalGenerators {
+		if !generator.Enabled {
+			common2.LogDebug("Skipping disabled generator: %s", generator.Name)
+			continue
+		}
+
+		log.Printf("Generating %s...", generator.Name)
+
+		// Parse template
+		tmpl, err := parseTemplate(generator.Template)
+		if err != nil {
+			return fmt.Errorf("loading template for %s: %s", generator.Name, err)
+		}
+
+		// Clean output folder if requested
+		if generator.CleanOutputFolder {
+			err = os.RemoveAll(generator.OutputFolder)
+			if err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("cleaning output folder for %s: %s", generator.Name, err)
+			}
+		}
+
+		// Create output folder
+		err = os.MkdirAll(generator.OutputFolder, 0777)
+		if err != nil {
+			return fmt.Errorf("creating output folder for %s: %s", generator.Name, err)
+		}
+
+		if generator.GenerationType == "single-file" {
+			// Generate single file with all routines
+			err = generateSingleFile(routines, tmpl, generator, hashMap, generatedFiles, config)
+			if err != nil {
+				return fmt.Errorf("generating %s: %s", generator.Name, err)
+			}
+		} else {
+			// Generate one file per routine
+			err = generatePerRoutineFiles(routines, tmpl, generator, hashMap, generatedFiles, config)
+			if err != nil {
+				return fmt.Errorf("generating %s: %s", generator.Name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func generateSingleFile(routines []Routine, tmpl *template.Template, generator AdditionalGenerator, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
+	data := &DbContextData{
+		Config:    config,
+		Functions: routines,
+		BuildInfo: version.GetBuildInfo(),
+	}
+
+	filePath := filepath.Join(generator.OutputFolder, generator.FileName)
+	changed, err := generateFile(data, tmpl, filePath, hashMap, generatedFiles)
+	if err != nil {
+		return err
+	}
+
+	if changed {
+		log.Printf("Updated: %s", generator.FileName)
+	} else {
+		common2.LogDebug("Same: %s", generator.FileName)
+	}
+
+	return nil
+}
+
+func generatePerRoutineFiles(routines []Routine, tmpl *template.Template, generator AdditionalGenerator, hashMap *map[string]string, generatedFiles *map[string]bool, config *Config) error {
+	for _, routine := range routines {
+		// Skip routines without return for certain generators if needed
+		if !routine.HasReturn && generator.Name == "TypeScript" {
+			continue
+		}
+
+		data := &ModelTemplateData{
+			Config:    config,
+			Routine:   routine,
+			BuildInfo: version.GetBuildInfo(),
+		}
+
+		// Determine filename
+		baseName := routine.ModelName
+		if generator.FileExtension != "" {
+			baseName = routine.FunctionName
+		}
+
+		filename := changeCase(baseName+generator.FileExtension, generator.FileCase)
+		filePath := filepath.Join(generator.OutputFolder, filename)
+
+		changed, err := generateFile(data, tmpl, filePath, hashMap, generatedFiles)
+		if err != nil {
+			return fmt.Errorf("generating file for %s: %s", routine.FunctionName, err)
+		}
+
+		if changed {
+			log.Printf("Updated: %s/%s", generator.Name, filename)
+		} else {
+			common2.LogDebug("Same: %s/%s", generator.Name, filename)
+		}
+	}
+
+	return nil
+}
+
 func changeCase(str string, desiredCase string) string {
 	switch desiredCase {
 	case "pascalcase":
@@ -305,4 +448,30 @@ func changeCase(str string, desiredCase string) string {
 		common2.LogWarn("unknown case, this should never happen")
 		return str
 	}
+}
+
+func removeOrphanedFiles(fileHashes *map[string]string, generatedFiles *map[string]bool, config *Config) error {
+	removedCount := 0
+
+	// Iterate through all files that existed before generation
+	for filePath := range *fileHashes {
+		// If the file was not regenerated, delete it
+		if !(*generatedFiles)[filePath] {
+			common2.LogDebug("Removing orphaned file: %s", filePath)
+			err := os.Remove(filePath)
+			if err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("removing orphaned file %s: %s", filePath, err)
+			}
+			removedCount++
+			log.Printf("Removed orphaned file: %s", filePath)
+		}
+	}
+
+	if removedCount > 0 {
+		log.Printf("Removed %d orphaned file(s)", removedCount)
+	} else {
+		common2.LogDebug("No orphaned files to remove")
+	}
+
+	return nil
 }

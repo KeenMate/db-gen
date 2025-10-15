@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## 0.6.0
+
+### New Features
+- **Context Parameter Mapping**: Automatically inject user context parameters (user_id, created_by, tenant_id, etc.) from UserContext object
+- **Additional Generators Framework**: Extensible system to generate additional outputs (CommonProvider, TypeScript models, etc.) using custom templates
+- **Three-tier Type Mapping System**: Separate type mappings for base types, nullable return types, nullable parameters, and optional parameters
+- **CleanOutputFolder Option**: Clean output folder before generation for AdditionalGenerators
+- **RemoveOrphanedFiles Option**: Automatically remove generated files when their corresponding database functions are deleted
+
+### Bug Fixes
+- Fixed per-function type override to properly use global nullable/optional type mappings
+- Fixed nullable vs optional parameter handling - nullable parameters now use `T?` instead of `Optional<T>` to ensure they're always passed to database
+- Fixed double-wrapping issue where nullable parameters were being wrapped in `Optional.Some()` when already typed as `Optional<T>`
+- Fixed jsonb parameter handling to prevent PostgreSQL-specific types from leaking outside DbContext layer
+- Fixed change detection to track files from all output folders (main + AdditionalGenerators), not just main output folder
+
+### Template Changes
+- DbContext template now checks only `$parameter.Optional` (not `$parameter.Nullable`) for `.ToObjectOptional()` usage
+- Added jsonb-to-JsonbStringParameter conversion logic in DbContext template for architectural boundary maintenance
+- Templates now have access to `BaseType`, `NullableReturnType`, `NullableParamType`, and `OptionalParamType` on Property objects
+
+### Configuration Changes
+- Added `UseUserContext`, `UserContextParameterName`, `UserContextType` options
+- Added `ContextParameterMappings` for automatic context parameter injection
+- Added `AdditionalGenerators` with support for `single-file` and `per-routine` generation types
+- Type mappings now support `NullableReturnType`, `NullableParameterType`, and `OptionalParameterType` fields
+- Added `CleanOutputFolder` boolean option to AdditionalGenerator configuration
+- Added `RemoveOrphanedFiles` boolean option to automatically clean up files for deleted database functions
+
 ## 0.5.2
 
 ### New features

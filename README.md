@@ -202,6 +202,11 @@ The local config file is not required.
 - **ClearOutputFolder (boolean)**:
 	- If `true`, deletes content of output folder before generating new files
 	- Valid values: `true`, `false`
+- **RemoveOrphanedFiles (boolean)**:
+	- If `true`, removes generated files when their corresponding database functions no longer exist
+	- Only works when `ClearOutputFolder` is `false` (mutually exclusive)
+	- Tracks all output folders (main + AdditionalGenerators)
+	- Valid values: `true`, `false`
 - **DbContextTemplate (string)**:
 	- Path to the template file for generating the dbContext file
 - **ModelTemplate (string)**:
@@ -218,6 +223,30 @@ The local config file is not required.
 - **UseRoutinesFile (boolean)**:
 	- If `true`, uses the routines file for offline generation instead of connecting to database
 	- Valid values: `true`, `false`
+- **UseUserContext (boolean)**:
+	- If `true`, enables automatic context parameter mapping
+	- Valid values: `true`, `false`
+- **UserContextParameterName (string)**:
+	- Name of the user context parameter (e.g., `"ctx"`)
+- **UserContextType (string)**:
+	- Type of the user context parameter (e.g., `"UserContext"`)
+- **ContextParameterMappings (array)**:
+	- Maps database parameter names to user context properties
+	- Each mapping has:
+		- **ParameterNames (array of strings)**: Database parameter names to map (e.g., `["_user_id", "_userid"]`)
+		- **ContextPath (string)**: Property path in context object (e.g., `"User.UserId"`)
+- **AdditionalGenerators (array)**:
+	- Defines additional code generation outputs beyond DbContext/Models/Processors
+	- Each generator has:
+		- **Name (string)**: Generator name for logging
+		- **Enabled (boolean)**: Whether to run this generator
+		- **Template (string)**: Path to template file
+		- **OutputFolder (string)**: Where to save generated files
+		- **FileName (string)**: File name for single-file generation
+		- **FileExtension (string)**: File extension for per-routine generation
+		- **FileCase (string)**: Case style for generated files (`"snakecase"`, `"camelcase"`, `"pascalcase"`)
+		- **GenerationType (string)**: `"single-file"` or `"per-routine"`
+		- **CleanOutputFolder (boolean)**: If `true`, deletes output folder before generation
 - **Generate**:
 	- **Schema (string)**:
 		- Specifies the database schema name
@@ -232,9 +261,15 @@ The local config file is not required.
 	- **DatabaseTypes (array of strings)**:
 		- If one database type has multiple mappings, the last will be used
 	- **MappedType (string)**:
-		- Can be used in templates
+		- Base type for non-nullable, non-optional cases
 	- **MappingFunction (string)**:
-		- Can be used in templates
+		- Function used to retrieve value from database reader
+	- **NullableReturnType (string)**:
+		- Type to use for nullable return values in models (e.g., `"int?"`)
+	- **NullableParameterType (string)**:
+		- Type to use for nullable parameters (no DEFAULT, accepts NULL) (e.g., `"int?"`)
+	- **OptionalParameterType (string)**:
+		- Type to use for optional parameters (has DEFAULT value) (e.g., `"Optional<int>"`)
 
 ## Templates
 

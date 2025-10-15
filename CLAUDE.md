@@ -35,9 +35,11 @@ The codebase follows a standard Go CLI structure:
 
 ### Templates and Output
 - Uses Go templates (.gotmpl files) for code generation
-- Supports three template types: DbContext, Model, and Processor
+- Supports three core template types: DbContext, Model, and Processor
+- Additional generators support custom templates for other outputs (e.g., CommonProvider, TypeScript models)
 - Templates receive structured data about database routines and configuration
 - Output can be customized per language/framework via template modification
+- Additional generators can generate either single-file or per-routine outputs
 
 ## Development Commands
 
@@ -72,19 +74,35 @@ Key configuration sections:
 - **Output**: Folder paths, file extensions, template locations
 - **Generation**: Schema selection, function filtering, type mappings
 - **Templates**: Paths to Go template files for different output types
+- **Context Parameter Mapping**: Automatic injection of user context parameters
+- **Additional Generators**: Extensible system for custom code generation beyond DbContext/Models/Processors
 
 ## Type Mapping System
 
-The tool maps PostgreSQL types to target language types via:
-1. Global mappings in configuration (DatabaseTypes → MappedType + MappingFunction)
-2. Per-function overrides for custom handling
-3. Template functions for case conversion (pascalCased, camelCased, snakeCased)
+The tool uses a three-tier type mapping system:
+1. **Base Type (`MappedType`)**: Used for non-nullable, non-optional cases
+2. **Nullable Types**:
+   - `NullableReturnType`: For nullable return values in models (e.g., `int?`)
+   - `NullableParameterType`: For nullable parameters with no DEFAULT (e.g., `int?`)
+3. **Optional Type (`OptionalParameterType`)**: For parameters with DEFAULT values (e.g., `Optional<int>`)
+
+Type resolution happens in mapper.go:
+- Parameters check `isOptional` first, then `isNullable`
+- If optional and `optionalParameterType` is set → use it
+- Else if nullable and `nullableParameterType` is set → use it
+- Otherwise use base `mappedType`
+
+Per-function overrides can customize:
+- `MappedType`: Override the base type
+- `IsNullable`: Override nullable detection
+- `IsOptional`: Override optional detection
+- Template functions available: `pascalCased`, `camelCased`, `snakeCased`, `trimPrefix`
 
 ## Configuration Options
 
 Key boolean settings (all default to false):
 - `GenerateModels`, `GenerateProcessors`, `GenerateProcessorsForVoidReturns`
-- `ClearOutputFolder`, `UseRoutinesFile`
+- `ClearOutputFolder`, `RemoveOrphanedFiles`, `UseRoutinesFile`
 
 Valid enum values:
 - `GeneratedFileCase`: "snakecase", "camelcase", "pascalcase"
@@ -99,9 +117,48 @@ Templates use Go template syntax with access to:
 
 Each `Routine` includes function metadata, parameters, return properties, and naming information.
 
-## Recent Updates
+## Recent Updates (v0.6.0)
 
-- Added comprehensive Mermaid architecture diagram to README.md showing complete workflow
-- Updated README with all valid enum values and configuration options
-- Fixed grammar and styling issues throughout documentation
-- Verified all struct definitions match current codebase
+### New Features
+- **Context Parameter Mapping**: Automatic injection of context parameters (_user_id, _created_by, _tenant_id, etc.) from UserContext
+  - Configure via `UseUserContext`, `UserContextParameterName`, `UserContextType`
+  - Define mappings in `ContextParameterMappings` array
+  - Parameters are split into context vs regular in generated code
+
+- **Additional Generators Framework**: Generate custom outputs beyond DbContext/Models/Processors
+  - Support for single-file generation (e.g., CommonProvider)
+  - Support for per-routine generation (e.g., TypeScript models)
+  - Configurable via `AdditionalGenerators` array
+  - Optional `CleanOutputFolder` to remove stale files
+
+- **Three-tier Type Mapping**: Separate handling for nullable returns, nullable parameters, and optional parameters
+  - `NullableReturnType`: For model properties (e.g., `int?`)
+  - `NullableParameterType`: For nullable params without DEFAULT (e.g., `int?`)
+  - `OptionalParameterType`: For params with DEFAULT (e.g., `Optional<int>`)
+
+- **RemoveOrphanedFiles**: Automatically remove generated files when database functions are deleted
+  - Set `RemoveOrphanedFiles: true` in config
+  - Only works when `ClearOutputFolder: false` (mutually exclusive)
+  - Tracks all output folders (main + AdditionalGenerators)
+  - Uses MD5 hash comparison to detect orphaned files
+
+### Bug Fixes
+- Fixed per-function type override bug where nullable/optional types weren't loaded from global mappings
+- Fixed nullable parameter handling to use `T?` instead of `Optional<T>` to prevent parameters from being filtered out
+- Fixed double-wrapping issue in DbContext template
+- Fixed jsonb parameter architectural boundary - keeps PostgreSQL types internal to DbContext
+- Fixed change detection to track files from all output folders, preventing all TypeScript files showing as "Updated" when only one changed
+
+### Template Data Updates
+- Property struct now includes: `BaseType`, `NullableReturnType`, `NullableParamType`, `OptionalParamType`
+- Property struct includes: `IsContextParameter`, `ContextPath` for context mapping
+- Routine struct includes: `ContextParameters`, `RegularParameters`, `Parameters` (all params in order)
+
+### Important Implementation Details
+- **Nullable vs Optional distinction**:
+  - Nullable (no DEFAULT, accepts NULL) → always pass to DB, can be null → `T?`
+  - Optional (has DEFAULT) → can be omitted from DB call → `Optional<T>`
+  - Templates check `$parameter.Optional` to decide `.ToObjectOptional()` vs `Optional.Some()`
+- **Context parameter processing**: Done in `processContextParameters()` in mapper.go
+- **Type resolution**: Happens in mapper.go lines 229-235, checks optional first, then nullable
+- **Per-function overrides**: Must pass empty string (not hardcoded text) to `handleTypeMappingOverride()` to properly lookup global mappings

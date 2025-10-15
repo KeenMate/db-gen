@@ -16,25 +16,32 @@ var localPrefixes = []string{"local.", ".local."}
 var localPostfixes = []string{".local"}
 
 type Config struct {
-	PathBase                         string         //for now just using config folder
-	ConnectionString                 string         `mapstructure:"ConnectionString"`
-	OutputFolder                     string         `mapstructure:"OutputFolder"`
-	ProcessorsFolderName             string         `mapstructure:"ProcessorsFolderName"`
-	ModelsFolderName                 string         `mapstructure:"ModelsFolderName"`
-	GenerateModels                   bool           `mapstructure:"GenerateModels"`
-	GenerateProcessors               bool           `mapstructure:"GenerateProcessors"`
-	GenerateProcessorsForVoidReturns bool           `mapstructure:"GenerateProcessorsForVoidReturns"`
-	DbContextTemplate                string         `mapstructure:"DbContextTemplate"`
-	ModelTemplate                    string         `mapstructure:"ModelTemplate"`
-	ProcessorTemplate                string         `mapstructure:"ProcessorTemplate"`
-	GeneratedFileExtension           string         `mapstructure:"GeneratedFileExtension"`
-	GeneratedFileCase                string         `mapstructure:"GeneratedFileCase"`
-	Debug                            bool           `mapstructure:"Debug"`
-	ClearOutputFolder                bool           `mapstructure:"ClearOutputFolder"`
-	RoutinesFile                     string         `mapstructure:"RoutinesFile"`
-	UseRoutinesFile                  bool           `mapstructure:"UseRoutinesFile"`
-	Generate                         []SchemaConfig `mapstructure:"Generate"`
-	Mappings                         []Mapping      `mapstructure:"Mappings"`
+	PathBase                         string                    //for now just using config folder
+	ConnectionString                 string                    `mapstructure:"ConnectionString"`
+	OutputFolder                     string                    `mapstructure:"OutputFolder"`
+	ProcessorsFolderName             string                    `mapstructure:"ProcessorsFolderName"`
+	ModelsFolderName                 string                    `mapstructure:"ModelsFolderName"`
+	GenerateModels                   bool                      `mapstructure:"GenerateModels"`
+	GenerateProcessors               bool                      `mapstructure:"GenerateProcessors"`
+	GenerateProcessorsForVoidReturns bool                      `mapstructure:"GenerateProcessorsForVoidReturns"`
+	DbContextTemplate                string                    `mapstructure:"DbContextTemplate"`
+	ModelTemplate                    string                    `mapstructure:"ModelTemplate"`
+	ProcessorTemplate                string                    `mapstructure:"ProcessorTemplate"`
+	GeneratedFileExtension           string                    `mapstructure:"GeneratedFileExtension"`
+	GeneratedFileCase                string                    `mapstructure:"GeneratedFileCase"`
+	Debug                            bool                      `mapstructure:"Debug"`
+	ClearOutputFolder                bool                      `mapstructure:"ClearOutputFolder"`
+	RemoveOrphanedFiles              bool                      `mapstructure:"RemoveOrphanedFiles"`
+	RoutinesFile                     string                    `mapstructure:"RoutinesFile"`
+	UseRoutinesFile                  bool                      `mapstructure:"UseRoutinesFile"`
+	Generate                         []SchemaConfig            `mapstructure:"Generate"`
+	Mappings                         []Mapping                 `mapstructure:"Mappings"`
+	UseUserContext                   bool                      `mapstructure:"UseUserContext"`
+	UserContextParameterName         string                    `mapstructure:"UserContextParameterName"`
+	UserContextType                  string                    `mapstructure:"UserContextType"`
+	ContextParameterMappings         []ContextParameterMapping `mapstructure:"ContextParameterMappings"`
+	AdditionalGenerators             []AdditionalGenerator     `mapstructure:"AdditionalGenerators"`
+	Validation                       ValidationConfig          `mapstructure:"Validation"`
 }
 
 type SchemaConfig struct {
@@ -69,9 +76,61 @@ type ParamMapping struct {
 }
 
 type Mapping struct {
-	DatabaseTypes   []string `mapstructure:"DatabaseTypes"`
-	MappedType      string   `mapstructure:"MappedType"`
-	MappingFunction string   `mapstructure:"MappingFunction"`
+	DatabaseTypes           []string `mapstructure:"DatabaseTypes"`
+	MappedType              string   `mapstructure:"MappedType"`
+	MappingFunction         string   `mapstructure:"MappingFunction"`
+	NullableReturnType      string   `mapstructure:"NullableReturnType"`
+	NullableParameterType   string   `mapstructure:"NullableParameterType"`
+	OptionalParameterType   string   `mapstructure:"OptionalParameterType"`
+}
+
+type ContextParameterMapping struct {
+	ParameterNames []string `mapstructure:"ParameterNames"`
+	ContextPath    string   `mapstructure:"ContextPath"`
+}
+
+type AdditionalGenerator struct {
+	Name              string `mapstructure:"Name"`
+	Enabled           bool   `mapstructure:"Enabled"`
+	Template          string `mapstructure:"Template"`
+	OutputFolder      string `mapstructure:"OutputFolder"`
+	FileName          string `mapstructure:"FileName"`
+	FileExtension     string `mapstructure:"FileExtension"`
+	FileCase          string `mapstructure:"FileCase"`
+	GenerationType    string `mapstructure:"GenerationType"`    // "per-routine" or "single-file"
+	CleanOutputFolder bool   `mapstructure:"CleanOutputFolder"` // Clean output folder before generation
+}
+
+type ValidationBehavior struct {
+	CollectAllErrors      bool   `mapstructure:"CollectAllErrors"`
+	ReturnType            string `mapstructure:"ReturnType"`
+	ErrorResponseTemplate string `mapstructure:"ErrorResponseTemplate"`
+}
+
+type ValidationRuleDefinition struct {
+	Name              string                 `mapstructure:"Name"`
+	Type              string                 `mapstructure:"Type"` // "Built-in", "Custom", "Generated"
+	ExecutorType      string                 `mapstructure:"ExecutorType"` // "ExistingFunction", "GenerateCode"
+	ExecutorReference string                 `mapstructure:"ExecutorReference"`
+	GeneratedCode     string                 `mapstructure:"GeneratedCode"`
+	ErrorMessage      string                 `mapstructure:"ErrorMessage"`
+	ErrorCode         string                 `mapstructure:"ErrorCode"`
+	Templates         map[string]interface{} `mapstructure:"Templates"` // Strategy -> Template (string or nested map)
+	Parameters        map[string]interface{} `mapstructure:"Parameters"`
+}
+
+type ParameterValidationMapping struct {
+	ParameterNames []string      `mapstructure:"ParameterNames"`
+	Rules          []interface{} `mapstructure:"Rules"` // Can be string or map
+}
+
+type ValidationConfig struct {
+	ValidationStrategy          string                              `mapstructure:"ValidationStrategy"`
+	ValidationLocations         []string                            `mapstructure:"ValidationLocations"`
+	ValidationBehavior          ValidationBehavior                  `mapstructure:"ValidationBehavior"`
+	ValidationRuleDefinitions   []ValidationRuleDefinition          `mapstructure:"ValidationRuleDefinitions"`
+	ParameterValidationMappings []ParameterValidationMapping        `mapstructure:"ParameterValidationMappings"`
+	FunctionSpecificValidations map[string]map[string][]interface{} `mapstructure:"FunctionSpecificValidations"`
 }
 
 // set in ReadConfig
@@ -95,10 +154,28 @@ func GetAndValidateConfig() (*Config, error) {
 		GeneratedFileCase:                "",
 		Debug:                            false,
 		ClearOutputFolder:                false,
+		RemoveOrphanedFiles:              false,
 		Generate:                         nil,
 		Mappings:                         nil,
 		RoutinesFile:                     "./db-gen-routines.json",
 		UseRoutinesFile:                  false,
+		UseUserContext:                   false,
+		UserContextParameterName:         "ctx",
+		UserContextType:                  "UserContext",
+		ContextParameterMappings:         nil,
+		AdditionalGenerators:             nil,
+		Validation: ValidationConfig{
+			ValidationStrategy:          "",
+			ValidationLocations:         nil,
+			ValidationBehavior: ValidationBehavior{
+				CollectAllErrors:      true,
+				ReturnType:            "ValidationResult",
+				ErrorResponseTemplate: "",
+			},
+			ValidationRuleDefinitions:   nil,
+			ParameterValidationMappings: nil,
+			FunctionSpecificValidations: nil,
+		},
 	}
 
 	err := getConfigFromViper(config)
@@ -121,6 +198,23 @@ func GetAndValidateConfig() (*Config, error) {
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 	// TODO maybe it is better to be relative to Output folder, not Base path
 	config.RoutinesFile = joinIfRelative(config.PathBase, config.RoutinesFile)
+
+	// Normalize additional generator paths
+	for i := range config.AdditionalGenerators {
+		gen := &config.AdditionalGenerators[i]
+		gen.Template = joinIfRelative(config.PathBase, gen.Template)
+		gen.OutputFolder = joinIfRelative(config.PathBase, gen.OutputFolder)
+		gen.FileCase = strings.ToLower(gen.FileCase)
+
+		// Set default generation type if not specified
+		if gen.GenerationType == "" {
+			if gen.FileName != "" {
+				gen.GenerationType = "single-file"
+			} else {
+				gen.GenerationType = "per-routine"
+			}
+		}
+	}
 
 	config.GeneratedFileCase = strings.ToLower(config.GeneratedFileCase)
 

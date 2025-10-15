@@ -5,11 +5,15 @@ import (
 	common2 "github.com/keenmate/db-gen/private/helpers"
 	"slices"
 	"sort"
+	"strings"
 )
 
 type mapping struct {
-	mappedFunction string
-	mappedType     string
+	mappedFunction          string
+	mappedType              string
+	nullableReturnType      string
+	nullableParameterType   string
+	optionalParameterType   string
 }
 
 type effectiveParamMapping struct {
@@ -39,6 +43,36 @@ var emptyMapping = RoutineMapping{
 	Parameters:          make(map[string]ParamMapping),
 }
 
+func processContextParameters(parameters []Property, config *Config) (contextParams []Property, regularParams []Property, allParams []Property) {
+	contextParams = make([]Property, 0)
+	regularParams = make([]Property, 0)
+	allParams = make([]Property, len(parameters))
+
+	// Build a quick lookup map for context parameter mappings
+	contextParamMap := make(map[string]string)
+	for _, mapping := range config.ContextParameterMappings {
+		for _, paramName := range mapping.ParameterNames {
+			contextParamMap[strings.ToLower(paramName)] = mapping.ContextPath
+		}
+	}
+
+	// Process parameters in original order, preserving order in allParams
+	for i, param := range parameters {
+		paramNameLower := strings.ToLower(param.PropertyName)
+		if contextPath, isContext := contextParamMap[paramNameLower]; isContext {
+			// Mark as context parameter
+			param.IsContextParameter = true
+			param.ContextPath = contextPath
+			contextParams = append(contextParams, param)
+		} else {
+			regularParams = append(regularParams, param)
+		}
+		allParams[i] = param
+	}
+
+	return contextParams, regularParams, allParams
+}
+
 func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, config *Config) ([]Routine, error) {
 	mappedFunctions := make([]Routine, len(*routines))
 	schemaConfig := getSchemaConfigMap(config)
@@ -57,6 +91,13 @@ func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, 
 			return nil, fmt.Errorf("processing function %s: %s", routine.RoutineName, err)
 		}
 
+		// Process context parameter mappings
+		contextParams, regularParams, allParameters := processContextParameters(parameters, config)
+		usesUserContext := len(contextParams) > 0 && config.UseUserContext
+
+		// Process validation rules
+		processParameterValidations(allParameters, routine, config)
+
 		// default case for names is UpperCamelcase
 		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema, routineMapping.MappedName)
 		modelName := getModelName(functionName)
@@ -66,13 +107,16 @@ func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, 
 			FunctionName:       functionName,
 			DbFullFunctionName: routine.RoutineSchema + "." + routine.RoutineName,
 			ModelName:          modelName,
-			Parameters:         parameters,
+			Parameters:         allParameters,
 			ReturnProperties:   modelProperties,
 			ProcessorName:      processorName,
 			HasReturn:          len(modelProperties) > 0,
 			IsProcedure:        routine.FuncType == Procedure,
 			Schema:             routine.RoutineSchema,
 			DbFunctionName:     routine.RoutineName,
+			UsesUserContext:    usesUserContext,
+			ContextParameters:  contextParams,
+			RegularParameters:  regularParams,
 		}
 
 		mappedFunctions[i] = mappedRoutine
@@ -132,15 +176,25 @@ func mapModel(routine DbRoutine, globalTypeMappings *map[string]mapping, routine
 			continue
 		}
 
+		// Determine the actual PropertyType for return values based on nullable status
+		propertyType := columnMapping.typeMapping.mappedType
+		if columnMapping.isNullable && columnMapping.typeMapping.nullableReturnType != "" {
+			propertyType = columnMapping.typeMapping.nullableReturnType
+		}
+
 		property := Property{
-			DbColumnName:   column.Name,
-			DbColumnType:   column.UDTName,
-			PropertyName:   columnMapping.name,
-			PropertyType:   columnMapping.typeMapping.mappedType,
-			Position:       column.OrdinalPosition - positionOffset,
-			MapperFunction: columnMapping.typeMapping.mappedFunction,
-			Nullable:       columnMapping.isNullable,
-			Optional:       columnMapping.isOptional,
+			DbColumnName:       column.Name,
+			DbColumnType:       column.UDTName,
+			PropertyName:       columnMapping.name,
+			PropertyType:       propertyType,
+			BaseType:           columnMapping.typeMapping.mappedType,
+			NullableReturnType: columnMapping.typeMapping.nullableReturnType,
+			NullableParamType:  columnMapping.typeMapping.nullableParameterType,
+			OptionalParamType:  columnMapping.typeMapping.optionalParameterType,
+			Position:           column.OrdinalPosition - positionOffset,
+			MapperFunction:     columnMapping.typeMapping.mappedFunction,
+			Nullable:           columnMapping.isNullable,
+			Optional:           columnMapping.isOptional,
 		}
 
 		properties = append(properties, property)
@@ -172,15 +226,27 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 			return nil, fmt.Errorf("processing parameter %s: %s", parameter.Name, err)
 		}
 
+		// Determine the actual PropertyType based on nullable/optional status
+		propertyType := effectiveMapping.typeMapping.mappedType
+		if effectiveMapping.isOptional && effectiveMapping.typeMapping.optionalParameterType != "" {
+			propertyType = effectiveMapping.typeMapping.optionalParameterType
+		} else if effectiveMapping.isNullable && effectiveMapping.typeMapping.nullableParameterType != "" {
+			propertyType = effectiveMapping.typeMapping.nullableParameterType
+		}
+
 		property := &Property{
-			DbColumnName:   parameter.Name,
-			DbColumnType:   parameter.UDTName,
-			PropertyName:   effectiveMapping.name,
-			PropertyType:   effectiveMapping.typeMapping.mappedType,
-			Position:       parameter.OrdinalPosition - positionOffset,
-			MapperFunction: "",
-			Nullable:       effectiveMapping.isNullable,
-			Optional:       effectiveMapping.isOptional,
+			DbColumnName:       parameter.Name,
+			DbColumnType:       parameter.UDTName,
+			PropertyName:       effectiveMapping.name,
+			PropertyType:       propertyType,
+			BaseType:           effectiveMapping.typeMapping.mappedType,
+			NullableReturnType: effectiveMapping.typeMapping.nullableReturnType,
+			NullableParamType:  effectiveMapping.typeMapping.nullableParameterType,
+			OptionalParamType:  effectiveMapping.typeMapping.optionalParameterType,
+			Position:           parameter.OrdinalPosition - positionOffset,
+			MapperFunction:     "",
+			Nullable:           effectiveMapping.isNullable,
+			Optional:           effectiveMapping.isOptional,
 		}
 
 		properties[i] = *property
@@ -284,7 +350,7 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 		}
 
 		if explicitMapping.MappedType != "" {
-			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "NO MAPPING FUNCTION FOR PARAMS", config)
+			typeMapping, err = handleTypeMappingOverride(explicitMapping.MappedType, "", config)
 			if err != nil {
 				return nil, err
 			}
@@ -363,12 +429,109 @@ func handleTypeMappingOverride(typeOverride string, mappingFunctionOverride stri
 	for _, typeMapping := range config.Mappings {
 		if typeMapping.MappedType == typeOverride {
 			return &mapping{
-				mappedFunction: typeMapping.MappingFunction,
-				mappedType:     typeOverride,
+				mappedFunction:        typeMapping.MappingFunction,
+				mappedType:            typeOverride,
+				nullableReturnType:    typeMapping.NullableReturnType,
+				nullableParameterType: typeMapping.NullableParameterType,
+				optionalParameterType: typeMapping.OptionalParameterType,
 			}, nil
 		}
 	}
 
 	// no mapping function is set and no mapping exist for type given
 	return nil, fmt.Errorf("mapped type overriden to %s, but no mapping functions specified and mapping function for override type doenst exist in mappings", typeOverride)
+}
+
+// processParameterValidations adds validation rules to parameters
+func processParameterValidations(parameters []Property, routine DbRoutine, config *Config) {
+	if len(config.Validation.ValidationRuleDefinitions) == 0 {
+		return
+	}
+
+	// Build lookup maps
+	ruleDefinitions := buildRuleDefinitionsMap(config.Validation.ValidationRuleDefinitions)
+	paramValidationMap := buildParamValidationMap(config.Validation.ParameterValidationMappings)
+
+	for i := range parameters {
+		param := &parameters[i]
+		paramNameLower := strings.ToLower(param.PropertyName)
+
+		// Start with empty validation rules
+		param.ValidationRules = make([]ValidationRule, 0)
+
+		// 1. Check global parameter validation mappings
+		if rules, found := paramValidationMap[paramNameLower]; found {
+			param.ValidationRules = append(param.ValidationRules,
+				resolveValidationRules(rules, ruleDefinitions)...)
+		}
+
+		// 2. Check function-specific validations (override/extend global)
+		if funcValidations, found := config.Validation.FunctionSpecificValidations[routine.RoutineName]; found {
+			if paramRules, found := funcValidations[param.DbColumnName]; found {
+				param.ValidationRules = append(param.ValidationRules,
+					resolveValidationRules(paramRules, ruleDefinitions)...)
+			}
+		}
+	}
+}
+
+func buildRuleDefinitionsMap(definitions []ValidationRuleDefinition) map[string]*ValidationRuleDefinition {
+	result := make(map[string]*ValidationRuleDefinition)
+	for i := range definitions {
+		def := &definitions[i]
+		result[strings.ToLower(def.Name)] = def
+	}
+	return result
+}
+
+func buildParamValidationMap(mappings []ParameterValidationMapping) map[string][]interface{} {
+	result := make(map[string][]interface{})
+	for _, mapping := range mappings {
+		for _, paramName := range mapping.ParameterNames {
+			result[strings.ToLower(paramName)] = mapping.Rules
+		}
+	}
+	return result
+}
+
+func resolveValidationRules(rulesInterface []interface{}, ruleDefinitions map[string]*ValidationRuleDefinition) []ValidationRule {
+	result := make([]ValidationRule, 0)
+
+	for _, ruleInterface := range rulesInterface {
+		switch rule := ruleInterface.(type) {
+		case string:
+			// Simple rule name
+			if def, found := ruleDefinitions[strings.ToLower(rule)]; found {
+				result = append(result, ValidationRule{
+					Name:       rule,
+					Definition: def,
+					Parameters: make(map[string]interface{}),
+				})
+			} else {
+				common2.LogWarn("Validation rule '%s' not found in definitions", rule)
+			}
+
+		case map[string]interface{}:
+			// Rule with parameters
+			if name, ok := rule["Name"].(string); ok {
+				if def, found := ruleDefinitions[strings.ToLower(name)]; found {
+					params := make(map[string]interface{})
+					for k, v := range rule {
+						if k != "Name" {
+							params[k] = v
+						}
+					}
+					result = append(result, ValidationRule{
+						Name:       name,
+						Definition: def,
+						Parameters: params,
+					})
+				} else {
+					common2.LogWarn("Validation rule '%s' not found in definitions", name)
+				}
+			}
+		}
+	}
+
+	return result
 }
