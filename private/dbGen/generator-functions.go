@@ -21,6 +21,9 @@ func getTemplateFunctions() template.FuncMap {
 		"snakeCased": func(s string) string {
 			return helpers.ToSnakeCase(s)
 		},
+		"normalizeStr": func(s string) string {
+			return helpers.NormalizeStr(s)
+		},
 		"trimPrefix": func(p string, s string) string {
 			return strings.TrimPrefix(s, p)
 		},

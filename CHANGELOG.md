@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 0.6.1
+
+### Bug Fixes
+- **Fixed field name generation**: Model and processor field names now preserve underscores before numbers (e.g., `country_iso_2` instead of `country_iso2`)
+  - Added `normalizeStr` template function to directly use normalized database column names
+  - Prevents information loss from round-trip conversion through PascalCase
+  - Maintains consistency with original ecto_gen behavior
+- **Fixed unnamed parameter handling**: Functions with unnamed parameters (e.g., `$1`, `$2`) no longer cause errors during routine loading
+  - `parameter_name` is now coalesced to empty string when NULL
+
+### Template Changes
+- Model template now uses `{{normalizeStr $property.DbColumnName}}` instead of `{{snakeCased $property.PropertyName}}`
+- Processor template now uses `{{normalizeStr $property.DbColumnName}}` instead of `{{snakeCased $property.PropertyName}}`
+- New template function `normalizeStr` available for removing leading underscores from strings
+
 ## 0.6.0
 
 ### New Features

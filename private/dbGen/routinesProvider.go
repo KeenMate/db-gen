@@ -150,15 +150,15 @@ func getFunctionsInSchema(conn *database.DbConn, schema string) ([]DbRoutine, er
 func addParamsToRoutine(conn *database.DbConn, routine *DbRoutine) error {
 	q := `
 		select ordinal_position::int,
-			   parameter_name::text,
+			   coalesce(parameter_name, '')::text as parameter_name,
 			   parameter_mode::text,
 			   udt_name::text,
 			   false as is_nullable,
 			   parameter_default is not null as is_optional
-			
+
 		from information_schema.parameters
 		where specific_schema = $1
-		  and specific_name = $2		
+		  and specific_name = $2
 		union
 		select c.ordinal_position::int, c.column_name::text, 'OUT', c.udt_name::text, c.is_nullable = 'YES',true
 		from information_schema.columns c
