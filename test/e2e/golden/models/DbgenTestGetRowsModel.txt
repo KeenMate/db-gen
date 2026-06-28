@@ -1,0 +1,3 @@
+// model DbgenTestGetRowsModel
+Id:int
+Label:string

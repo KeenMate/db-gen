@@ -1,0 +1,4 @@
+// db-gen {{.BuildInfo.Version}}
+{{- range .Functions}}
+{{.FunctionName}}({{range $i, $p := .Parameters}}{{if $i}}, {{end}}{{$p.PropertyName}}:{{$p.PropertyType}}{{if $p.IsContextParameter}}@ctx{{end}}{{end}}) -> {{.ModelName}}
+{{- end}}

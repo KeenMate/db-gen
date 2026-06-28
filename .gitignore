@@ -1,2 +1,8 @@
 db-gen
 /db-gen.exe
+
+# build artifacts and generated test output
+/build/
+/test/output/
+/test/output-copy/
+/test/testdata/

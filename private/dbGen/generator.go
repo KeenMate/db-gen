@@ -15,7 +15,7 @@ import (
 
 var ValidCaseNormalized = []string{"snakecase", "camelcase", "pascalcase"}
 
-func Generate(routines []Routine, config *Config) error {
+func Generate(routines []Routine, copyTargets []CopyTarget, config *Config) error {
 	fileHashes, err := generateFileHashes(config.OutputFolder)
 	if err != nil {
 		return fmt.Errorf("generating file hashes: %s", err)
@@ -84,6 +84,12 @@ func Generate(routines []Routine, config *Config) error {
 	err = generateAdditionalOutputs(routines, fileHashes, &generatedFiles, config)
 	if err != nil {
 		return fmt.Errorf("generating additional outputs: %s", err)
+	}
+
+	// Generate bulk-COPY code for configured tables
+	err = generateCopyTargets(copyTargets, fileHashes, &generatedFiles, config)
+	if err != nil {
+		return fmt.Errorf("generating copy targets: %s", err)
 	}
 
 	// Remove orphaned files if configured

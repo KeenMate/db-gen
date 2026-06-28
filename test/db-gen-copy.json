@@ -1,0 +1,34 @@
+{
+	"ConnectionString": "host=db-01.km8.local port=5432 user=db_gen password=db_gen dbname=db_gen sslmode=disable",
+	"OutputFolder": "./testdata/cli-output",
+	"GenerateModels": false,
+	"GenerateProcessors": false,
+	"ClearOutputFolder": true,
+	"DbContextTemplate": "./templates/dbcontext.gotmpl",
+	"ModelTemplate": "./templates/model.gotmpl",
+	"ProcessorTemplate": "./templates/processor.gotmpl",
+	"GeneratedFileExtension": ".go",
+	"GeneratedFileCase": "pascalcase",
+	"Generate": [
+		{
+			"Schema": "public",
+			"AllFunctions": true
+		}
+	],
+	"GenerateCopyTargets": true,
+	"CopyTargetTemplate": "./templates/copy-pgx.gotmpl",
+	"CopyTargetsFolderName": "copy",
+	"ContextParameterMappings": [
+		{ "ParameterNames": ["created_by"], "ContextPath": "createdBy" },
+		{ "ParameterNames": ["job_run_id"], "ContextPath": "jobRunId" }
+	],
+	"CopyTargets": [
+		{ "Schema": "stage", "Table": "data_to_process", "Format": "csv", "NullString": "" }
+	],
+	"Mappings": [
+		{ "DatabaseTypes": ["text", "varchar", "character varying", "json", "jsonb"], "MappedType": "string" },
+		{ "DatabaseTypes": ["bigint", "int8"], "MappedType": "int64" },
+		{ "DatabaseTypes": ["integer", "int4"], "MappedType": "int" },
+		{ "DatabaseTypes": ["*"], "MappedType": "string" }
+	]
+}

@@ -99,10 +99,24 @@ func doGenerate() error {
 		return fmt.Errorf("error preprocessing: %s", err)
 	}
 
+	var copyTables []dbGen.DbTable
+	if config.GenerateCopyTargets {
+		log.Printf("Getting copy target tables...")
+		copyTables, err = dbGen.GetCopyTargets(config)
+		if err != nil {
+			return fmt.Errorf("error getting copy targets: %s", err)
+		}
+		log.Printf("Got %d copy target tables", len(copyTables))
+	}
+
 	if infoExist {
 		// TODO maybe only handle changes after filtering
 		changes := buildInfo.GetRoutinesChanges(routines)
 		printDatabaseChanges(changes)
+
+		if tableChanges := buildInfo.GetTableChanges(copyTables); len(tableChanges) > 0 {
+			printDatabaseChanges(tableChanges)
+		}
 	} else {
 		log.Printf("No previous build information found")
 	}
@@ -125,14 +139,19 @@ func doGenerate() error {
 
 	}
 
+	copyTargets, err := dbGen.MapCopyTargets(copyTables, config)
+	if err != nil {
+		return fmt.Errorf("error mapping copy targets: %s", err)
+	}
+
 	log.Printf("Generating...")
-	err = dbGen.Generate(processedFunctions, config)
+	err = dbGen.Generate(processedFunctions, copyTargets, config)
 	if err != nil {
 		return fmt.Errorf("error generating: %s", err)
 	}
 	timer.AddEntry("generating files")
 
-	err = dbGen.SaveGenerationInformation(config, routines, version.GetVersion())
+	err = dbGen.SaveGenerationInformation(config, routines, copyTables, version.GetVersion())
 	if err != nil {
 		log.Printf("Error saving generation information: %v", err)
 	}

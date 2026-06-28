@@ -42,6 +42,19 @@ type Config struct {
 	ContextParameterMappings         []ContextParameterMapping `mapstructure:"ContextParameterMappings"`
 	AdditionalGenerators             []AdditionalGenerator     `mapstructure:"AdditionalGenerators"`
 	Validation                       ValidationConfig          `mapstructure:"Validation"`
+	GenerateCopyTargets              bool                      `mapstructure:"GenerateCopyTargets"`
+	CopyTargetTemplate               string                    `mapstructure:"CopyTargetTemplate"`
+	CopyTargetsFolderName            string                    `mapstructure:"CopyTargetsFolderName"`
+	CopyTargets                      []CopyTargetConfig        `mapstructure:"CopyTargets"`
+}
+
+// CopyTargetConfig declares a table to generate bulk-COPY code for.
+type CopyTargetConfig struct {
+	Schema     string `mapstructure:"Schema"`
+	Table      string `mapstructure:"Table"`
+	MappedName string `mapstructure:"MappedName"` // overrides the generated struct/file name
+	Format     string `mapstructure:"Format"`     // "csv" | "text" | "binary" (template hint)
+	NullString string `mapstructure:"NullString"` // NULL sentinel for text/csv formats
 }
 
 type SchemaConfig struct {
@@ -76,12 +89,12 @@ type ParamMapping struct {
 }
 
 type Mapping struct {
-	DatabaseTypes           []string `mapstructure:"DatabaseTypes"`
-	MappedType              string   `mapstructure:"MappedType"`
-	MappingFunction         string   `mapstructure:"MappingFunction"`
-	NullableReturnType      string   `mapstructure:"NullableReturnType"`
-	NullableParameterType   string   `mapstructure:"NullableParameterType"`
-	OptionalParameterType   string   `mapstructure:"OptionalParameterType"`
+	DatabaseTypes         []string `mapstructure:"DatabaseTypes"`
+	MappedType            string   `mapstructure:"MappedType"`
+	MappingFunction       string   `mapstructure:"MappingFunction"`
+	NullableReturnType    string   `mapstructure:"NullableReturnType"`
+	NullableParameterType string   `mapstructure:"NullableParameterType"`
+	OptionalParameterType string   `mapstructure:"OptionalParameterType"`
 }
 
 type ContextParameterMapping struct {
@@ -109,7 +122,7 @@ type ValidationBehavior struct {
 
 type ValidationRuleDefinition struct {
 	Name              string                 `mapstructure:"Name"`
-	Type              string                 `mapstructure:"Type"` // "Built-in", "Custom", "Generated"
+	Type              string                 `mapstructure:"Type"`         // "Built-in", "Custom", "Generated"
 	ExecutorType      string                 `mapstructure:"ExecutorType"` // "ExistingFunction", "GenerateCode"
 	ExecutorReference string                 `mapstructure:"ExecutorReference"`
 	GeneratedCode     string                 `mapstructure:"GeneratedCode"`
@@ -164,9 +177,13 @@ func GetAndValidateConfig() (*Config, error) {
 		UserContextType:                  "UserContext",
 		ContextParameterMappings:         nil,
 		AdditionalGenerators:             nil,
+		GenerateCopyTargets:              false,
+		CopyTargetTemplate:               "",
+		CopyTargetsFolderName:            "copy",
+		CopyTargets:                      nil,
 		Validation: ValidationConfig{
-			ValidationStrategy:          "",
-			ValidationLocations:         nil,
+			ValidationStrategy:  "",
+			ValidationLocations: nil,
 			ValidationBehavior: ValidationBehavior{
 				CollectAllErrors:      true,
 				ReturnType:            "ValidationResult",
@@ -194,6 +211,8 @@ func GetAndValidateConfig() (*Config, error) {
 	config.ProcessorTemplate = joinIfRelative(config.PathBase, config.ProcessorTemplate)
 	config.DbContextTemplate = joinIfRelative(config.PathBase, config.DbContextTemplate)
 	config.ModelTemplate = joinIfRelative(config.PathBase, config.ModelTemplate)
+
+	config.CopyTargetTemplate = joinIfRelative(config.PathBase, config.CopyTargetTemplate)
 
 	config.OutputFolder = joinIfRelative(config.PathBase, config.OutputFolder)
 	// TODO maybe it is better to be relative to Output folder, not Base path

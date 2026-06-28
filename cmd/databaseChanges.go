@@ -78,5 +78,17 @@ func doDatabaseChanges() error {
 	databaseChanges := buildInfo.GetRoutinesChanges(routines)
 	printDatabaseChanges(databaseChanges)
 
+	if config.GenerateCopyTargets {
+		log.Printf("Getting copy target tables...")
+		copyTables, err := dbGen.GetCopyTargets(config)
+		if err != nil {
+			return fmt.Errorf("error getting copy targets: %s", err)
+		}
+
+		if tableChanges := buildInfo.GetTableChanges(copyTables); len(tableChanges) > 0 {
+			printDatabaseChanges(tableChanges)
+		}
+	}
+
 	return nil
 }

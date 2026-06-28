@@ -21,6 +21,7 @@ type GenerationInformation struct {
 	Version  string      `json:"version"`
 	Time     time.Time   `json:"time"`
 	Routines []DbRoutine `json:"routines"`
+	Tables   []DbTable   `json:"tables"`
 }
 
 type databaseChanges struct {
@@ -52,7 +53,7 @@ func LoadGenerationInformation(config *Config) (*GenerationInformation, bool) {
 }
 
 // SaveGenerationInformation Saves json with generation info inside output folder.
-func SaveGenerationInformation(config *Config, routines []DbRoutine, version string) error {
+func SaveGenerationInformation(config *Config, routines []DbRoutine, tables []DbTable, version string) error {
 	// make local copy because we will be removing specific name
 	routinesCopy := make([]DbRoutine, len(routines))
 	copy(routinesCopy, routines)
@@ -65,6 +66,7 @@ func SaveGenerationInformation(config *Config, routines []DbRoutine, version str
 		Version:  version,
 		Time:     time.Now(),
 		Routines: routinesCopy,
+		Tables:   tables,
 	}
 
 	path := filepath.Join(config.OutputFolder, generationInfoFileName)
@@ -235,6 +237,138 @@ func getParameterChanges(oldParams []DbParameter, newParams []DbParameter) strin
 	}
 
 	return outBuilder.String()
+}
+
+// ---------------------------------------------------------------------------
+// Copy-target (table) change detection
+// ---------------------------------------------------------------------------
+
+type tableChanges struct {
+	deletedTables []DbTable
+	createdTables []DbTable
+	changedTables []tablePair
+}
+
+type tablePair struct {
+	oldTable DbTable
+	newTable DbTable
+}
+
+// GetTableChanges diffs the configured copy-target tables against the last generation.
+func (info *GenerationInformation) GetTableChanges(newTables []DbTable) string {
+	oldTables := info.Tables
+	changes := new(tableChanges)
+
+	for _, oldTable := range oldTables {
+		if _, exists := findTable(newTables, oldTable); !exists {
+			changes.deletedTables = append(changes.deletedTables, oldTable)
+		}
+	}
+
+	for _, newTable := range newTables {
+		oldTable, exists := findTable(oldTables, newTable)
+		if !exists {
+			changes.createdTables = append(changes.createdTables, newTable)
+			continue
+		}
+
+		changes.changedTables = append(changes.changedTables, tablePair{
+			oldTable: *oldTable,
+			newTable: newTable,
+		})
+	}
+
+	return changes.String()
+}
+
+func (tableChanges *tableChanges) String() string {
+	var out strings.Builder
+
+	if len(tableChanges.deletedTables) > 0 {
+		out.WriteString("Deleted copy-target tables:\n")
+		for _, table := range tableChanges.deletedTables {
+			out.WriteString(fmt.Sprintf(" - %s.%s\n", table.TableSchema, table.TableName))
+		}
+	}
+
+	if len(tableChanges.createdTables) > 0 {
+		out.WriteString("Created copy-target tables:\n")
+		for _, table := range tableChanges.createdTables {
+			out.WriteString(fmt.Sprintf(" - %s.%s\n", table.TableSchema, table.TableName))
+		}
+	}
+
+	changesDetected := false
+	for _, pair := range tableChanges.changedTables {
+		columnChanges := getColumnChanges(pair.oldTable.Columns, pair.newTable.Columns)
+		if len(columnChanges) == 0 {
+			continue
+		}
+		if !changesDetected {
+			out.WriteString("Changed copy-target tables:\n")
+			changesDetected = true
+		}
+		out.WriteString(fmt.Sprintf(" - %s.%s: \n%s", pair.newTable.TableSchema, pair.newTable.TableName, columnChanges))
+	}
+
+	return out.String()
+}
+
+func getColumnChanges(oldColumns []DbColumn, newColumns []DbColumn) string {
+	var out strings.Builder
+
+	slices.SortFunc(oldColumns, func(a, b DbColumn) int { return a.OrdinalPosition - b.OrdinalPosition })
+	slices.SortFunc(newColumns, func(a, b DbColumn) int { return a.OrdinalPosition - b.OrdinalPosition })
+
+	oldLength := len(oldColumns)
+	newLength := len(newColumns)
+
+	for i := 0; i < min(oldLength, newLength); i++ {
+		oldColumn := oldColumns[i]
+		newColumn := newColumns[i]
+
+		if oldColumn.Name != newColumn.Name {
+			out.WriteString(fmt.Sprintf("\t column %d(%s): renamed from %s\n", i, newColumn.Name, oldColumn.Name))
+		}
+
+		if oldColumn.UDTName != newColumn.UDTName {
+			out.WriteString(fmt.Sprintf("\t column %d(%s): data type changed from %s to %s\n", i, newColumn.Name, oldColumn.UDTName, newColumn.UDTName))
+		}
+
+		if oldColumn.IsNullable != newColumn.IsNullable {
+			out.WriteString(fmt.Sprintf("\t column %d(%s): nullability changed from %v to %v\n", i, newColumn.Name, oldColumn.IsNullable, newColumn.IsNullable))
+		}
+
+		if oldColumn.HasDefault != newColumn.HasDefault {
+			out.WriteString(fmt.Sprintf("\t column %d(%s): default changed from %v to %v\n", i, newColumn.Name, oldColumn.HasDefault, newColumn.HasDefault))
+		}
+	}
+
+	if oldLength > newLength {
+		for _, oldColumn := range oldColumns[newLength:oldLength] {
+			out.WriteString(fmt.Sprintf("\t removed column: %s\n", oldColumn.Name))
+		}
+	}
+
+	if newLength > oldLength {
+		for _, newColumn := range newColumns[oldLength:newLength] {
+			out.WriteString(fmt.Sprintf("\t added column: %s\n", newColumn.Name))
+		}
+	}
+
+	return out.String()
+}
+
+func findTable(tables []DbTable, table DbTable) (*DbTable, bool) {
+	index := slices.IndexFunc(tables, func(t DbTable) bool {
+		return t.TableSchema == table.TableSchema && t.TableName == table.TableName
+	})
+
+	if index == -1 {
+		return nil, false
+	}
+
+	return &tables[index], true
 }
 
 func findRoutine(routines []DbRoutine, routine DbRoutine) (*DbRoutine, bool) {

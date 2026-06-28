@@ -1,0 +1,4 @@
+// db-gen LOCAL
+DbgenTestGetRows() -> DbgenTestGetRowsModel
+DbgenTestScalarSum(a:int, b:int) -> DbgenTestScalarSumModel
+DbgenTestWithContext(_user_id:int@ctx, name:string) -> DbgenTestWithContextModel
