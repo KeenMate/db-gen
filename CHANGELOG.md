@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Unreleased
+
+### New Features
+- **Copy targets** — generate language-agnostic bulk-`COPY`-into-table code from a table's columns. db-gen emits column metadata (ordered columns, type, nullability, context/data split, format hint) and a per-language template produces the `COPY ... FROM STDIN` code. See [docs/copy-targets.md](./docs/copy-targets.md).
+  - New config: `GenerateCopyTargets`, `CopyTargetTemplate`, `CopyTargetsFolderName`, `CopyTargets[]` (`Schema`, `Table`, `MappedName`, `Format`, `NullString`).
+  - New template data: `CopyTargetTemplateData` / `CopyTarget` with `ContextColumns` / `DataColumns` / `AllColumns`.
+  - Example templates added: `copy-pgx.gotmpl` (Go/pgx) and `copy-npgsql.gotmpl` (C#/Npgsql).
+- **Copy-target change detection** — staging-table schema changes (added/removed columns, type and nullability changes) are now reported by `generate` and `database-changes`, closing the gap where staging-column drift was silent.
+- **Test framework** — three-layer suite (pure unit, DB-backed integration, golden-file e2e) with `make test` / `test-unit` / `test-integration` / `test-force` / `test-update-golden`. See [test/README.md](./test/README.md).
+
+### Documentation
+- README slimmed into a landing page; reference docs split into `docs/` (`usage`, `configuration`, `templating`, `copy-targets`, `context-mapping`, `validation`, `examples`).
+- Added `FEATURES.md` feature-inventory matrix.
+
 ## 0.6.1
 
 ### Bug Fixes

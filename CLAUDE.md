@@ -117,48 +117,28 @@ Templates use Go template syntax with access to:
 
 Each `Routine` includes function metadata, parameters, return properties, and naming information.
 
-## Recent Updates (v0.6.0)
+## Documentation map
 
-### New Features
-- **Context Parameter Mapping**: Automatic injection of context parameters (_user_id, _created_by, _tenant_id, etc.) from UserContext
-  - Configure via `UseUserContext`, `UserContextParameterName`, `UserContextType`
-  - Define mappings in `ContextParameterMappings` array
-  - Parameters are split into context vs regular in generated code
+User-facing docs live at the repo root and in `docs/`. When changing behavior, update the relevant doc — don't add changelog-style notes here.
 
-- **Additional Generators Framework**: Generate custom outputs beyond DbContext/Models/Processors
-  - Support for single-file generation (e.g., CommonProvider)
-  - Support for per-routine generation (e.g., TypeScript models)
-  - Configurable via `AdditionalGenerators` array
-  - Optional `CleanOutputFolder` to remove stale files
+- `README.md` — landing page + "What's New".
+- `CHANGELOG.md` — version history (add release notes here, newest first).
+- `FEATURES.md` — feature inventory matrix (config key / default / test coverage per feature).
+- `docs/usage.md` — commands, flags, config resolution, offline workflow, change detection, architecture diagram.
+- `docs/configuration.md` — full config key reference.
+- `docs/templating.md` — template data model, functions, per-routine overrides, three-tier type mapping.
+- `docs/copy-targets.md` — bulk-`COPY` metadata contract and example templates.
+- `docs/context-mapping.md` — context parameters + additional generators.
+- `docs/validation.md` — validation subsystem.
+- `test/README.md` — test framework layout.
 
-- **Three-tier Type Mapping**: Separate handling for nullable returns, nullable parameters, and optional parameters
-  - `NullableReturnType`: For model properties (e.g., `int?`)
-  - `NullableParameterType`: For nullable params without DEFAULT (e.g., `int?`)
-  - `OptionalParameterType`: For params with DEFAULT (e.g., `Optional<int>`)
+## Important implementation details
 
-- **RemoveOrphanedFiles**: Automatically remove generated files when database functions are deleted
-  - Set `RemoveOrphanedFiles: true` in config
-  - Only works when `ClearOutputFolder: false` (mutually exclusive)
-  - Tracks all output folders (main + AdditionalGenerators)
-  - Uses MD5 hash comparison to detect orphaned files
-
-### Bug Fixes
-- Fixed per-function type override bug where nullable/optional types weren't loaded from global mappings
-- Fixed nullable parameter handling to use `T?` instead of `Optional<T>` to prevent parameters from being filtered out
-- Fixed double-wrapping issue in DbContext template
-- Fixed jsonb parameter architectural boundary - keeps PostgreSQL types internal to DbContext
-- Fixed change detection to track files from all output folders, preventing all TypeScript files showing as "Updated" when only one changed
-
-### Template Data Updates
-- Property struct now includes: `BaseType`, `NullableReturnType`, `NullableParamType`, `OptionalParamType`
-- Property struct includes: `IsContextParameter`, `ContextPath` for context mapping
-- Routine struct includes: `ContextParameters`, `RegularParameters`, `Parameters` (all params in order)
-
-### Important Implementation Details
 - **Nullable vs Optional distinction**:
   - Nullable (no DEFAULT, accepts NULL) → always pass to DB, can be null → `T?`
   - Optional (has DEFAULT) → can be omitted from DB call → `Optional<T>`
   - Templates check `$parameter.Optional` to decide `.ToObjectOptional()` vs `Optional.Some()`
-- **Context parameter processing**: Done in `processContextParameters()` in mapper.go
-- **Type resolution**: Happens in mapper.go lines 229-235, checks optional first, then nullable
-- **Per-function overrides**: Must pass empty string (not hardcoded text) to `handleTypeMappingOverride()` to properly lookup global mappings
+- **Context parameter processing**: Done in `processContextParameters()` in mapper.go; copy-target equivalent is `splitCopyColumns()` in copyTargets.go (matches by db column name).
+- **Type resolution**: Happens in mapper.go, checks optional first, then nullable.
+- **Per-function overrides**: Must pass empty string (not hardcoded text) to `handleTypeMappingOverride()` to properly lookup global mappings.
+- **Copy targets**: db-gen stays language-agnostic — it emits `CopyTarget` metadata (`ContextColumns`/`DataColumns`/`AllColumns`, wire order = context then data) and templates produce the `COPY` code. Tables are tracked in generation info for change detection.
