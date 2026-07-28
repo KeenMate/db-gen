@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.7.1
+
+### Security
+- Upgraded dependencies to clear all reachable vulnerabilities reported by `govulncheck`:
+  - `github.com/jackc/pgx/v5` v5.5.1 → v5.10.0 (fixes `GO-2024-2606` SQL injection, `GO-2024-2567` Pipeline panic, `GO-2026-5004`).
+  - `golang.org/x/text` v0.14.0 → v0.40.0.
+  - Bumped Go toolchain to 1.25 in `go.mod` and CI, clearing 16 standard-library advisories (TLS/x509/url/pem) in released binaries.
+
 ## 0.7.0
 
 ### New Features
