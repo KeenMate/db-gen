@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.7.2
+
+### Bug Fixes
+- Use a constant format string in `log.Printf` (`generate.go`) so `go test`/`go vet` pass under the Go 1.25 toolchain. Test-compilation only; v0.7.1 release binaries were unaffected.
+
 ## 0.7.1
 
 ### Security
