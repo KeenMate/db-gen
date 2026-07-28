@@ -63,6 +63,16 @@ Use the test database and configuration in the `test/` folder:
 go run main.go generate --config test/db-gen.json
 ```
 
+## Releases
+
+Releases are produced by GitHub Actions, not by hand.
+
+- **Trigger**: pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which cross-compiles binaries (linux amd64/arm64, windows amd64, darwin amd64/arm64) with `-trimpath -ldflags "-s -w" CGO_ENABLED=0`, adds `.sha256` checksums, and publishes a GitHub Release.
+- **Version stamping**: the committed `version.txt` is a `LOCAL` placeholder — local `go build` binaries report `Locally build Version`. CI overwrites `version.txt` with `GITHUB_ACTIONS <ref_name> <sha>`, so a release binary's `db-gen version` always matches its tag (including the `v` prefix, e.g. `v0.7.2`). Tag and binary version are in sync by construction.
+- **CI checks**: `.github/workflows/go.yml` runs `go build` + `go test ./...` on every push. Both workflows pin `go-version: '1.25'`.
+- **Go 1.25 vet**: `go test` runs `go vet`, which rejects non-constant format strings (e.g. `log.Printf(x.String())` must be `log.Printf("%s", x.String())`). Keep this in mind — `go build` alone won't catch it, but CI's test step will.
+- To cut a release: add a `## X.Y.Z` CHANGELOG block (version headings, newest first), commit, then `git tag -a vX.Y.Z` and push the tag.
+
 ## Configuration
 
 Configuration files follow the pattern:
