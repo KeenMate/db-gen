@@ -10,36 +10,76 @@ permissions:
   packages: write
 
 jobs:
-  publish:
-    name: Publish for ${{ matrix.goos }}
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - goarch: amd64
-            goos: linux
+          - goos: linux
+            goarch: amd64
             binary: db-gen-linux
-          - goarch: amd64
-            goos: windows
+          - goos: linux
+            goarch: arm64
+            binary: db-gen-linux-arm64
+          - goos: windows
+            goarch: amd64
             binary: db-gen-win.exe
+          - goos: darwin
+            goarch: amd64
+            binary: db-gen-darwin
+          - goos: darwin
+            goarch: arm64
+            binary: db-gen-darwin-arm64
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21'
-      - name: add version
-        run: echo "GITHUB_ACTIONS ${{  github.ref_name }} unknown" > version.txt
-      - name: check version
-        run: cat version.txt
+          cache: true
+
+      - name: Stamp version
+        run: echo "GITHUB_ACTIONS ${{ github.ref_name }} ${{ github.sha }}" > version.txt
+
       - name: Build
-        run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o ${{ matrix.binary }} .
-      - name: LS
-        run: ls
-      - name: Create release
-        uses: softprops/action-gh-release@v1
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: go build -trimpath -ldflags "-s -w" -o "${{ matrix.binary }}" .
+
+      - name: Checksum
+        run: sha256sum "${{ matrix.binary }}" > "${{ matrix.binary }}.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: ${{ matrix.binary }}
+          path: |
             ${{ matrix.binary }}
-            
+            ${{ matrix.binary }}.sha256
+          retention-days: 1
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -R dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

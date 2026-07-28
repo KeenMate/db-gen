@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 0.7.0
 
 ### New Features
 - **Copy targets** — generate language-agnostic bulk-`COPY`-into-table code from a table's columns. db-gen emits column metadata (ordered columns, type, nullability, context/data split, format hint) and a per-language template produces the `COPY ... FROM STDIN` code. See [docs/copy-targets.md](./docs/copy-targets.md).
