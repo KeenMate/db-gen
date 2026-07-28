@@ -158,6 +158,6 @@ func doGenerate() error {
 
 	timer.AddEntry("saving generation info")
 	timer.Finish()
-	log.Printf(timer.String())
+	log.Printf("%s", timer.String())
 	return nil
 }
