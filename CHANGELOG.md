@@ -8,6 +8,9 @@
   - New per-function override: `SecurityLevel` on `Generate[].Functions[].Parameters[]`.
   - Resolution precedence: per-function override → global mapping → `DefaultParameterSecurityLevel`. Levels are validated (case-insensitive) at config load.
 
+### New Features (cont.)
+- **`validate` command.** `db-gen validate` checks configuration and templates without generating files: static settings validation (required templates for enabled features, valid enums, consistency), template **parsing** (syntax + known functions), and — when a database is reachable or `UseRoutinesFile` is set — **rendering** each template against real routines to a discard writer to catch field/method errors. `--offline` restricts it to settings + parsing. Exits non-zero on any error, for CI use. See [docs/usage.md → validate](./docs/usage.md#validate).
+
 ### Testing & examples
 - **Metadata contract test.** New `test/e2e/templates/metadata.gotmpl` dumps every field db-gen exposes to templates (all `Routine`/`Property` fields); its golden (`test/e2e/golden/metadata/contract.txt`) locks the template-facing contract so any change surfaces as a diff. The `register_user` e2e fixture exercises all four security levels, a context param, an optional+nullable param, and a validation rule.
 - **Example templates.** New top-level [`examples/`](./examples) with anonymized, real-world-shaped templates: a C# DbContext/Model/Processor set, a `common-provider` that renders **secure logging** from `SecurityLevel`, and a per-routine TypeScript model.

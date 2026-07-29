@@ -36,6 +36,7 @@ Everything db-gen needs — configuration and templates — lives in your reposi
   - **How it works:** you assign levels in config — globally by name (`ParameterSecurityMappings`), as a project-wide default (`DefaultParameterSecurityLevel`, defaults to `secure`), or per function (`Functions[].Parameters[].SecurityLevel`, highest precedence). db-gen resolves the effective level and hands it to your template; **your template renders the masking**, so the tool stays language-agnostic (same philosophy as copy targets). A template branches on `$p.SecurityLevel` to emit `"******"`, a runtime-flag ternary, or the raw value — and drops `omit` params from the log line entirely. See [docs/templating.md → parameter security levels](./docs/templating.md#parameter-security-levels).
 - **Example templates.** New top-level [`examples/`](./examples) with anonymized, real-world-shaped starting points: a C# `DbContext`/`Model`/`Processor` set, a `common-provider` that turns `SecurityLevel` into safe log lines, and a per-routine TypeScript model. See [examples/README.md](./examples/README.md).
 - **Metadata contract test.** A golden-file test (`test/e2e/templates/metadata.gotmpl` → `test/e2e/golden/metadata/contract.txt`) dumps *every* field db-gen exposes to templates, so any change to the template-facing data model shows up as a reviewable diff.
+- **`validate` command.** `db-gen validate` checks your configuration and templates without generating anything: it verifies settings are consistent, parses every template, and — when a database is reachable — renders each against your real routines to catch field/method typos. Exits non-zero on error, so it drops straight into CI. Use `--offline` to skip the database and render step. See [docs/usage.md → validate](./docs/usage.md#validate).
 
 ### v0.7.0
 
@@ -104,6 +105,7 @@ See [docs/usage.md](./docs/usage.md) for the full command surface and [docs/exam
 | Command | What it does |
 |---------|--------------|
 | `generate` | Connect, read routines, and generate code. Reports schema changes since last run. |
+| `validate` | Check the config and templates (parse + render) without generating files. Exits non-zero on error. |
 | `routines [out]` | Export routine metadata to JSON for offline generation. |
 | `database-changes` | Show what changed in the database since the last generation. |
 | `completion [shell]` | Emit a shell-completion script (`bash`, `zsh`, `fish`, `powershell`). |

@@ -11,6 +11,7 @@ db-gen <command> [flags]
 | Command | Description |
 |---------|-------------|
 | `generate` | Connect to the database (or load a routines file), read routine metadata, apply filters/mappings, and generate code. Prints a summary of schema changes since the last generation. |
+| `validate` | Validate the configuration and templates without generating files — see [validate](#validate). |
 | `routines [out]` | Read routines from the database and write their definitions to a JSON file (default `./db-gen-routines.json`, or the `out` argument). Use this to enable offline generation later. |
 | `database-changes` | Compare the current database schema against the last generation and print what changed — without generating anything. |
 | `completion [bash\|zsh\|fish\|powershell]` | Print a shell-completion script. |
@@ -83,6 +84,23 @@ Reported changes include, per routine: created / deleted functions, renamed para
 
 This is what closes the gap where a changed staging-table column used to be silent — copy-target tables are tracked alongside routines.
 
+## validate
+
+`db-gen validate` checks your configuration and templates **without generating any files**, and exits non-zero if anything is wrong — so it fits straight into a pre-commit hook or CI step.
+
+```bash
+db-gen validate --config db-gen.json            # full check (renders if a DB is reachable)
+db-gen validate --config db-gen.json --offline  # settings + template parsing only
+```
+
+It runs three layers, reporting **all** problems (not just the first):
+
+1. **Settings** — the config loads and enabled features are configured consistently: a template is set for each thing you asked to generate (models, processors, copy targets, each enabled additional generator), enum values are valid (`GenerationType`, `FileCase`, copy `Format`, security levels), and there are no contradictory options (e.g. `RemoveOrphanedFiles` while `ClearOutputFolder` is on). Missing pieces are **errors**; likely-mistakes (no `"*"` catch-all mapping, empty `CopyTargets`) are **warnings**.
+2. **Templates — parse** — every template that would actually be used is parsed, catching syntax errors and unknown template functions. No database needed.
+3. **Templates — render** — if a database is reachable (or `UseRoutinesFile` is set) and `--offline` was not given, each template is executed against your **real** routines to a discard writer. This catches field/method typos (e.g. `{{.Routine.FuncName}}` instead of `FunctionName`) that only surface at render time. If no database is available, this step is skipped with a notice and validation degrades to parse-only rather than failing.
+
+Warnings do not affect the exit code; only errors do.
+
 ## How it works
 
 ```mermaid
@@ -91,6 +109,7 @@ graph TD
     B -->|generate| C[Load Configuration]
     B -->|routines| D[Export Routines]
     B -->|database-changes| E[Detect Changes]
+    B -->|validate| VAL[Validate settings + templates]
 
     C --> F{Data Source}
     F -->|Database| G[Connect to PostgreSQL]

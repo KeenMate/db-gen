@@ -18,6 +18,7 @@ How to read the matrix:
 | Feature | Surface | Identifier | Notes | Tested |
 |---|---|---|---|---|
 | Generate code | cmd | `generate` | Connect/load, map, render templates; reports changes | `e2e_test.go` |
+| Validate config & templates | cmd | `validate` | Static settings checks + template parse + render (if DB reachable); `--offline` skips DB. Exits non-zero on error | `validate_test.go` |
 | Export routines (offline) | cmd | `routines [out]` | Writes routine metadata JSON | `integration_test.go` |
 | Show schema changes | cmd | `database-changes` | Diff only, no generation | `changedetection_test.go` |
 | Shell completion | cmd | `completion [shell]` | `bash`/`zsh`/`fish`/`powershell` | n/a |
