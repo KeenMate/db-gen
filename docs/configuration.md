@@ -4,6 +4,20 @@ Every db-gen setting lives in a JSON config file (see [usage → configuration f
 
 > Source of truth for the schema: `Config` and related structs in `private/dbGen/config.go`. Boolean keys default to `false` unless noted.
 
+## Contents
+
+- [Connection & output](#connection--output)
+- [What to generate](#what-to-generate)
+- [Templates](#templates)
+- [Offline generation](#offline-generation)
+- [Context parameters](#context-parameters)
+- [Parameter security](#parameter-security)
+- [Additional generators](#additional-generators)
+- [Copy targets](#copy-targets)
+- [Generate — schema selection](#generate--schema-selection)
+- [Mappings — type mapping](#mappings--type-mapping)
+- [Validation](#validation)
+
 ## Connection & output
 
 | Key | Type | Default | Description |
@@ -16,6 +30,7 @@ Every db-gen setting lives in a JSON config file (see [usage → configuration f
 | `GeneratedFileCase` | string | — | Filename case. One of `"snakecase"`, `"camelcase"`, `"pascalcase"`. Required (validated). |
 | `ClearOutputFolder` | bool | `false` | Delete the output folder's contents before generating. Mutually exclusive with `RemoveOrphanedFiles`. |
 | `RemoveOrphanedFiles` | bool | `false` | Remove previously generated files whose database function no longer exists. Tracks all output folders (main + additional generators). Only works when `ClearOutputFolder` is `false`. |
+| `Debug` | bool | `false` | Enable debug logging and debug-file output. Usually set via the `--debug`/`-d` flag rather than in the config file. |
 
 ## What to generate
 

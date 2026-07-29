@@ -4,6 +4,13 @@
 
 > A language-agnostic CLI that generates database-access code from PostgreSQL stored functions and procedures — consistent, customizable, and fully offline-capable.
 
+## Contents
+
+- [What is it](#what-is-it) · [What's New](#whats-new) · [Install](#install) · [Quick start](#quick-start) · [CLI commands](#cli-commands) · [Why db-gen](#why-db-gen) · [Architecture](#architecture) · [Development](#development)
+- **Reference docs:** [Usage & CLI](./docs/usage.md) · [**Configuration**](./docs/configuration.md) — every setting, grouped by area · [Templating](./docs/templating.md) · [Copy targets](./docs/copy-targets.md) · [Context mapping & generators](./docs/context-mapping.md) · [Validation](./docs/validation.md) · [Examples / cookbook](./docs/examples.md) · [Example templates](./examples) · [Feature inventory](./FEATURES.md)
+
+See the annotated [Docs](#docs) index below for one-line descriptions of each.
+
 ## What is it
 
 `db-gen` connects to a PostgreSQL database, reads the metadata of your stored functions and procedures, and generates the boilerplate code that calls them — in whatever language and style your templates define. It is **not** an ORM: you keep writing SQL functions, and db-gen writes the typed call/mapping code around them.
@@ -25,24 +32,16 @@ Everything db-gen needs — configuration and templates — lives in your reposi
 
 ### v0.8.0
 
-- **Parameter security levels.** Each parameter now carries a logging-sensitivity level — `none` (log plainly), `secure` (plain or masked depending on a runtime flag in your code), `strict` (always masked), `omit` (never logged) — exposed to templates as `Property.SecurityLevel`. Assign levels globally by name (`ParameterSecurityMappings`), set a project-wide default (`DefaultParameterSecurityLevel`, defaults to `secure`), and override per function. db-gen stays language-agnostic: it resolves the level; your template renders the masking. See [docs/templating.md](./docs/templating.md#parameter-security-levels).
+- **Parameter security levels.** Each parameter now carries a logging-sensitivity level — `none` (log plainly), `secure` (plain or masked depending on a runtime flag in your code), `strict` (always masked), `omit` (never logged) — exposed to templates as `Property.SecurityLevel`.
+  - **How it works:** you assign levels in config — globally by name (`ParameterSecurityMappings`), as a project-wide default (`DefaultParameterSecurityLevel`, defaults to `secure`), or per function (`Functions[].Parameters[].SecurityLevel`, highest precedence). db-gen resolves the effective level and hands it to your template; **your template renders the masking**, so the tool stays language-agnostic (same philosophy as copy targets). A template branches on `$p.SecurityLevel` to emit `"******"`, a runtime-flag ternary, or the raw value — and drops `omit` params from the log line entirely. See [docs/templating.md → parameter security levels](./docs/templating.md#parameter-security-levels).
+- **Example templates.** New top-level [`examples/`](./examples) with anonymized, real-world-shaped starting points: a C# `DbContext`/`Model`/`Processor` set, a `common-provider` that turns `SecurityLevel` into safe log lines, and a per-routine TypeScript model. See [examples/README.md](./examples/README.md).
+- **Metadata contract test.** A golden-file test (`test/e2e/templates/metadata.gotmpl` → `test/e2e/golden/metadata/contract.txt`) dumps *every* field db-gen exposes to templates, so any change to the template-facing data model shows up as a reviewable diff.
 
-### Unreleased
+### v0.7.0
 
 - **Copy targets — generic bulk-`COPY` code generation.** Declare a staging table and db-gen emits the metadata (ordered columns, type, nullability, context/data split, format hint) a per-language template needs to write a correct `COPY ... FROM STDIN`. No language specifics live in the tool. Schema drift on those tables is now reported in `generate` and `database-changes` output, so a changed staging column is no longer silent. See [docs/copy-targets.md](./docs/copy-targets.md).
 - **Test framework.** A three-layer suite (pure unit, DB-backed integration, golden-file e2e) plus `make test` / `test-unit` / `test-integration` / `test-force` / `test-update-golden`. See [test/README.md](./test/README.md).
-
-### v0.6.1
-
-- **Field-name generation preserves underscores before numbers** — `country_iso_2` no longer collapses to `country_iso2`. New `normalizeStr` template function uses normalized db column names directly instead of round-tripping through PascalCase.
-- **Unnamed parameters** (`$1`, `$2`) no longer crash routine loading — `parameter_name` is coalesced to an empty string.
-
-### v0.6.0
-
-- **Context Parameter Mapping** — inject context params from a UserContext object ([docs/context-mapping.md](./docs/context-mapping.md)).
-- **Additional Generators framework** — single-file or per-routine custom outputs.
-- **Three-tier type mapping** — `NullableReturnType`, `NullableParameterType`, `OptionalParameterType`.
-- **RemoveOrphanedFiles** — delete generated files when their database function disappears.
+- **Security & toolchain (v0.7.1–v0.7.2).** Upgraded `pgx`/`x/text` and the Go toolchain to 1.25 to clear all `govulncheck` findings.
 
 See [CHANGELOG.md](./CHANGELOG.md) for the full history.
 
@@ -54,7 +53,8 @@ See [CHANGELOG.md](./CHANGELOG.md) for the full history.
 - 📦 [Copy targets](./docs/copy-targets.md) — bulk-`COPY` metadata contract and example templates.
 - 🔐 [Context mapping & additional generators](./docs/context-mapping.md)
 - ✅ [Validation](./docs/validation.md)
-- 📚 [Examples / cookbook](./docs/examples.md)
+- 📚 [Examples / cookbook](./docs/examples.md) — config recipes for common setups.
+- 🎁 [Example templates](./examples) — anonymized, real-world-shaped C# & TypeScript templates to copy from.
 - 🗂️ [Feature inventory](./FEATURES.md) — every feature, its config key, default, and test coverage.
 
 ## Install
