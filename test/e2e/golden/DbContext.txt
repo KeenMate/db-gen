@@ -1,4 +1,5 @@
 // db-gen LOCAL
 DbgenTestGetRows() -> DbgenTestGetRowsModel
+DbgenTestRegisterUser(_user_id:int@ctx, username:string, display_name:string, email:string, password:string, api_token:string, secret_note:string) -> DbgenTestRegisterUserModel
 DbgenTestScalarSum(a:int, b:int) -> DbgenTestScalarSumModel
 DbgenTestWithContext(_user_id:int@ctx, name:string) -> DbgenTestWithContextModel

@@ -92,6 +92,17 @@ How to read the matrix:
 | Mapped parameter names | config | `ContextParameterMappings[].ParameterNames` | — | | `mapper_test.go` |
 | Context path | config | `ContextParameterMappings[].ContextPath` | — | | `mapper_test.go` |
 
+## 7a. Parameter security (logging sensitivity)
+
+| Feature | Surface | Identifier | Default | Notes | Tested |
+|---|---|---|---|---|---|
+| Default security level | config | `DefaultParameterSecurityLevel` | `"secure"` | fallback level; `none`/`secure`/`strict`/`omit` | `mapper_test.go` |
+| Global security mappings | config[] | `ParameterSecurityMappings` | — | name(s) → level | `mapper_test.go` |
+| Mapped parameter names | config | `ParameterSecurityMappings[].ParameterNames` | — | case-insensitive | `mapper_test.go` |
+| Security level | config | `ParameterSecurityMappings[].SecurityLevel` | — | | `mapper_test.go` |
+| Per-function override | config | `Generate[].Functions[].Parameters[].SecurityLevel` | — | wins over global | `mapper_test.go` |
+| Resolved level (template) | template-data | `Property.SecurityLevel` | — | `none`/`secure`/`strict`/`omit` | `mapper_test.go`, `e2e_test.go` |
+
 ## 8. Additional generators
 
 | Feature | Surface | Identifier | Default | Notes | Tested |
@@ -135,7 +146,7 @@ How to read the matrix:
 | DbContext data | template-data | `DbContextData{Config,Functions,BuildInfo}` | All routines | `e2e_test.go` |
 | Model/Processor data | template-data | `ModelTemplateData`/`ProcessorTemplateData` | One routine | `e2e_test.go` |
 | Routine fields | template-data | `Routine{Parameters,ReturnProperties,ContextParameters,RegularParameters,…}` | | `mapper_test.go` |
-| Property fields | template-data | `Property{BaseType,Nullable,Optional,Position,…}` | | `mapper_test.go` |
+| Property fields | template-data | `Property{BaseType,Nullable,Optional,Position,SecurityLevel,…}` | | `mapper_test.go` |
 | Pascal case | template-fn | `pascalCased` | | `strings_test.go` |
 | Camel case | template-fn | `camelCased` | | `strings_test.go` |
 | Snake case | template-fn | `snakeCased` | | `strings_test.go` |

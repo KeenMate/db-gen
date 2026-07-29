@@ -17,10 +17,15 @@ Everything db-gen needs — configuration and templates — lives in your reposi
 - **Three-tier type mapping** — distinct types for base, nullable returns, nullable params, and optional (DEFAULT) params.
 - **Context parameter injection** — map `_user_id`, `created_by`, `tenant_id`, … to a context object instead of threading them through call sites.
 - **Copy targets** — generate bulk-`COPY`-into-staging-table code from a table's columns, language-agnostically.
+- **Parameter security levels** — tag parameters `none`/`secure`/`strict`/`omit` so templates can generate secure logging (mask or omit sensitive values).
 - **Schema change detection** — see what changed in your routines and copy-target tables since the last generation.
 - **Offline generation** — export routine metadata to JSON and generate without a database connection.
 
 ## What's New
+
+### v0.8.0
+
+- **Parameter security levels.** Each parameter now carries a logging-sensitivity level — `none` (log plainly), `secure` (plain or masked depending on a runtime flag in your code), `strict` (always masked), `omit` (never logged) — exposed to templates as `Property.SecurityLevel`. Assign levels globally by name (`ParameterSecurityMappings`), set a project-wide default (`DefaultParameterSecurityLevel`, defaults to `secure`), and override per function. db-gen stays language-agnostic: it resolves the level; your template renders the masking. See [docs/templating.md](./docs/templating.md#parameter-security-levels).
 
 ### Unreleased
 

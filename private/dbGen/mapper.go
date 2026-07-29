@@ -9,19 +9,33 @@ import (
 )
 
 type mapping struct {
-	mappedFunction          string
-	mappedType              string
-	nullableReturnType      string
-	nullableParameterType   string
-	optionalParameterType   string
+	mappedFunction        string
+	mappedType            string
+	nullableReturnType    string
+	nullableParameterType string
+	optionalParameterType string
 }
 
 type effectiveParamMapping struct {
-	name        string
-	typeMapping mapping
-	isNullable  bool
-	isOptional  bool
+	name          string
+	typeMapping   mapping
+	isNullable    bool
+	isOptional    bool
+	securityLevel string
 }
+
+// Parameter logging-sensitivity levels. See docs/configuration.md.
+const (
+	SecurityLevelNone   = "none"   // safe to log as plain text
+	SecurityLevelSecure = "secure" // plain text or masked depending on a runtime insecure-logging flag
+	SecurityLevelStrict = "strict" // always masked
+	SecurityLevelOmit   = "omit"   // never logged
+)
+
+// DefaultSecurityLevel is the fallback level when nothing else matches a parameter.
+const DefaultSecurityLevel = SecurityLevelSecure
+
+var ValidSecurityLevels = []string{SecurityLevelNone, SecurityLevelSecure, SecurityLevelStrict, SecurityLevelOmit}
 
 // TODO make configurable
 const hiddenSchema = "public"
@@ -247,6 +261,7 @@ func mapParameters(attributes []DbParameter, typeMappings *map[string]mapping, r
 			MapperFunction:     "",
 			Nullable:           effectiveMapping.isNullable,
 			Optional:           effectiveMapping.isOptional,
+			SecurityLevel:      effectiveMapping.securityLevel,
 		}
 
 		properties[i] = *property
@@ -336,6 +351,7 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 	var err error = nil
 
 	explicitMapping, hasExplicitParamMapping := routineMapping.Parameters[param.Name]
+	securityLevel := resolveSecurityLevel(param.Name, explicitMapping, hasExplicitParamMapping, config)
 	if hasExplicitParamMapping {
 		if explicitMapping.MappedName != "" {
 			name = explicitMapping.MappedName
@@ -366,12 +382,79 @@ func getParamMapping(param DbParameter, routineMapping *RoutineMapping, globalMa
 	}
 
 	return &effectiveParamMapping{
-		name:        name,
-		typeMapping: *typeMapping,
-		isNullable:  isNullable,
-		isOptional:  isOptional,
+		name:          name,
+		typeMapping:   *typeMapping,
+		isNullable:    isNullable,
+		isOptional:    isOptional,
+		securityLevel: securityLevel,
 	}, nil
 
+}
+
+// resolveSecurityLevel determines a parameter's logging-sensitivity level.
+// Precedence: per-function override > global by-name mapping > DefaultParameterSecurityLevel.
+// All configured values are already normalized to lowercase in normalizeAndValidateSecurityLevels.
+func resolveSecurityLevel(dbParamName string, explicitMapping ParamMapping, hasExplicitMapping bool, config *Config) string {
+	if hasExplicitMapping && explicitMapping.SecurityLevel != "" {
+		return explicitMapping.SecurityLevel
+	}
+
+	nameLower := strings.ToLower(dbParamName)
+	for _, mapping := range config.ParameterSecurityMappings {
+		for _, paramName := range mapping.ParameterNames {
+			if strings.ToLower(paramName) == nameLower {
+				return mapping.SecurityLevel
+			}
+		}
+	}
+
+	return config.DefaultParameterSecurityLevel
+}
+
+// normalizeAndValidateSecurityLevels lowercases every configured security level and
+// rejects unknown values. Empty values are left as-is (they mean "not set" and fall
+// through to the next precedence tier).
+func normalizeAndValidateSecurityLevels(config *Config) error {
+	validate := func(where, level string) (string, error) {
+		if level == "" {
+			return level, nil
+		}
+		normalized := strings.ToLower(level)
+		if !common2.Contains(ValidSecurityLevels, normalized) {
+			return "", fmt.Errorf("'%s' is not a valid security level for %s (valid: %s)",
+				level, where, strings.Join(ValidSecurityLevels, ", "))
+		}
+		return normalized, nil
+	}
+
+	var err error
+	if config.DefaultParameterSecurityLevel, err = validate("DefaultParameterSecurityLevel", config.DefaultParameterSecurityLevel); err != nil {
+		return err
+	}
+	if config.DefaultParameterSecurityLevel == "" {
+		config.DefaultParameterSecurityLevel = DefaultSecurityLevel
+	}
+
+	for i := range config.ParameterSecurityMappings {
+		m := &config.ParameterSecurityMappings[i]
+		if m.SecurityLevel, err = validate("ParameterSecurityMappings", m.SecurityLevel); err != nil {
+			return err
+		}
+	}
+
+	for si := range config.Generate {
+		for fnName, routineMapping := range config.Generate[si].Functions {
+			for pName, paramMapping := range routineMapping.Parameters {
+				if paramMapping.SecurityLevel, err = validate(
+					fmt.Sprintf("Generate[%s].Parameters[%s]", fnName, pName), paramMapping.SecurityLevel); err != nil {
+					return err
+				}
+				routineMapping.Parameters[pName] = paramMapping
+			}
+		}
+	}
+
+	return nil
 }
 
 func getFunctionName(dbFunctionName string, schema string, mappedName string) string {

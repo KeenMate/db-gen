@@ -120,6 +120,81 @@ func TestMapParameters_TypeResolution(t *testing.T) {
 	}
 }
 
+func TestResolveSecurityLevel(t *testing.T) {
+	config := &Config{
+		DefaultParameterSecurityLevel: SecurityLevelSecure,
+		ParameterSecurityMappings: []ParameterSecurityMapping{
+			{ParameterNames: []string{"password", "secret"}, SecurityLevel: SecurityLevelStrict},
+			{ParameterNames: []string{"email"}, SecurityLevel: SecurityLevelNone},
+		},
+	}
+
+	t.Run("per-function override wins over global and default", func(t *testing.T) {
+		got := resolveSecurityLevel("password", ParamMapping{SecurityLevel: SecurityLevelOmit}, true, config)
+		if got != SecurityLevelOmit {
+			t.Errorf("got %q, want %q", got, SecurityLevelOmit)
+		}
+	})
+
+	t.Run("global by-name match, case-insensitive", func(t *testing.T) {
+		got := resolveSecurityLevel("PASSWORD", ParamMapping{}, false, config)
+		if got != SecurityLevelStrict {
+			t.Errorf("got %q, want %q", got, SecurityLevelStrict)
+		}
+	})
+
+	t.Run("empty per-function level falls through to global", func(t *testing.T) {
+		got := resolveSecurityLevel("secret", ParamMapping{SecurityLevel: ""}, true, config)
+		if got != SecurityLevelStrict {
+			t.Errorf("got %q, want %q", got, SecurityLevelStrict)
+		}
+	})
+
+	t.Run("no match falls back to default", func(t *testing.T) {
+		got := resolveSecurityLevel("username", ParamMapping{}, false, config)
+		if got != SecurityLevelSecure {
+			t.Errorf("got %q, want %q", got, SecurityLevelSecure)
+		}
+	})
+}
+
+func TestNormalizeAndValidateSecurityLevels(t *testing.T) {
+	t.Run("empty default becomes DefaultSecurityLevel; values lowercased", func(t *testing.T) {
+		config := &Config{
+			ParameterSecurityMappings: []ParameterSecurityMapping{
+				{ParameterNames: []string{"password"}, SecurityLevel: "STRICT"},
+			},
+			Generate: []SchemaConfig{{
+				Schema: "public",
+				Functions: map[string]RoutineMapping{
+					"create_user": {Parameters: map[string]ParamMapping{
+						"pwd": {SecurityLevel: "Omit"},
+					}},
+				},
+			}},
+		}
+		if err := normalizeAndValidateSecurityLevels(config); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if config.DefaultParameterSecurityLevel != DefaultSecurityLevel {
+			t.Errorf("default = %q, want %q", config.DefaultParameterSecurityLevel, DefaultSecurityLevel)
+		}
+		if config.ParameterSecurityMappings[0].SecurityLevel != SecurityLevelStrict {
+			t.Errorf("global level not normalized: %q", config.ParameterSecurityMappings[0].SecurityLevel)
+		}
+		if got := config.Generate[0].Functions["create_user"].Parameters["pwd"].SecurityLevel; got != SecurityLevelOmit {
+			t.Errorf("per-function level not normalized: %q", got)
+		}
+	})
+
+	t.Run("invalid value is rejected", func(t *testing.T) {
+		config := &Config{DefaultParameterSecurityLevel: "loud"}
+		if err := normalizeAndValidateSecurityLevels(config); err == nil {
+			t.Error("expected error for invalid security level")
+		}
+	})
+}
+
 func TestMapModel_Scalar(t *testing.T) {
 	routine := DbRoutine{RoutineName: "sum", RoutineSchema: "public", DataType: "int4", FuncType: "function"}
 	mappings := map[string]mapping{"int4": {mappedType: "int", mappedFunction: "GetInt32"}}

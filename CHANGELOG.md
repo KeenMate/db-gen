@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.8.0
+
+### New Features
+- **Parameter security levels** — each parameter now carries a logging-sensitivity level (`none` / `secure` / `strict` / `omit`), exposed to templates as `Property.SecurityLevel` for generating secure logging. db-gen only resolves and exposes the level; templates render the masking (staying language-agnostic). See [docs/templating.md → parameter security levels](./docs/templating.md#parameter-security-levels).
+  - New config: `DefaultParameterSecurityLevel` (defaults to `secure`) and `ParameterSecurityMappings[]` (`ParameterNames`, `SecurityLevel`) for global by-name assignment.
+  - New per-function override: `SecurityLevel` on `Generate[].Functions[].Parameters[]`.
+  - Resolution precedence: per-function override → global mapping → `DefaultParameterSecurityLevel`. Levels are validated (case-insensitive) at config load.
+
+### Testing & examples
+- **Metadata contract test.** New `test/e2e/templates/metadata.gotmpl` dumps every field db-gen exposes to templates (all `Routine`/`Property` fields); its golden (`test/e2e/golden/metadata/contract.txt`) locks the template-facing contract so any change surfaces as a diff. The `register_user` e2e fixture exercises all four security levels, a context param, an optional+nullable param, and a validation rule.
+- **Example templates.** New top-level [`examples/`](./examples) with anonymized, real-world-shaped templates: a C# DbContext/Model/Processor set, a `common-provider` that renders **secure logging** from `SecurityLevel`, and a per-routine TypeScript model.
+
 ## 0.7.2
 
 ### Bug Fixes

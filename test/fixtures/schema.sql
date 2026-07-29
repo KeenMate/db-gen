@@ -76,3 +76,26 @@ create table dbgen_test.copy_target_demo
 	name       text,
 	amount     text
 );
+
+-- 9. Function with sensitive parameters (drives db-gen security levels) ----
+-- Exercises every SecurityLevel resolution path in one signature:
+--   _user_id     -> context parameter (mapped in the e2e config)
+--   username     -> none    (global ParameterSecurityMappings)
+--   display_name -> secure  (falls through to DefaultParameterSecurityLevel)
+--   email        -> omit    (per-function override beats the default)
+--   password     -> strict  (global)
+--   api_token    -> strict  (global)
+--   secret_note  -> omit    (global) and optional+nullable (has a DEFAULT)
+create function dbgen_test.register_user(
+	_user_id     int,
+	username     text,
+	display_name text,
+	email        text,
+	password     text,
+	api_token    text,
+	secret_note  text default null
+) returns int
+	language sql as
+$$
+select _user_id;
+$$;

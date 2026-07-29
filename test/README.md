@@ -40,6 +40,17 @@ and compares the generated tree against committed golden files in
 `test/e2e/golden/`. Templates live in `test/e2e/templates/` (minimal and
 deterministic) plus the shared `test/templates/copy-pgx.gotmpl`.
 
+**Metadata contract dump.** `test/e2e/templates/metadata.gotmpl` is not a real
+code template — it emits *every* field db-gen exposes to templates (all
+`Routine` and `Property` fields), so its golden (`test/e2e/golden/metadata/
+contract.txt`) is a locked snapshot of the whole template-facing contract. Any
+change to what generation exposes shows up as a golden diff. The
+`register_user` fixture function drives the interesting cases in one signature:
+all four `SecurityLevel`s (none/secure/strict/omit, global + per-function
+override), a context parameter, an optional+nullable parameter, and a
+non-empty `ValidationRules`. When a contract change is intentional, regenerate
+with `-update` and review the diff.
+
 After an intentional change to templates or generation output:
 
 ```

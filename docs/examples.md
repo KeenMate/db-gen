@@ -9,6 +9,7 @@ Recipes for common db-gen setups. The bundled `test/` folder has runnable config
 | [`test/db-gen-with-validation.json`](../test/db-gen-with-validation.json) | Parameter validation rules |
 | [`test/db-gen-copy.json`](../test/db-gen-copy.json) | Copy targets (bulk `COPY`) |
 | [`test/templates/`](../test/templates) | Example templates: `dbcontext`, `model`, `processor`, `typescript`, `provider`, `copy-pgx`, `copy-npgsql`, validation |
+| [`examples/`](../examples) | Fuller, anonymized real-world templates: C# DbContext/Model/Processor, a secure-logging provider, and a TypeScript model — see [`examples/README.md`](../examples/README.md) |
 
 Run any of them:
 

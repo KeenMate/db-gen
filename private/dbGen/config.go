@@ -16,36 +16,38 @@ var localPrefixes = []string{"local.", ".local."}
 var localPostfixes = []string{".local"}
 
 type Config struct {
-	PathBase                         string                    //for now just using config folder
-	ConnectionString                 string                    `mapstructure:"ConnectionString"`
-	OutputFolder                     string                    `mapstructure:"OutputFolder"`
-	ProcessorsFolderName             string                    `mapstructure:"ProcessorsFolderName"`
-	ModelsFolderName                 string                    `mapstructure:"ModelsFolderName"`
-	GenerateModels                   bool                      `mapstructure:"GenerateModels"`
-	GenerateProcessors               bool                      `mapstructure:"GenerateProcessors"`
-	GenerateProcessorsForVoidReturns bool                      `mapstructure:"GenerateProcessorsForVoidReturns"`
-	DbContextTemplate                string                    `mapstructure:"DbContextTemplate"`
-	ModelTemplate                    string                    `mapstructure:"ModelTemplate"`
-	ProcessorTemplate                string                    `mapstructure:"ProcessorTemplate"`
-	GeneratedFileExtension           string                    `mapstructure:"GeneratedFileExtension"`
-	GeneratedFileCase                string                    `mapstructure:"GeneratedFileCase"`
-	Debug                            bool                      `mapstructure:"Debug"`
-	ClearOutputFolder                bool                      `mapstructure:"ClearOutputFolder"`
-	RemoveOrphanedFiles              bool                      `mapstructure:"RemoveOrphanedFiles"`
-	RoutinesFile                     string                    `mapstructure:"RoutinesFile"`
-	UseRoutinesFile                  bool                      `mapstructure:"UseRoutinesFile"`
-	Generate                         []SchemaConfig            `mapstructure:"Generate"`
-	Mappings                         []Mapping                 `mapstructure:"Mappings"`
-	UseUserContext                   bool                      `mapstructure:"UseUserContext"`
-	UserContextParameterName         string                    `mapstructure:"UserContextParameterName"`
-	UserContextType                  string                    `mapstructure:"UserContextType"`
-	ContextParameterMappings         []ContextParameterMapping `mapstructure:"ContextParameterMappings"`
-	AdditionalGenerators             []AdditionalGenerator     `mapstructure:"AdditionalGenerators"`
-	Validation                       ValidationConfig          `mapstructure:"Validation"`
-	GenerateCopyTargets              bool                      `mapstructure:"GenerateCopyTargets"`
-	CopyTargetTemplate               string                    `mapstructure:"CopyTargetTemplate"`
-	CopyTargetsFolderName            string                    `mapstructure:"CopyTargetsFolderName"`
-	CopyTargets                      []CopyTargetConfig        `mapstructure:"CopyTargets"`
+	PathBase                         string                     //for now just using config folder
+	ConnectionString                 string                     `mapstructure:"ConnectionString"`
+	OutputFolder                     string                     `mapstructure:"OutputFolder"`
+	ProcessorsFolderName             string                     `mapstructure:"ProcessorsFolderName"`
+	ModelsFolderName                 string                     `mapstructure:"ModelsFolderName"`
+	GenerateModels                   bool                       `mapstructure:"GenerateModels"`
+	GenerateProcessors               bool                       `mapstructure:"GenerateProcessors"`
+	GenerateProcessorsForVoidReturns bool                       `mapstructure:"GenerateProcessorsForVoidReturns"`
+	DbContextTemplate                string                     `mapstructure:"DbContextTemplate"`
+	ModelTemplate                    string                     `mapstructure:"ModelTemplate"`
+	ProcessorTemplate                string                     `mapstructure:"ProcessorTemplate"`
+	GeneratedFileExtension           string                     `mapstructure:"GeneratedFileExtension"`
+	GeneratedFileCase                string                     `mapstructure:"GeneratedFileCase"`
+	Debug                            bool                       `mapstructure:"Debug"`
+	ClearOutputFolder                bool                       `mapstructure:"ClearOutputFolder"`
+	RemoveOrphanedFiles              bool                       `mapstructure:"RemoveOrphanedFiles"`
+	RoutinesFile                     string                     `mapstructure:"RoutinesFile"`
+	UseRoutinesFile                  bool                       `mapstructure:"UseRoutinesFile"`
+	Generate                         []SchemaConfig             `mapstructure:"Generate"`
+	Mappings                         []Mapping                  `mapstructure:"Mappings"`
+	UseUserContext                   bool                       `mapstructure:"UseUserContext"`
+	UserContextParameterName         string                     `mapstructure:"UserContextParameterName"`
+	UserContextType                  string                     `mapstructure:"UserContextType"`
+	ContextParameterMappings         []ContextParameterMapping  `mapstructure:"ContextParameterMappings"`
+	ParameterSecurityMappings        []ParameterSecurityMapping `mapstructure:"ParameterSecurityMappings"`
+	DefaultParameterSecurityLevel    string                     `mapstructure:"DefaultParameterSecurityLevel"`
+	AdditionalGenerators             []AdditionalGenerator      `mapstructure:"AdditionalGenerators"`
+	Validation                       ValidationConfig           `mapstructure:"Validation"`
+	GenerateCopyTargets              bool                       `mapstructure:"GenerateCopyTargets"`
+	CopyTargetTemplate               string                     `mapstructure:"CopyTargetTemplate"`
+	CopyTargetsFolderName            string                     `mapstructure:"CopyTargetsFolderName"`
+	CopyTargets                      []CopyTargetConfig         `mapstructure:"CopyTargets"`
 }
 
 // CopyTargetConfig declares a table to generate bulk-COPY code for.
@@ -82,10 +84,11 @@ type ColumnMapping struct {
 }
 
 type ParamMapping struct {
-	MappedName string    `mapstructure:"MappedName"`
-	MappedType string    `mapstructure:"MappedType"`
-	IsNullable null.Bool `mapstructure:"IsNullable"`
-	IsOptional null.Bool `mapstructure:"IsOptional"`
+	MappedName    string    `mapstructure:"MappedName"`
+	MappedType    string    `mapstructure:"MappedType"`
+	IsNullable    null.Bool `mapstructure:"IsNullable"`
+	IsOptional    null.Bool `mapstructure:"IsOptional"`
+	SecurityLevel string    `mapstructure:"SecurityLevel"` // none | secure | strict | omit (per-function override)
 }
 
 type Mapping struct {
@@ -100,6 +103,13 @@ type Mapping struct {
 type ContextParameterMapping struct {
 	ParameterNames []string `mapstructure:"ParameterNames"`
 	ContextPath    string   `mapstructure:"ContextPath"`
+}
+
+// ParameterSecurityMapping assigns a logging-sensitivity level to parameters by
+// name, globally across all routines. Same shape as ContextParameterMapping.
+type ParameterSecurityMapping struct {
+	ParameterNames []string `mapstructure:"ParameterNames"`
+	SecurityLevel  string   `mapstructure:"SecurityLevel"` // none | secure | strict | omit
 }
 
 type AdditionalGenerator struct {
@@ -176,6 +186,8 @@ func GetAndValidateConfig() (*Config, error) {
 		UserContextParameterName:         "ctx",
 		UserContextType:                  "UserContext",
 		ContextParameterMappings:         nil,
+		ParameterSecurityMappings:        nil,
+		DefaultParameterSecurityLevel:    DefaultSecurityLevel,
 		AdditionalGenerators:             nil,
 		GenerateCopyTargets:              false,
 		CopyTargetTemplate:               "",
@@ -239,6 +251,10 @@ func GetAndValidateConfig() (*Config, error) {
 
 	if !common2.Contains(ValidCaseNormalized, config.GeneratedFileCase) {
 		return nil, fmt.Errorf(" '%s' is not valid case (maybe GeneratedFileCase is missing)", config.GeneratedFileCase)
+	}
+
+	if err := normalizeAndValidateSecurityLevels(config); err != nil {
+		return nil, err
 	}
 
 	common2.LogDebug("Loaded configuration: \n%+v", config)

@@ -69,6 +69,12 @@ func buildE2EConfig(connStr, outDir string) *Config {
 				"scalar_sum":   {Generate: true},
 				"get_rows":     {Generate: true},
 				"with_context": {Generate: true},
+				// register_user drives the parameter-security coverage; the
+				// per-function override on `email` (omit) must beat the default (secure).
+				"register_user": {
+					Generate:   true,
+					Parameters: map[string]ParamMapping{"email": {SecurityLevel: "omit"}},
+				},
 			},
 		}},
 		ContextParameterMappings: []ContextParameterMapping{
@@ -77,6 +83,28 @@ func buildE2EConfig(connStr, outDir string) *Config {
 			{ParameterNames: []string{"created_by"}, ContextPath: "ctx.CreatedBy"},
 			{ParameterNames: []string{"job_run_id"}, ContextPath: "ctx.JobRunId"},
 		},
+		// Parameter security: global-by-name defaults, resolved against the db
+		// parameter name. `display_name` matches nothing -> DefaultParameterSecurityLevel.
+		DefaultParameterSecurityLevel: "secure",
+		ParameterSecurityMappings: []ParameterSecurityMapping{
+			{ParameterNames: []string{"username"}, SecurityLevel: "none"},
+			{ParameterNames: []string{"password", "api_token"}, SecurityLevel: "strict"},
+			{ParameterNames: []string{"secret_note"}, SecurityLevel: "omit"},
+		},
+		// Minimal validation config so ValidationRules is non-empty for at least
+		// one parameter, locking that field in the contract dump too.
+		Validation: ValidationConfig{
+			ValidationRuleDefinitions:   []ValidationRuleDefinition{{Name: "NotEmpty", Type: "Built-in"}},
+			ParameterValidationMappings: []ParameterValidationMapping{{ParameterNames: []string{"username"}, Rules: []interface{}{"NotEmpty"}}},
+		},
+		AdditionalGenerators: []AdditionalGenerator{{
+			Name:           "Metadata",
+			Enabled:        true,
+			Template:       tmpl("metadata.gotmpl"),
+			OutputFolder:   filepath.Join(outDir, "metadata"),
+			FileName:       "contract.txt",
+			GenerationType: "single-file",
+		}},
 		GenerateCopyTargets:   true,
 		CopyTargetTemplate:    filepath.Join("..", "..", "test", "templates", "copy-pgx.gotmpl"),
 		CopyTargetsFolderName: "copy",

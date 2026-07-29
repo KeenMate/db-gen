@@ -1,0 +1,41 @@
+{{- /*
+  Metadata contract dump — NOT a real code template.
+
+  Emits every field db-gen exposes to templates (Routine + Property), in a
+  stable, deterministic format. Its golden file (test/e2e/golden/metadata/
+  contract.txt) is a locked snapshot of the whole template-facing contract:
+  any change to what generation exposes surfaces as a golden diff. When that
+  diff is intentional, run `go test ./private/dbGen -run E2E -update` and
+  review it.
+*/ -}}
+{{- define "prop" -}}
+{{.PropertyName}}
+      DbColumnName={{.DbColumnName}} DbColumnType={{.DbColumnType}}
+      PropertyType={{.PropertyType}} BaseType={{.BaseType}}
+      NullableReturnType={{.NullableReturnType}} NullableParamType={{.NullableParamType}} OptionalParamType={{.OptionalParamType}}
+      Position={{.Position}} MapperFunction={{.MapperFunction}}
+      Nullable={{.Nullable}} Optional={{.Optional}}
+      IsContextParameter={{.IsContextParameter}} ContextPath={{.ContextPath}}
+      SecurityLevel={{.SecurityLevel}}
+      ValidationRules=[{{range $i, $r := .ValidationRules}}{{if $i}},{{end}}{{$r.Name}}{{end}}]
+{{- end -}}
+# db-gen metadata contract dump
+# BuildInfo.Version={{.BuildInfo.Version}}
+# Functions={{len .Functions}}
+{{range $fn := .Functions}}
+==== Routine: {{$fn.FunctionName}} ====
+  DbFullFunctionName={{$fn.DbFullFunctionName}}
+  Schema={{$fn.Schema}} DbFunctionName={{$fn.DbFunctionName}}
+  ModelName={{$fn.ModelName}} ProcessorName={{$fn.ProcessorName}}
+  HasReturn={{$fn.HasReturn}} IsProcedure={{$fn.IsProcedure}} UsesUserContext={{$fn.UsesUserContext}}
+  Parameters ({{len $fn.Parameters}}):
+{{- range $p := $fn.Parameters}}
+    - {{template "prop" $p}}
+{{- end}}
+  RegularParameters ({{len $fn.RegularParameters}}): {{range $i, $p := $fn.RegularParameters}}{{if $i}}, {{end}}{{$p.PropertyName}}{{end}}
+  ContextParameters ({{len $fn.ContextParameters}}): {{range $i, $p := $fn.ContextParameters}}{{if $i}}, {{end}}{{$p.PropertyName}}{{end}}
+  ReturnProperties ({{len $fn.ReturnProperties}}):
+{{- range $p := $fn.ReturnProperties}}
+    - {{template "prop" $p}}
+{{- end}}
+{{end -}}

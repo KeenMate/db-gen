@@ -62,6 +62,40 @@ Inject parameters like `_user_id` / `created_by` from a context object instead o
 | `ParameterNames` | string[] | Database parameter names to treat as context (e.g. `["_user_id", "_userid"]`). |
 | `ContextPath` | string | Property path on the context object, e.g. `"User.UserId"`. |
 
+## Parameter security
+
+Assign a logging-sensitivity level (`none` / `secure` / `strict` / `omit`) to parameters so templates can generate secure logging. db-gen resolves the level onto each parameter and exposes it as `Property.SecurityLevel`; it never renders masking itself — see [templating → parameter security levels](./templating.md#parameter-security-levels) for the level semantics and a template example.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `DefaultParameterSecurityLevel` | string | `"secure"` | Level used for any parameter not matched by the rules below. One of `none`/`secure`/`strict`/`omit` (validated, case-insensitive). |
+| `ParameterSecurityMappings` | array | — | Global by-name assignments. Same shape as `ContextParameterMappings`. |
+
+`ParameterSecurityMappings[]`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ParameterNames` | string[] | Database parameter names this level applies to (e.g. `["password", "secret"]`). Case-insensitive. |
+| `SecurityLevel` | string | One of `none`/`secure`/`strict`/`omit`. |
+
+Per-function overrides take precedence over the global mappings: set `SecurityLevel` inside a function's [`Parameters` override object](./templating.md#per-routine-overrides). Resolution precedence is **per-function override → global mapping → `DefaultParameterSecurityLevel`**.
+
+```json
+{
+  "DefaultParameterSecurityLevel": "secure",
+  "ParameterSecurityMappings": [
+    { "ParameterNames": ["password", "secret", "token"], "SecurityLevel": "strict" },
+    { "ParameterNames": ["internal_note"], "SecurityLevel": "omit" }
+  ],
+  "Generate": [{
+    "Schema": "public",
+    "Functions": {
+      "create_user": { "Parameters": { "password": { "SecurityLevel": "omit" } } }
+    }
+  }]
+}
+```
+
 ## Additional generators
 
 Generate outputs beyond the three core templates (TypeScript types, providers, WebSocket endpoints, …). Full guide: [context-mapping.md → Additional Generators](./context-mapping.md).

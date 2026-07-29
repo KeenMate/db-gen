@@ -1,0 +1,187 @@
+# db-gen metadata contract dump
+# BuildInfo.Version=LOCAL
+# Functions=4
+
+==== Routine: DbgenTestGetRows ====
+  DbFullFunctionName=dbgen_test.get_rows
+  Schema=dbgen_test DbFunctionName=get_rows
+  ModelName=DbgenTestGetRowsModel ProcessorName=DbgenTestGetRowsProcessor
+  HasReturn=true IsProcedure=false UsesUserContext=false
+  Parameters (0):
+  RegularParameters (0): 
+  ContextParameters (0): 
+  ReturnProperties (2):
+    - Id
+      DbColumnName=id DbColumnType=int4
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=
+      ValidationRules=[]
+    - Label
+      DbColumnName=label DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=1 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=
+      ValidationRules=[]
+
+==== Routine: DbgenTestRegisterUser ====
+  DbFullFunctionName=dbgen_test.register_user
+  Schema=dbgen_test DbFunctionName=register_user
+  ModelName=DbgenTestRegisterUserModel ProcessorName=DbgenTestRegisterUserProcessor
+  HasReturn=true IsProcedure=false UsesUserContext=false
+  Parameters (7):
+    - _user_id
+      DbColumnName=_user_id DbColumnType=int4
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=true ContextPath=ctx.UserId
+      SecurityLevel=secure
+      ValidationRules=[]
+    - username
+      DbColumnName=username DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=1 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=none
+      ValidationRules=[NotEmpty]
+    - display_name
+      DbColumnName=display_name DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=2 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=secure
+      ValidationRules=[]
+    - email
+      DbColumnName=email DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=3 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=omit
+      ValidationRules=[]
+    - password
+      DbColumnName=password DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=4 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=strict
+      ValidationRules=[]
+    - api_token
+      DbColumnName=api_token DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=5 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=strict
+      ValidationRules=[]
+    - secret_note
+      DbColumnName=secret_note DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=6 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=omit
+      ValidationRules=[]
+  RegularParameters (6): username, display_name, email, password, api_token, secret_note
+  ContextParameters (1): _user_id
+  ReturnProperties (1):
+    - RegisterUser
+      DbColumnName=register_user DbColumnType=integer
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=
+      ValidationRules=[]
+
+==== Routine: DbgenTestScalarSum ====
+  DbFullFunctionName=dbgen_test.scalar_sum
+  Schema=dbgen_test DbFunctionName=scalar_sum
+  ModelName=DbgenTestScalarSumModel ProcessorName=DbgenTestScalarSumProcessor
+  HasReturn=true IsProcedure=false UsesUserContext=false
+  Parameters (2):
+    - a
+      DbColumnName=a DbColumnType=int4
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=secure
+      ValidationRules=[]
+    - b
+      DbColumnName=b DbColumnType=int4
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=1 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=secure
+      ValidationRules=[]
+  RegularParameters (2): a, b
+  ContextParameters (0): 
+  ReturnProperties (1):
+    - ScalarSum
+      DbColumnName=scalar_sum DbColumnType=integer
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=
+      ValidationRules=[]
+
+==== Routine: DbgenTestWithContext ====
+  DbFullFunctionName=dbgen_test.with_context
+  Schema=dbgen_test DbFunctionName=with_context
+  ModelName=DbgenTestWithContextModel ProcessorName=DbgenTestWithContextProcessor
+  HasReturn=true IsProcedure=false UsesUserContext=false
+  Parameters (2):
+    - _user_id
+      DbColumnName=_user_id DbColumnType=int4
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=true ContextPath=ctx.UserId
+      SecurityLevel=secure
+      ValidationRules=[]
+    - name
+      DbColumnName=name DbColumnType=text
+      PropertyType=string BaseType=string
+      NullableReturnType=string? NullableParamType= OptionalParamType=
+      Position=1 MapperFunction=
+      Nullable=false Optional=false
+      IsContextParameter=false ContextPath=
+      SecurityLevel=secure
+      ValidationRules=[]
+  RegularParameters (1): name
+  ContextParameters (1): _user_id
+  ReturnProperties (1):
+    - WithContext
+      DbColumnName=with_context DbColumnType=integer
+      PropertyType=int BaseType=int
+      NullableReturnType=int? NullableParamType= OptionalParamType=
+      Position=0 MapperFunction=
+      Nullable=false Optional=true
+      IsContextParameter=false ContextPath=
+      SecurityLevel=
+      ValidationRules=[]

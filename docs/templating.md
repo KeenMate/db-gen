@@ -68,10 +68,13 @@ type Property struct {
     IsContextParameter bool
     ContextPath        string
     ValidationRules    []ValidationRule
+    SecurityLevel      string // logging sensitivity: none | secure | strict | omit
 }
 ```
 
 `Config` is the full [configuration object](./configuration.md), and `BuildInfo` carries version/build metadata — both available in every template.
+
+> **Runnable examples:** minimal, test-covered templates live in [`test/templates/`](../test/templates) and [`test/e2e/templates/`](../test/e2e/templates). For fuller, real-world-shaped (anonymized) starting points — a C# DbContext/Model/Processor set, a secure-logging provider, and a TypeScript model — see [`examples/`](../examples).
 
 ## Template functions
 
@@ -128,9 +131,38 @@ Override object fields:
 - **`Model`** — object keyed by db column name. `false` skips the column; `true` or an object selects it. The object may override `MappedName`, `IsNullable`, `MappedType`, and `MappingFunction`.
   - Setting only `MappedType` looks up the mapping function from global mappings (errors if none found).
   - Setting only `MappingFunction` without `MappedType` does nothing.
-- **`Parameters`** — object keyed by parameter name. Because you can't meaningfully select a subset of parameters, values must be objects (not booleans). You may override `MappedName`, `MappedType`, `IsNullable`, and `IsOptional`.
+- **`Parameters`** — object keyed by parameter name. Because you can't meaningfully select a subset of parameters, values must be objects (not booleans). You may override `MappedName`, `MappedType`, `IsNullable`, `IsOptional`, and `SecurityLevel`.
 
 > When overriding types per function, leave fields you don't want to change as empty strings so the global mapping is looked up correctly — don't hardcode placeholder text.
+
+## Parameter security levels
+
+Every parameter carries a `SecurityLevel` describing how sensitive it is to logging. db-gen only resolves and exposes the level — it never renders masking itself. Your template decides what to emit for each level (this keeps db-gen language-agnostic, like [copy targets](./copy-targets.md)).
+
+The four levels:
+
+| Level | Meaning |
+|-------|---------|
+| `none` | Safe to log as plain text. |
+| `secure` | Log as plain text or masked (`******`) depending on a **runtime** flag in your generated code (the issue calls it `db-gen:insecure-logging`). db-gen does not read this flag — your template emits code that does. |
+| `strict` | Always log masked. |
+| `omit` | Never include in any log output. |
+
+Resolution precedence (in `mapper.go`): per-function `Parameters[name].SecurityLevel` → global [`ParameterSecurityMappings`](./configuration.md#parameter-security) by name → `DefaultParameterSecurityLevel` (defaults to `secure`). Matching is case-insensitive on the db parameter name.
+
+Example template fragment (C#-flavored), branching on the level:
+
+```gotemplate
+{{range $p := .Routine.RegularParameters}}
+{{- if ne $p.SecurityLevel "omit"}}
+    log.Add("{{$p.PropertyName}}",
+    {{- if eq $p.SecurityLevel "strict"}} "******"
+    {{- else if eq $p.SecurityLevel "secure"}} InsecureLogging ? {{$p.PropertyName}}.ToString() : "******"
+    {{- else}} {{$p.PropertyName}}.ToString()
+    {{- end}});
+{{- end}}
+{{end}}
+```
 
 ## Overloaded functions
 
