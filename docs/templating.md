@@ -87,6 +87,7 @@ Case conversion (default output is camelCase):
 | `snakeCased` | `get_user_by_id` |
 | `normalizeStr` | normalized db name with leading underscores stripped (e.g. `_user_id` → `user_id`); preserves underscores before numbers like `country_iso_2` |
 | `trimPrefix` | strips a given prefix from a string |
+| `templateVar` | looks up a [`TemplateVariables`](#template-variables) value by key (case-insensitive) |
 
 Example:
 
@@ -95,6 +96,16 @@ Example:
 ```
 
 > Since v0.6.1, the bundled Model and Processor templates use `{{normalizeStr $property.DbColumnName}}` rather than `{{snakeCased $property.PropertyName}}`, to avoid information loss (e.g. `country_iso_2` collapsing to `country_iso2`) from round-tripping through PascalCase.
+
+## Template variables
+
+`TemplateVariables` is a free-form string→string map in the [config](./configuration.md#template-variables). It lets one shared template set serve multiple projects that differ only in config — e.g. output namespaces. Read a value with the `templateVar` function:
+
+```gotemplate
+namespace {{templateVar .Config.TemplateVariables "GeneratedNs"}};
+```
+
+Lookup is **case-insensitive**. Config loading lowercases every key, so `templateVar` lowercases the requested key before matching — author keys in whatever casing reads best (`GeneratedNs`, `generated_ns`, …) and reference them the same way. Values keep their exact case. A missing key yields an empty string.
 
 ## Three-tier type mapping
 

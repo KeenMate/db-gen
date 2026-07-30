@@ -29,6 +29,12 @@ func getTemplateFunctions() template.FuncMap {
 		},
 		"renderValidationTemplate": renderValidationTemplateFunc,
 		"getValidationTemplate":    getValidationTemplateFunc,
+		// templateVar looks up a Config.TemplateVariables value. Lookup is
+		// case-insensitive because viper lowercases all config keys on load, so
+		// templates can reference keys in whatever casing reads best.
+		"templateVar": func(m map[string]string, key string) string {
+			return m[strings.ToLower(key)]
+		},
 	}
 }
 

@@ -48,6 +48,7 @@ type Config struct {
 	CopyTargetTemplate               string                     `mapstructure:"CopyTargetTemplate"`
 	CopyTargetsFolderName            string                     `mapstructure:"CopyTargetsFolderName"`
 	CopyTargets                      []CopyTargetConfig         `mapstructure:"CopyTargets"`
+	TemplateVariables                map[string]string          `mapstructure:"TemplateVariables"`
 }
 
 // CopyTargetConfig declares a table to generate bulk-COPY code for.
@@ -193,6 +194,7 @@ func GetAndValidateConfig() (*Config, error) {
 		CopyTargetTemplate:               "",
 		CopyTargetsFolderName:            "copy",
 		CopyTargets:                      nil,
+		TemplateVariables:                nil,
 		Validation: ValidationConfig{
 			ValidationStrategy:  "",
 			ValidationLocations: nil,

@@ -3,6 +3,7 @@
 ## 0.8.0
 
 ### New Features
+- **Template variables.** New `TemplateVariables` config key — a free-form string→string map passed through to every template (DbContext, Model, Processor, and additional generators). Read values with the new `templateVar` template function: `{{templateVar .Config.TemplateVariables "GeneratedNs"}}`. This lets one shared template set serve multiple projects that differ only in config (e.g. output namespaces). Lookup is case-insensitive (config loading lowercases keys; values keep their case). See [docs/configuration.md → template variables](./docs/configuration.md#template-variables) and [docs/templating.md → template variables](./docs/templating.md#template-variables).
 - **Parameter security levels** — each parameter now carries a logging-sensitivity level (`none` / `secure` / `strict` / `omit`), exposed to templates as `Property.SecurityLevel` for generating secure logging. db-gen only resolves and exposes the level; templates render the masking (staying language-agnostic). See [docs/templating.md → parameter security levels](./docs/templating.md#parameter-security-levels).
   - New config: `DefaultParameterSecurityLevel` (defaults to `secure`) and `ParameterSecurityMappings[]` (`ParameterNames`, `SecurityLevel`) for global by-name assignment.
   - New per-function override: `SecurityLevel` on `Generate[].Functions[].Parameters[]`.

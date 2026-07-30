@@ -3,6 +3,7 @@ package dbGen
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"testing"
@@ -52,6 +53,24 @@ func TestFileMd5SumAndHashes(t *testing.T) {
 	}
 	if (*hashes)[filepath.Clean(a)] != ha {
 		t.Errorf("hash map missing/incorrect entry for a.txt")
+	}
+}
+
+func TestTemplateVarFunc(t *testing.T) {
+	tmpl, err := template.New("t").Funcs(getTemplateFunctions()).
+		Parse(`{{templateVar .Vars "GeneratedNs"}}|{{templateVar .Vars "missing"}}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// keys arrive lowercased (viper); helper looks up case-insensitively
+	data := struct{ Vars map[string]string }{Vars: map[string]string{"generatedns": "Keenmate.Generated"}}
+
+	var sb strings.Builder
+	if err := tmpl.Execute(&sb, data); err != nil {
+		t.Fatal(err)
+	}
+	if got := sb.String(); got != "Keenmate.Generated|" {
+		t.Errorf("templateVar output = %q, want %q", got, "Keenmate.Generated|")
 	}
 }
 

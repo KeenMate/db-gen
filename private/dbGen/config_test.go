@@ -33,6 +33,47 @@ func TestGetPossibleLocalConfigs(t *testing.T) {
 	}
 }
 
+// TestTemplateVariablesDecode verifies the passthrough map round-trips through
+// viper decoding when present, and defaults to nil when absent. viper is a global
+// singleton, so we reset it around each case.
+func TestTemplateVariablesDecode(t *testing.T) {
+	t.Run("present", func(t *testing.T) {
+		viper.Reset()
+		t.Cleanup(viper.Reset)
+
+		viper.Set("TemplateVariables", map[string]interface{}{
+			"GeneratedNs":   "Keenmate.MyApp.Database.Generated",
+			"UserContextNs": "Keenmate.MyApp.Web.Models",
+		})
+
+		config := &Config{}
+		if err := getConfigFromViper(config); err != nil {
+			t.Fatalf("getConfigFromViper: %v", err)
+		}
+		if len(config.TemplateVariables) != 2 {
+			t.Fatalf("TemplateVariables = %+v, want 2 entries", config.TemplateVariables)
+		}
+		// viper lowercases config keys on load; values keep their case. The
+		// templateVar helper hides this from templates.
+		if got := config.TemplateVariables["generatedns"]; got != "Keenmate.MyApp.Database.Generated" {
+			t.Errorf("generatedns = %q, want Keenmate.MyApp.Database.Generated", got)
+		}
+	})
+
+	t.Run("absent", func(t *testing.T) {
+		viper.Reset()
+		t.Cleanup(viper.Reset)
+
+		config := &Config{}
+		if err := getConfigFromViper(config); err != nil {
+			t.Fatalf("getConfigFromViper: %v", err)
+		}
+		if config.TemplateVariables != nil {
+			t.Errorf("absent TemplateVariables should be nil, got %+v", config.TemplateVariables)
+		}
+	})
+}
+
 // TestLoadConfig exercises the real config pipeline (ReadConfig + GetAndValidateConfig)
 // against the committed copy-target test config. viper is a global singleton, so we
 // reset it first to avoid pollution from other tests.

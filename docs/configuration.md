@@ -52,6 +52,26 @@ Every db-gen setting lives in a JSON config file (see [usage → configuration f
 
 See [templating](./templating.md) for the data each template receives.
 
+## Template variables
+
+Arbitrary string values passed through config into every template — use it to keep one shared template set and vary only the config per project (e.g. output namespaces).
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `TemplateVariables` | object (string → string) | — | Free-form key/value map. Read in templates with `{{templateVar .Config.TemplateVariables "Key"}}`. |
+
+```json
+{
+  "TemplateVariables": {
+    "GeneratedNs": "Keenmate.MyApp.Database.Generated",
+    "DatabaseCommonNs": "Keenmate.MyApp.Database.Common",
+    "CommonProviderNs": "Keenmate.MyApp.Web.Providers"
+  }
+}
+```
+
+> Keys are **case-insensitive**: config loading lowercases all keys, so author them however reads best and look them up with any casing via `templateVar` (values keep their exact case). See [templating → template variables](./templating.md#template-variables).
+
 ## Offline generation
 
 | Key | Type | Default | Description |

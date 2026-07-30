@@ -52,6 +52,7 @@ How to read the matrix:
 | DbContext template | config | `DbContextTemplate` | — | Database-call code | `e2e_test.go` |
 | Generate models | config | `GenerateModels` | `false` | | `e2e_test.go` |
 | Model template | config | `ModelTemplate` | — | | `e2e_test.go` |
+| Template variables | config | `TemplateVariables` | — | String map read via `templateVar`; keys lowercased on load | `config_test.go` |
 | Generate processors | config | `GenerateProcessors` | `false` | | n/a |
 | Processor template | config | `ProcessorTemplate` | — | | n/a |
 | Processors for void returns | config | `GenerateProcessorsForVoidReturns` | `false` | | n/a |
@@ -153,6 +154,7 @@ How to read the matrix:
 | Snake case | template-fn | `snakeCased` | | `strings_test.go` |
 | Normalize string | template-fn | `normalizeStr` | Strips leading underscores; keeps `_` before digits | `strings_test.go` |
 | Trim prefix | template-fn | `trimPrefix` | | n/a |
+| Template variable lookup | template-fn | `templateVar` | Case-insensitive lookup into `Config.TemplateVariables` | `generator_test.go` |
 
 ## 12. Validation
 
