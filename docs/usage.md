@@ -14,6 +14,7 @@ db-gen <command> [flags]
 | `validate` | Validate the configuration and templates without generating files — see [validate](#validate). |
 | `routines [out]` | Read routines from the database and write their definitions to a JSON file (default `./db-gen-routines.json`, or the `out` argument). Use this to enable offline generation later. |
 | `database-changes` | Compare the current database schema against the last generation and print what changed — without generating anything. |
+| `llm` | Print a full CLI reference (concepts, commands, config keys, template model) for LLM/AI assistants — see [llm](#llm). Equivalent to `db-gen --llm`. |
 | `completion [bash\|zsh\|fish\|powershell]` | Print a shell-completion script. |
 | `version` | Print version and build information. |
 | `help [command]` | Print help for a command. |
@@ -100,6 +101,17 @@ It runs three layers, reporting **all** problems (not just the first):
 3. **Templates — render** — if a database is reachable (or `UseRoutinesFile` is set) and `--offline` was not given, each template is executed against your **real** routines to a discard writer. This catches field/method typos (e.g. `{{.Routine.FuncName}}` instead of `FunctionName`) that only surface at render time. If no database is available, this step is skipped with a notice and validation degrades to parse-only rather than failing.
 
 Warnings do not affect the exit code; only errors do.
+
+## llm
+
+`db-gen --llm` (or the equivalent `db-gen llm`) prints one self-contained plain-text reference document to stdout, aimed at LLM/AI coding assistants that need the full mental model of the tool in a single shot — without reading the source or docs.
+
+```bash
+db-gen --llm > db-gen-reference.txt   # dump the reference
+db-gen llm                            # same output, as a subcommand
+```
+
+The document covers, in order: the core **concepts** (routines, nullable-vs-optional, the three core templates and additional generators, copy targets, three-tier type mapping, context-parameter mapping, parameter security levels, the offline/routines-file workflow, change detection, and config-file resolution); **every command** with its flags and defaults; the **full configuration-key reference**; the **template data model**; and the **template functions**. It requires no database connection and no config file.
 
 ## How it works
 

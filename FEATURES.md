@@ -21,6 +21,7 @@ How to read the matrix:
 | Validate config & templates | cmd | `validate` | Static settings checks + template parse + render (if DB reachable); `--offline` skips DB. Exits non-zero on error | `validate_test.go` |
 | Export routines (offline) | cmd | `routines [out]` | Writes routine metadata JSON | `integration_test.go` |
 | Show schema changes | cmd | `database-changes` | Diff only, no generation | `changedetection_test.go` |
+| LLM reference | cmd | `llm` | Prints full CLI reference (concepts/commands/config/template model); same as `--llm`. No DB/config needed | n/a |
 | Shell completion | cmd | `completion [shell]` | `bash`/`zsh`/`fish`/`powershell` | n/a |
 | Version info | cmd | `version` | Prints build info | n/a |
 
@@ -31,6 +32,7 @@ How to read the matrix:
 | Config file path | flag | `--config` / `-s` | — | Else default locations tried | `config_test.go` |
 | Connection string | flag | `--connectionString` / `-c` | — | Overrides config value | manual |
 | Debug logging | flag | `--debug` / `-d` | off | Debug logs + debug files | manual |
+| LLM reference | flag | `--llm` | off | Prints the full CLI reference, then exits; same as the `llm` command | n/a |
 
 ## 3. Connection & output
 

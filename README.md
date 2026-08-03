@@ -38,6 +38,7 @@ Everything db-gen needs — configuration and templates — lives in your reposi
 - **Example templates.** New top-level [`examples/`](./examples) with anonymized, real-world-shaped starting points: a C# `DbContext`/`Model`/`Processor` set, a `common-provider` that turns `SecurityLevel` into safe log lines, and a per-routine TypeScript model. See [examples/README.md](./examples/README.md).
 - **Metadata contract test.** A golden-file test (`test/e2e/templates/metadata.gotmpl` → `test/e2e/golden/metadata/contract.txt`) dumps *every* field db-gen exposes to templates, so any change to the template-facing data model shows up as a reviewable diff.
 - **`validate` command.** `db-gen validate` checks your configuration and templates without generating anything: it verifies settings are consistent, parses every template, and — when a database is reachable — renders each against your real routines to catch field/method typos. Exits non-zero on error, so it drops straight into CI. Use `--offline` to skip the database and render step. See [docs/usage.md → validate](./docs/usage.md#validate).
+- **`--llm` reference.** `db-gen --llm` (or `db-gen llm`) prints one self-contained plain-text reference — concepts, every command and flag, the full config-key reference, the template data model, and template functions — for pasting into an LLM/AI coding assistant so it gets the whole tool in one shot. No database or config needed. See [docs/usage.md → llm](./docs/usage.md#llm).
 
 ### v0.7.0
 
@@ -109,10 +110,11 @@ See [docs/usage.md](./docs/usage.md) for the full command surface and [docs/exam
 | `validate` | Check the config and templates (parse + render) without generating files. Exits non-zero on error. |
 | `routines [out]` | Export routine metadata to JSON for offline generation. |
 | `database-changes` | Show what changed in the database since the last generation. |
+| `llm` | Print a full CLI reference (concepts, commands, config, template model) for LLM/AI assistants. Same as `--llm`. |
 | `completion [shell]` | Emit a shell-completion script (`bash`, `zsh`, `fish`, `powershell`). |
 | `version` | Print version / build information. |
 
-Global flags: `--config`/`-s` (config file path), `--connectionString`/`-c`, `--debug`/`-d`. See [docs/usage.md](./docs/usage.md).
+Global flags: `--config`/`-s` (config file path), `--connectionString`/`-c`, `--debug`/`-d`, `--llm` (print the LLM reference). See [docs/usage.md](./docs/usage.md).
 
 ## Why db-gen
 
