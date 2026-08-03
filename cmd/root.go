@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/keenmate/db-gen/private/version"
 	"github.com/spf13/cobra"
 	"os"
@@ -14,6 +15,15 @@ var rootCmd = &cobra.Command{
 ---------
 For more information, see github.com/keenmate/db-gen
 `,
+	// Handle the global --llm flag here so "db-gen --llm" prints the LLM
+	// reference; otherwise fall back to the usual help output.
+	Run: func(cmd *cobra.Command, args []string) {
+		if llm, _ := cmd.Flags().GetBool("llm"); llm {
+			fmt.Println(formatLlmOutput())
+			return
+		}
+		_ = cmd.Help()
+	},
 }
 
 // Execute adds all child commands to the root command and sets generateCmdFlags appropriately.
@@ -30,6 +40,8 @@ func Execute(versionStringFile string) {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+
+	rootCmd.PersistentFlags().Bool("llm", false, "Print a full CLI reference for LLM/AI assistants")
 }
 
 func initConfig() {
