@@ -11,17 +11,22 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "db-gen",
 	Short: "Code generator for stored procedures and functions",
-	Long: `DB-GEN by KEEN|MATE
+	Long: `db-gen by Keenmate s.r.o.
 ---------
+Generates typed database-access code from PostgreSQL stored functions and
+procedures using Go templates you control. Language-agnostic and built for
+offline, repeatable code generation.
+
 For more information, see github.com/keenmate/db-gen
 `,
 	// Handle the global --llm flag here so "db-gen --llm" prints the LLM
-	// reference; otherwise fall back to the usual help output.
+	// reference; otherwise print version info followed by the usual help output.
 	Run: func(cmd *cobra.Command, args []string) {
 		if llm, _ := cmd.Flags().GetBool("llm"); llm {
 			fmt.Println(formatLlmOutput())
 			return
 		}
+		version.PrintVersion()
 		_ = cmd.Help()
 	},
 }

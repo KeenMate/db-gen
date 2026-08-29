@@ -39,6 +39,7 @@ Everything db-gen needs — configuration and templates — lives in your reposi
 - **Metadata contract test.** A golden-file test (`test/e2e/templates/metadata.gotmpl` → `test/e2e/golden/metadata/contract.txt`) dumps *every* field db-gen exposes to templates, so any change to the template-facing data model shows up as a reviewable diff.
 - **`validate` command.** `db-gen validate` checks your configuration and templates without generating anything: it verifies settings are consistent, parses every template, and — when a database is reachable — renders each against your real routines to catch field/method typos. Exits non-zero on error, so it drops straight into CI. Use `--offline` to skip the database and render step. See [docs/usage.md → validate](./docs/usage.md#validate).
 - **`--llm` reference.** `db-gen --llm` (or `db-gen llm`) prints one self-contained plain-text reference — concepts, every command and flag, the full config-key reference, the template data model, and template functions — for pasting into an LLM/AI coding assistant so it gets the whole tool in one shot. No database or config needed. See [docs/usage.md → llm](./docs/usage.md#llm).
+- **Bare invocation prints version.** Running `db-gen` with no arguments now prints build/version information above the help output.
 
 ### v0.7.0
 

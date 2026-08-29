@@ -30,7 +30,7 @@ func init() {
 // formatLlmOutput returns the full plain-text reference document.
 func formatLlmOutput() string {
 	return fmt.Sprintf(`db-gen %s — code generator for PostgreSQL stored functions and procedures
-by KEEN|MATE | https://github.com/keenmate/db-gen
+by Keenmate s.r.o. | https://github.com/keenmate/db-gen
 
 db-gen connects to a PostgreSQL database, reads metadata for stored functions
 and procedures ("routines"), and generates typed database-access code from Go
