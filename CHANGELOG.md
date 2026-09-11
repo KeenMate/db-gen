@@ -16,6 +16,10 @@
 ### Improvements
 - **Bare invocation prints version.** Running `db-gen` with no arguments now prints build/version information before the help output.
 - **Branding.** Root help and the `--llm` reference now read "db-gen by Keenmate s.r.o." with a short description of what the tool does.
+- **Overloaded functions are disambiguated automatically.** Overloads that share a name now get a stable, 1-based numeric suffix on their generated names (`GetSomething1`, `GetSomething2`, …) instead of requiring a `MappedName`. The suffix order is deterministic — overloads are sorted by their full parameter signature and routines are now returned in a stable, signature-sorted order — so the same database always yields the same names. A per-overload `MappedName` still overrides the suffix. See [docs/templating.md → overloaded functions](./docs/templating.md#overloaded-functions).
+
+### Bug Fixes
+- **Overloaded functions no longer silently collide.** Previously the overload-mapping enforcement was dead code (it checked `HasOverload` before it was set), so two overloads without a `MappedName` generated to the same file and the second silently overwrote the first. Overloads are now always given unique generated names.
 
 ### Testing & examples
 - **Metadata contract test.** New `test/e2e/templates/metadata.gotmpl` dumps every field db-gen exposes to templates (all `Routine`/`Property` fields); its golden (`test/e2e/golden/metadata/contract.txt`) locks the template-facing contract so any change surfaces as a diff. The `register_user` e2e fixture exercises all four security levels, a context param, an optional+nullable param, and a validation rule.

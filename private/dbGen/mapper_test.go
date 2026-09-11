@@ -38,16 +38,19 @@ func TestGetTypeMapping(t *testing.T) {
 
 func TestGetFunctionName(t *testing.T) {
 	cases := []struct {
-		db, schema, mapped, want string
+		db, schema, mapped, suffix, want string
 	}{
-		{"get_user", "public", "", "GetUser"},      // public schema is hidden
-		{"get_user", "app", "", "AppGetUser"},      // non-public prefixes schema
-		{"get_user", "public", "Custom", "Custom"}, // explicit mapped name wins
-		{"get_user", "app", "Custom", "Custom"},    // mapped name wins over schema
+		{"get_user", "public", "", "", "GetUser"},         // public schema is hidden
+		{"get_user", "app", "", "", "AppGetUser"},         // non-public prefixes schema
+		{"get_user", "public", "Custom", "", "Custom"},    // explicit mapped name wins
+		{"get_user", "app", "Custom", "", "Custom"},       // mapped name wins over schema
+		{"get_user", "public", "", "1", "GetUser1"},       // overload suffix appended
+		{"get_user", "app", "", "2", "AppGetUser2"},       // suffix after schema prefix
+		{"get_user", "public", "Custom", "2", "Custom"},   // mapped name wins, suffix ignored
 	}
 	for _, c := range cases {
-		if got := getFunctionName(c.db, c.schema, c.mapped); got != c.want {
-			t.Errorf("getFunctionName(%q,%q,%q) = %q, want %q", c.db, c.schema, c.mapped, got, c.want)
+		if got := getFunctionName(c.db, c.schema, c.mapped, c.suffix); got != c.want {
+			t.Errorf("getFunctionName(%q,%q,%q,%q) = %q, want %q", c.db, c.schema, c.mapped, c.suffix, got, c.want)
 		}
 	}
 }

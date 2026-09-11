@@ -177,4 +177,8 @@ Example template fragment (C#-flavored), branching on the level:
 
 ## Overloaded functions
 
-To avoid ambiguity, every function that is overloaded **must** be given a unique `MappedName`. The name must be unique within the schema (uniqueness is not yet enforced automatically, so be careful).
+When two or more functions share a name within a schema (PostgreSQL overloads), db-gen keeps their generated names unique automatically:
+
+- Each member of the overload set gets a **stable, 1-based numeric suffix** appended to its generated name — e.g. `get_something(int4)` → `GetSomething1`, `get_something(text)` → `GetSomething2` (with matching `GetSomething1Model` / `GetSomething2Processor` and file names).
+- The suffix order is **deterministic**: overloads are sorted by their full parameter signature, so the same database always produces the same suffixes regardless of physical row order or the machine running db-gen. Adding a new overload whose signature sorts earlier can shift the numbers, so pin names with `MappedName` if you need them frozen. db-gen logs a warning for any overload set that has no `MappedName` at all, so the shift risk is visible in CI output.
+- A per-overload **`MappedName` overrides the suffix** — set one (keyed by the full signature, e.g. `"get_something(text)": { "MappedName": "GetSomethingByName" }`) and that exact name is used with no suffix. `MappedName` values are not checked for uniqueness, so make sure they don't collide.

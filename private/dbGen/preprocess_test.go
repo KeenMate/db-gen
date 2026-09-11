@@ -40,4 +40,12 @@ func TestMarkOverloadedRoutines(t *testing.T) {
 	if routines[2].HasOverload {
 		t.Errorf("unique routine g should not be overloaded")
 	}
+
+	// suffix is assigned by signature order: f(int4) before f(text)
+	if routines[0].OverloadSuffix != "1" || routines[1].OverloadSuffix != "2" {
+		t.Errorf("overload suffixes wrong: %q, %q", routines[0].OverloadSuffix, routines[1].OverloadSuffix)
+	}
+	if routines[2].OverloadSuffix != "" {
+		t.Errorf("non-overloaded routine should have empty suffix, got %q", routines[2].OverloadSuffix)
+	}
 }

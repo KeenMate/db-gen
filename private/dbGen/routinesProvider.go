@@ -6,6 +6,7 @@ import (
 	helpers "github.com/keenmate/db-gen/private/helpers"
 	"log"
 	"slices"
+	"sort"
 	"strings"
 )
 
@@ -14,6 +15,10 @@ type DbRoutine struct {
 	RoutineSchema         string `db:"routine_schema"`
 	RoutineNameWithParams string
 	HasOverload           bool
+	// OverloadSuffix is a stable, 1-based numeric suffix assigned to each member
+	// of an overload set (empty for non-overloaded routines). It is appended to
+	// the generated name when no explicit MappedName is configured.
+	OverloadSuffix string
 	RoutineName           string `db:"routine_name"`
 	SpecificName          string `db:"specific_name"`
 	DataType              string `db:"data_type"`
@@ -41,17 +46,43 @@ const (
 )
 
 func GetRoutines(config *Config) ([]DbRoutine, error) {
+	var routines []DbRoutine
+
 	if config.UseRoutinesFile {
 		helpers.LogDebug("Load routines from file %s", config.RoutinesFile)
-		return loadRoutinesFromFile(config)
+		loaded, err := loadRoutinesFromFile(config)
+		if err != nil {
+			return nil, err
+		}
+		routines = loaded
+	} else {
+		loaded, err := getRoutinesFromDatabase(config)
+		if err != nil {
+			return nil, fmt.Errorf("error loading routines from db: %v", err)
+		}
+		routines = loaded
 	}
 
-	routines, err := getRoutinesFromDatabase(config)
-	if err != nil {
-		return nil, fmt.Errorf("error loading routines from db: %v", err)
-	}
+	// Deterministic order so overloaded routines (same name, different params)
+	// always appear in the same, signature-sorted order regardless of the
+	// database's physical row order or the machine running db-gen.
+	sortRoutines(routines)
 
 	return routines, nil
+}
+
+// sortRoutines orders routines by schema, then name, then full parameter
+// signature so overloads are always emitted in a stable order.
+func sortRoutines(routines []DbRoutine) {
+	sort.SliceStable(routines, func(i, j int) bool {
+		if routines[i].RoutineSchema != routines[j].RoutineSchema {
+			return routines[i].RoutineSchema < routines[j].RoutineSchema
+		}
+		if routines[i].RoutineName != routines[j].RoutineName {
+			return routines[i].RoutineName < routines[j].RoutineName
+		}
+		return routines[i].RoutineNameWithParams < routines[j].RoutineNameWithParams
+	})
 }
 
 func SaveRoutinesFile(routines []DbRoutine, config *Config) error {
@@ -121,7 +152,7 @@ func getFunctionsInSchema(conn *database.DbConn, schema string) ([]DbRoutine, er
 	routines := new([]DbRoutine)
 
 	// I am coalescing
-	q := `select row_number() over (PARTITION BY routine_schema, routine_name),
+	q := `select row_number() over (PARTITION BY routine_schema, routine_name ORDER BY r.specific_name),
 	        r.routine_schema::text,
 	        r.routine_name::text,
 	        r.specific_name::text,
@@ -136,7 +167,7 @@ func getFunctionsInSchema(conn *database.DbConn, schema string) ([]DbRoutine, er
 	        information_schema.parameters p
 	        group by  specific_schema, specific_name) p on p.specific_schema = r.specific_schema and p.specific_name = r.specific_name
 	      where r.specific_schema = $1
-	      order by routine_schema, routine_name;
+	      order by routine_schema, routine_name, r.specific_name;
 	`
 
 	err := conn.Select(routines, q, schema)

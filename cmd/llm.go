@@ -56,6 +56,17 @@ Nullable vs Optional (a core distinction):
     Maps to OptionalParameterType (e.g. Optional<int>).
   Templates check $parameter.Optional to decide how to pass the value.
 
+Overloaded functions:
+  When several functions share a name in one schema (PostgreSQL overloads),
+  db-gen keeps their generated names unique by appending a stable, 1-based
+  numeric suffix (get_something(int4) -> GetSomething1, get_something(text) ->
+  GetSomething2, plus matching Model/Processor/file names). Overloads are sorted
+  by full parameter signature, so suffixes are deterministic across runs and
+  machines. A per-overload MappedName (keyed by full signature, e.g.
+  "get_something(text)") overrides the suffix. db-gen warns when an overload set
+  has no MappedName at all, since positional suffixes can shift if signatures
+  change.
+
 Templates (three core types):
   DbContext  — receives ALL processed routines at once; generates the main
                database-call facade. Data: { Config, Functions []Routine, BuildInfo }.
