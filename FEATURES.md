@@ -78,12 +78,12 @@ How to read the matrix:
 | Schema selection | config[] | `Generate[].Schema` | | `filter_test.go` |
 | All functions | config | `Generate[].AllFunctions` | Except those set `false` | `filter_test.go` |
 | Per-function selection | config | `Generate[].Functions` | name or `name(args)` → bool/object | `filter_test.go` |
-| Rename routine | config | `Functions[].MappedName` | Required for overloads | `mapper_test.go` |
+| Rename routine | config | `Functions[].MappedName` | Overrides generated name; overrides overload suffix | `mapper_test.go` |
 | Disable value retrieval | config | `Functions[].DontRetrieveValues` | Off-only | n/a |
 | Select only specified columns | config | `Functions[].SelectOnlySpecified` | | n/a |
 | Per-column model override | config | `Functions[].Model` | `MappedName`/`MappedType`/`MappingFunction`/`IsNullable` | n/a |
 | Per-parameter override | config | `Functions[].Parameters` | `MappedName`/`MappedType`/`IsNullable`/`IsOptional` | `mapper_test.go` |
-| Overloaded function handling | behavior | (mark overloaded) | Forces unique `MappedName` | `preprocess_test.go` |
+| Overloaded function handling | behavior | (auto numeric suffix) | Stable signature-ordered `Name1`/`Name2`; `MappedName` overrides | `preprocess_test.go` |
 
 ## 7. Context parameters
 

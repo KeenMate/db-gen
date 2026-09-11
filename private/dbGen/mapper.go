@@ -113,7 +113,7 @@ func mapRoutines(routines *[]DbRoutine, globalTypeMappings *map[string]mapping, 
 		processParameterValidations(allParameters, routine, config)
 
 		// default case for names is UpperCamelcase
-		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema, routineMapping.MappedName)
+		functionName := getFunctionName(routine.RoutineName, routine.RoutineSchema, routineMapping.MappedName, routine.OverloadSuffix)
 		modelName := getModelName(functionName)
 		processorName := getProcessorName(functionName)
 
@@ -457,7 +457,9 @@ func normalizeAndValidateSecurityLevels(config *Config) error {
 	return nil
 }
 
-func getFunctionName(dbFunctionName string, schema string, mappedName string) string {
+func getFunctionName(dbFunctionName string, schema string, mappedName string, overloadSuffix string) string {
+	// An explicit MappedName wins outright — the caller has chosen the name and
+	// is responsible for keeping overloads unique, so we don't append a suffix.
 	if mappedName != "" {
 		return mappedName
 	}
@@ -469,7 +471,9 @@ func getFunctionName(dbFunctionName string, schema string, mappedName string) st
 	if schema != hiddenSchema {
 		schemaPrefix = common2.ToPascalCase(common2.NormalizeStr(schema))
 	}
-	return schemaPrefix + common2.ToPascalCase(dbFunctionName)
+	// overloadSuffix is empty for non-overloaded routines; for overloads it is a
+	// stable 1-based index that disambiguates the otherwise-identical names.
+	return schemaPrefix + common2.ToPascalCase(dbFunctionName) + overloadSuffix
 }
 
 func getModelName(functionName string) string {

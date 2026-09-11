@@ -1,83 +1,80 @@
 package dbGen
 
 import (
-	"fmt"
+	"sort"
+	"strconv"
+
 	"github.com/keenmate/db-gen/private/helpers"
 )
 
 func PreprocessRoutines(routines *[]DbRoutine, config *Config) error {
-	err := markOverloadedRoutines(routines, config)
-	if err != nil {
-		return err
-	}
+	markOverloadedRoutines(routines, config)
 
 	return nil
 }
 
-func markOverloadedRoutines(routines *[]DbRoutine, config *Config) error {
+// markOverloadedRoutines finds routines that share a schema-qualified name
+// (PostgreSQL overloads) and assigns each a stable, 1-based numeric suffix.
+// Members are ordered by their full parameter signature so the suffix is
+// deterministic across runs and database rebuilds. Routines that carry an
+// explicit MappedName are still marked as overloaded (change detection relies
+// on the flag) but ignore the suffix when their generated name is built.
+func markOverloadedRoutines(routines *[]DbRoutine, config *Config) {
 	schemaMap := getSchemaConfigMap(config)
 
-	// first, we find all the overloaded functions
-	namesCounter := make(map[string]int)
-	for _, routine := range *routines {
-		// carefull about schemas
-		routineKey := routine.RoutineSchema + "." + routine.RoutineName
-		count, exists := namesCounter[routineKey]
-
-		if !exists {
-			namesCounter[routineKey] = 1
-		}
-
-		namesCounter[routineKey] = count + 1
-	}
-	overloadedFunctionCount := 0
-	// select all the value, that have overload
+	// group routine indices by schema-qualified name
+	groups := make(map[string][]int)
 	for i, routine := range *routines {
-		// carefull about schemas
 		routineKey := routine.RoutineSchema + "." + routine.RoutineName
-		count, exists := namesCounter[routineKey]
+		groups[routineKey] = append(groups[routineKey], i)
+	}
 
-		if !exists || count == 1 {
+	overloadedFunctionCount := 0
+	for routineKey, indices := range groups {
+		if len(indices) < 2 {
 			continue
 		}
 
-		schemaConfig, exists := schemaMap[routine.RoutineSchema]
+		// deterministic order: sort overloads by their full signature so the
+		// numeric suffix is stable regardless of the input order
+		sort.Slice(indices, func(a, b int) bool {
+			return (*routines)[indices[a]].RoutineNameWithParams < (*routines)[indices[b]].RoutineNameWithParams
+		})
 
-		if !exists {
-			panic(fmt.Sprintf("schema config for schema %s missing", routine.RoutineSchema))
+		anyMappedName := false
+		for order, idx := range indices {
+			(*routines)[idx].HasOverload = true
+			(*routines)[idx].OverloadSuffix = strconv.Itoa(order + 1)
+			overloadedFunctionCount++
+
+			if hasMappedName(schemaMap, &(*routines)[idx]) {
+				anyMappedName = true
+			}
 		}
 
-		// enforce that overloaded routine has to have mapping
-		if routine.HasOverload && !hasCustomMappedName(&schemaConfig, &routine) {
-			// todo return error
-			helpers.Log("Overloaded function %s doesnt have mapping", routine.RoutineNameWithParams)
-			return fmt.Errorf("overloaded function %s.%s doesn't have mapping defined", routine.RoutineSchema, routine.RoutineNameWithParams)
+		// A fully-unmapped overload set relies on positional numeric suffixes,
+		// which can shift if a new overload with an earlier-sorting signature is
+		// added. Surface that so it's visible in CI output.
+		if !anyMappedName {
+			helpers.LogWarn("overloaded function %s has %d overloads and no MappedName; "+
+				"generated names use positional numeric suffixes (e.g. ...1, ...2) whose ordering "+
+				"can shift if signatures change — set MappedName to pin names", routineKey, len(indices))
 		}
-
-		overloadedFunctionCount++
-		(*routines)[i].HasOverload = true
-
 	}
 
 	helpers.Log("Marked %d functions as overload", overloadedFunctionCount)
-
-	return nil
 }
 
-func hasCustomMappedName(schemaConfig *SchemaConfig, routine *DbRoutine) bool {
-	mappingInfo, exists := schemaConfig.Functions[routine.RoutineNameWithParams]
-	if !exists {
-		helpers.LogDebug("mapping for function %s doesnt exist", routine.RoutineNameWithParams)
+// hasMappedName reports whether the routine has a non-empty MappedName
+// configured (keyed by its full signature) in the schema config.
+func hasMappedName(schemaMap map[string]SchemaConfig, routine *DbRoutine) bool {
+	schemaConfig, ok := schemaMap[routine.RoutineSchema]
+	if !ok {
 		return false
 	}
 
-	if mappingInfo.MappedName == "" {
-		helpers.LogDebug("mapping for function %s exists, but mapped name is not set", routine.RoutineNameWithParams)
-
-		return false
-	}
-
-	return true
+	mapping, ok := schemaConfig.Functions[routine.RoutineNameWithParams]
+	return ok && mapping.MappedName != ""
 }
 
 func getTypeMappings(config *Config) map[string]mapping {
